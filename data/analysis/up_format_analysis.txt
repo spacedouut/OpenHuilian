@@ -1,0 +1,67 @@
+SL6800 / 377 '.up' FIRMWARE FORMAT — STRUCTURAL ANALYSIS
+Derived from the 24 StarFun OTA images (Huilian / SmartLink / Shenju).
+==============================================================================
+
+CONTAINER LAYOUT
+  0x000  'CONFIG' 00 01                 magic + format rev
+  0x010  uint32  payload size           = filesize - 0x100
+  0x014  uint16  container checksum
+  0x016  char[16] chip id               always the ASCII string 'SL6801'
+  0x0fe  55 AA                          header terminator
+  0x100  'HLKJ'                         body magic = HuiLian KeJi (慧联科技)
+  0x120  uint32  index offset           always 0x3000 (body-relative)
+
+INDEX TABLE  (at body+0x3000, i.e. file 0x3100)
+  +0x00  uint32 entry count
+  +0x04  uint32 build version           (YYMMDDhhmm, e.g. 2506281656)
+  then N * 16 bytes: char[4] tag, uint32 flash_addr, uint32 length, uint32 crc
+
+  Payload mapping:  file_offset = flash_addr + 0x100
+  Verified for every partition in all 24 images.
+
+PARTITIONS
+  FIRM  main application/DSP image. Starts with a 0x30-byte wrapper, then a
+        load descriptor: entry 0x00804c40 / 0x00804c41 (Thumb bit set) — ARM
+        Thumb-2 code, consistent with the 32-bit RISC core in Huilian's specs.
+  SENC  sensor calibration blob, 2,056 B, constant size across every image.
+  SEN2  second sensor blob — ONLY present on h2slim (x3) and h2spro (x2).
+  TONE  voice-prompt / tone pack (83-94 KB).
+  EQ2P  EQ profile, ~1.5 KB.
+  OTAP  OTA updater stub, EXACTLY 0x28d50 (167,248 B) in all 24 images.
+  PSMP  16 KB, crc always 0, flash_addr beyond end of file — DECLARED BUT NOT
+        STORED. It is the runtime persistent-settings region, reserved only.
+
+FLASH CLASSES
+  1 MB parts: OTAP @ 0x0d2000, PSMP @ 0x0fc000, file 1,027,232 / 1,027,664 B
+  2 MB parts: OTAP @ 0x1d2000, PSMP @ 0x1fc000, file 2,076,240 B
+  In 2 MB images the 1 MB..1.8 MB span is all zero padding.
+
+SILICON GENERATIONS (markers recovered from inside FIRM)
+  'LHK-SL6800-TEST'  -> 21 of 24 images (all 2022-2024 builds)
+  '377 Super++'      -> h2sturbo 2506281656 ONLY (Jun 2025, newest in catalog)
+  no marker          -> a12pro 2410231555, h2sturbo 2409191721
+  => the catalog straddles a platform migration: the newest image is already a
+     377-series build, while the container header still claims 'SL6801'.
+     The user's H3Pro Max3 is Huilian 377H3 — the generation after this.
+
+SHARED vs PER-PRODUCT PAYLOADS (sha256 of extracted blobs)
+  FIRM  24/24 unique — always per-product.
+  OTAP  23 distinct across 24 (only a10+fit40 share one) despite fixed size.
+  TONE  10 distinct across 24 — reused across product families.
+  EQ2P  10 distinct; SENC 11 distinct; SEN2 2 distinct.
+  => tone/EQ/sensor packs are shared assets; FIRM and OTAP are per-build.
+
+APPLE / AAP LAYER
+  Every FIRM contains 'AAP Server', 'bt audio server', 'tws_manager_task',
+  and 'Copyright (c) 2007 Apple Inc. All rights reserved' — the AirPods
+  accessory protocol emulation is compiled into the main image.
+
+h2sturbo 2409191721 -> 2506281656 DELTA (4 KB block diff)
+  0x000000-0x001000  DIFF   header/config
+  0x001000-0x003000  same   zero padding
+  0x003000-0x009000  DIFF   index table + start of FIRM
+  0x00a000-0x0d2000  DIFF   FIRM/SENC/TONE/EQ2P body (819,200 B)
+  0x0d2000-0x1d2000  same   zero padding (1 MB)
+  0x1d2000-0x1d3000  DIFF   first 4 KB of OTAP only
+  0x1d3000-0x1fb000  same   remaining 163,840 B of OTAP identical
+  FIRM grew 737,080 -> 746,256 B (+9,176) across the SL6800->377 transition.
