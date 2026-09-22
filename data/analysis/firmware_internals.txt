@@ -1,0 +1,71 @@
+H2S TURBO 2506281656 (377 Super++) — FIRMWARE INTERNALS & CFW FEASIBILITY
+==========================================================================
+Analysis only. Nothing flashed.
+
+1. INTEGRITY MODEL  (the CFW gatekeeper)
+   - Partition CRC field  = CRC16/CCITT-FALSE (poly 0x1021, init 0xFFFF) over payload.  5/5 match.
+   - Container checksum @0x14 = CRC16/CCITT-FALSE over entire body (file[0x100:]). 23/24 match.
+   - No signature, no encryption, no hash chain anywhere in the container.
+   - Round-trip test: edited EQ2P -> recomputed partition CRC + container CRC -> re-validates 100%.
+     (repack_test.up, identical size; NOT for flashing — H2S Turbo image, not H3Pro.)
+   - The 1 non-matching image (a10_2311090955_RYEQ) has a stale container CRC: consistent with
+     a reseller re-tune that fixed the partition CRC but not the outer one.
+
+2. TONE PARTITION  (voice prompts) — trivially moddable
+   Format: directory of [uint32 size][name\0] ... then raw files back-to-back from offset 0x400.
+   17 files, extracted bit-exact (83,143/83,143 bytes consumed), all valid MP3/WAV:
+     power_off low_power close key_up adpt call noise pass_those disconnected hangup
+     connected space_close game_mode_open slip_max slip slip_min key
+   MP3 = 16/22/48 kHz mono 24-56 kbps; WAV = 16-bit PCM mono 8/48 kHz.
+   'space_close' = spatial audio off, 'game_mode_open' = low-latency mode, 'adpt' = adaptive ANC.
+
+3. EQ2P PARTITION  (magic 'SLEQ') — plain float table
+   Records: [u8 kind][u8 param][u16 band][f32 value], 8-byte stride from offset 26.
+   kind 0x00 = main playback EQ, param 0x00=freq Hz, 0x01=Q, 0x02=gain dB.
+   FACTORY H2S TURBO TUNING (10-band parametric):
+      80 Hz  Q0.71  -2.0 dB     2421 Hz Q1.5  +3.8 dB     9750 Hz Q5.2  -0.5 dB
+     130 Hz  Q1.2   -1.9 dB     4100 Hz Q2.0   0.0 dB    12200 Hz Q4.7  +6.3 dB
+     240 Hz  Q0.71  -4.6 dB     6100 Hz Q5.5  -4.5 dB      900 Hz Q1.0  +0.5 dB
+     420 Hz  Q1.0   -1.3 dB     7990 Hz Q2.2  +4.5 dB
+   => bass/low-mid scooped, presence + air lifted: a bright AirPods-Pro-style target.
+   kinds 0x02-0x05 = additional band tables (mic / ANC / sidetone paths; 25 Hz-16 kHz).
+
+4. SENC PARTITION  (magic 'SENC') — same [u16 group][u16 idx][f32] param table.
+   Sensor / wear-detect / motion calibration constants (e.g. -25, -60, 125, 0.985).
+
+5. NV / SETTINGS KEYS EXPOSED BY FIRM (55)
+   Tap mapping: key_tap2_left/right_setting, key_long_left/right_setting
+   Audio:  eq_preset_cur_num, eq_ud_gain (user-defined EQ), bt_vol, anc_mode_sel, anc_mode_phone_sel
+   Wear:   ear_detection_en, ear_type, motion_type, kws_en
+   AirPods emulation: air_en, air_pair, air_link, air_adv_key, air_phone_addr,
+           air_audio_setting, air_callctrl_setting, air_volumectrl_setting, air_reset, air_clean
+   Identity: bt_name, bt_addr(+backup), ble_addr, device_id, product_id, product_mode,
+           sn_info, sn_l_info, sn_r_info, date_of_manufacture, authorization_code(+_length)
+   Misc:   bat_level, paired_flag, bootup_flag, startup_flag, freq_drift, link_phone_type
+
+6. APPLE / AIRPODS LAYER
+   HFP spoof:  AT+XAPL=0042-0887-0100,2  (vendor 0x0042, product 0x0887)  AT+IPHONEACCEV  +APLSIRI:1
+   Strings: 'AAP Server', 'AirPods', 'AccessoryService', 'SerialNumber', 'LocationID',
+            'ReportDescriptor', 'MaxReportSize', 'PrimaryVendorUsages', 'ProtectedAccess',
+            'ProtUpdate', 'AVClient', 'Copyright (c) 2007 Apple Inc.'
+   Codecs referenced: SBC, AAC, LDAC (string present), LC3 marker.
+   ANC test hooks: +ANCFFG= +ANCFBG= +ANCAG= +ANCDG= +ANCTEST=   (feed-forward/feedback gain)
+   Debug: AT+MICTEST=9, '6wire mode', vbus_print, uart_isr_bh (UART debug path alive)
+
+7. WHAT THE 377 BUILD ADDED vs THE LAST SL6800-ERA TURBO (2409191721)
+   + '377 Super++' platform tag, 'H2S Turbo' model string
+   + Apple accessory/HID service layer (AccessoryService, ReportDescriptor, SerialNumber ...)
+   + head-tracking: 'air motion tx timer', 'taskB motion', motion_type
+   + user EQ: eq_preset_cur_num, eq_ud_gain   (matches StarFun 2.0.7.017 changelog
+     "增加EQ调节（仅支持个别机型）" — EQ adjust only on certain models = the 377 ones)
+
+8. CFW TAKEAWAYS
+   Easy (data-only, CRC fix only):   custom voice prompts (TONE), custom EQ curve (EQ2P),
+                                     sensor thresholds (SENC).
+   Medium (FIRM binary patching):    default tap mapping, AirPods VID/PID/model spoof
+                                     (0042-0887), bt_name default, feature gates.
+   Real gate:                        the on-device OTAP updater. It's 167 KB of Thumb-2 with
+                                     no visible crypto strings; the container has no signature,
+                                     so the expectation is CRC-only acceptance — UNVERIFIED
+                                     until OTAP is disassembled or a test unit is available.
+   Hard rule: an H2S Turbo (377 Super++) image must never go on an H3Pro Max3 (377H3).
