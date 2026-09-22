@@ -1,0 +1,124 @@
+不含天线的LBEE5ZZ2XS-846、LBEE5ZZ1PJ-377、LBEE5XV1XA-540多协议模块
+https://www.52bluetooth.com/forum.php?mod=viewthread&tid=88731&highlight=377
+
+--- post 1
+1、描述：2XS型是一款基于88W9098组合芯片组的小型超高性能模块，支持Wi-Fi 802.11 a/b/g/n/AC/ax 2×2 MIMO+蓝牙5.3 BR/EDR/LE 2MPHY高达1200Mbps的Wi-Fi PHY数据速率和3Mbps的蓝牙PHY数据速率。
+
+器件：LBEE5ZZ2XS-846
+
+系列：2XS
+
+射频系列/标准：蓝牙，WiFi
+
+协议：802.11a/b/g/-c/ax，蓝牙 v5.3
+
+调制：CCK，DSSS，OFDM
+
+频率：2.4GHz，5GHz
+
+数据速率：54Mbps
+
+功率 - 输出：18dBm
+
+灵敏度：-95dBm
+
+串行接口：PCle，SDIO，UART
+
+天线类型：不含天线
+
+使用的 IC/零件：NXP 88W9098
+
+存储容量：-
+
+电压 - 供电：1.71V ~ 1.89V， 3.14V ~ 3.46V
+
+电流 - 接收：0.2mA ~ 420mA
+
+电流 - 传输：0.2mA ~ 420mA
+
+安装类型：表面贴装型
+
+工作温度：-40°C ~ 85°C（TA）
+
+封装/外壳：249-SMD 模块
+
+
+
+2、描述：1PJ型模块是一款非常高性能的模块，包括2.4GHz/5GHz WLAN和蓝牙功能，适用于消费级应用。基于QCA9377，该模块提供IEEE 802.11 a/b/g/n/AC（1×1）和蓝牙5.0 BR/EDR/LE。
+
+器件：LBEE5ZZ1PJ-377
+
+系列：1PJ
+
+射频系列/标准：蓝牙，WiFi
+
+协议：802.11a/b/g/-c，蓝牙 v5.0
+
+调制：8-DPSK，CCK，DQPSK，DSSS，OFDM
+
+频率：2.4GHz，5GHz
+
+数据速率：54Mbps
+
+功率 - 输出：19dBm
+
+灵敏度：-96dBm
+
+串行接口：PCM，SDIO，UART
+
+天线类型：不含天线
+
+使用的 IC/零件：QCA9377-3
+
+存储容量：-
+
+电压 - 供电：1.71V ~ 3.46V
+
+电流 - 接收：22mA ~ 90mA
+
+电流 - 传输：50mA ~ 420mA
+
+安装类型：表面贴装型
+
+工作温度：-20°C ~ 70°C
+
+封装/外壳：62-SMD 模块
+
+
+
+3、描述：1XA型是一款基于CYW54591组合芯片组的小型超高性能模块，支持Wi-Fi 802.11 a/b/g/n/AC 2×2 MIMO RSDB+蓝牙5.2 BR/EDR/LE高达866Mbps的Wi-Fi PHY数据速率和3Mbps的蓝牙PHY数据速率。WLAN部分支持PCIe v3.0第1代接口，蓝牙部分支持用于音频数据的高速4线UART接口和PCM。
+
+器件：LBEE5XV1XA-540
+
+产品种类 ：多协议模块
+
+系列 ：1XA
+
+频率 ：2.4 GHz, 5 GHz
+
+输出功率 ：17 dBm
+
+接口类型 ：PCIe, UART
+
+电源电压-最小 ：1.62 V
+
+电源电压-最大 ：3.63 V
+
+工作温度 ：- 40°C 至+ 85°C
+
+天线连接器类型 ：u.FL
+
+尺寸 ：11.4 mm x 8.9 mm x 1.4 mm
+
+协议 - 蓝牙、BLE - 802.15.1 ：Bluetooth 5.2
+
+协议 - WiFi - 802.11 ：WiFi
+
+支持协议 ：802.11 a/b/g/n/ac, Bluetooth 5.2
+
+【回收】不含天线的LBEE5ZZ2XS-846、LBEE5ZZ1PJ-377、LBEE5XV1XA-540多协议模块，如有多余的库存需要处理，请把库存清单发送到：chen13410018555@163.com 邮箱上；
+
+【供应】不含天线的LBEE5ZZ2XS-846、LBEE5ZZ1PJ-377、LBEE5XV1XA-540多协议模块，库存充足，价格优于同行，具体请联系陈先生qq 1668527835 咨询。
+
+ATTACHMENTS:
+

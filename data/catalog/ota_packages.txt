@@ -1,0 +1,96 @@
+STARFUN / SHENJU (Huilian SmartLink) — KNOWN OTA FIRMWARE PACKAGES
+Source: https://ota.starfun.fun  (tenant 'yiguo', auth from StarFun APK)
+Retrieved: 2026-09-22.  All images downloaded, CONFIG-validated and partition-parsed.
+Every device is a Huilian/SmartLink SL6801 (1MB or 2MB flash class).
+==============================================================================
+
+16 device products, 24 firmware images.
+
+### H2S Ultra
+  v2309162000  chip=SL6801 (2MB)  2,076,240 B  sha256:6c35b55b916048e8…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### a10
+  v2307011403  chip=SL6801 (1MB)  1,027,664 B  sha256:5ed2c7d177b76cfc…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+  v2311090956  chip=SL6801 (1MB)  1,027,664 B  sha256:b088c716b8485a84…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### a10studio
+  v2307011403  chip=SL6801 (1MB)  1,027,664 B  sha256:36a234522e342736…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### a12pro
+  v2410231600  chip=SL6801 (1MB)  1,027,664 B  sha256:e2d0917494ffbe42…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### a6pro
+  v2307011406  chip=SL6801 (1MB)  1,027,664 B  sha256:65f06a6a024ddb95…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### a8
+  v2307011406  chip=SL6801 (1MB)  1,027,664 B  sha256:7de94c4dadd392e5…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### b24
+  v2307011405  chip=SL6801 (1MB)  1,027,664 B  sha256:9bc900f81d5a9a88…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### fit30
+  v2209242029  chip=SL6801 (1MB)  1,027,232 B  sha256:d66672dcf41963ed…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### fit31
+  v2307251119  chip=SL6801 (1MB)  1,027,664 B  sha256:afa97123727207e9…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### fit40
+  v2307011404  chip=SL6801 (1MB)  1,027,664 B  sha256:1c59ca27b9ae8114…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### fit50
+  v2210141125  chip=SL6801 (1MB)  1,027,232 B  sha256:89310de0d657ebea…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### h2slim
+  v2301172000  chip=SL6801 (1MB)  1,027,664 B  sha256:f7dc0cdaffccc1fd…
+     partitions: FIRM/SENC/SEN2/TONE/EQ2P/OTAP/PSMP
+  v2308111648  chip=SL6801 (1MB)  1,027,664 B  sha256:dfa455cff6fa2596…
+     partitions: FIRM/SENC/SEN2/TONE/EQ2P/OTAP/PSMP
+  v2311120942  chip=SL6801 (1MB)  1,027,664 B  sha256:41db3918f81b34e4…
+     partitions: FIRM/SENC/SEN2/TONE/EQ2P/OTAP/PSMP
+
+### h2slimc
+  v2310241700  chip=SL6801 (1MB)  1,027,664 B  sha256:c7aa80f05e131092…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+  v2311061000  chip=SL6801 (1MB)  1,027,664 B  sha256:f535ce207a9aaba1…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### h2spro
+  v2308091143  chip=SL6801 (2MB)  2,076,240 B  sha256:056387c17bcaa8c6…
+     partitions: FIRM/SENC/SEN2/TONE/EQ2P/OTAP/PSMP
+  v2311131723  chip=SL6801 (2MB)  2,076,240 B  sha256:b1eaf0cf6f4665ed…
+     partitions: FIRM/SENC/SEN2/TONE/EQ2P/OTAP/PSMP
+
+### h2sturbo
+  v2409211800  chip=SL6801 (2MB)  2,076,240 B  sha256:ec51bb65b5a71d85…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+  v2506281656  chip=SL6801 (2MB)  2,076,240 B  sha256:31ed185b6a58bbd9…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+### h2sultra
+  v2311041607  chip=SL6801 (2MB)  2,076,240 B  sha256:6e2ed5122aa0e8d1…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+  v2312191611  chip=SL6801 (2MB)  2,076,240 B  sha256:23b299fa9d683c08…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+  v2401041027  chip=SL6801 (2MB)  2,076,240 B  sha256:49aca1d5aadb5746…
+     partitions: FIRM/SENC/TONE/EQ2P/OTAP/PSMP
+
+==============================================================================
+NOTES
+- H3Pro Max3 (package key 'h3promax3'): NOT present. Live query from the device
+  returned 204 No Content at every version -> no firmware published for it here.
+- Shenju host ota.shenjugroup.com: unauthenticated (app_id/app_secret from APK), but
+  requires a known firmware_id per product and has NO listing endpoint (Swagger:
+  release/auth, release/last, release/report only). The only firmware_id baked into
+  StarFun maps to a smartwatch ('手表固件 正式', w10_watch_2.0.4.up), not the buds.

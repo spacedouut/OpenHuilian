@@ -1,0 +1,242 @@
+[
+ {
+  "package": "H2S Ultra",
+  "catalog_version": "2309162000",
+  "chip": "SL6801",
+  "internal_version": 2309161705,
+  "size": 2076240,
+  "sha256_16": "6c35b55b916048e8",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2s_ultra_2309161705.up"
+ },
+ {
+  "package": "a10",
+  "catalog_version": "2307011403",
+  "chip": "SL6801",
+  "internal_version": 2307011403,
+  "size": 1027664,
+  "sha256_16": "5ed2c7d177b76cfc",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/a10_2307011403_-_RYEQ.up"
+ },
+ {
+  "package": "a10",
+  "catalog_version": "2311090956",
+  "chip": "SL6801",
+  "internal_version": 2311090955,
+  "size": 1027664,
+  "sha256_16": "b088c716b8485a84",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/a10_2311090955_RYEQ.up"
+ },
+ {
+  "package": "a10studio",
+  "catalog_version": "2307011403",
+  "chip": "SL6801",
+  "internal_version": 2307011403,
+  "size": 1027664,
+  "sha256_16": "36a234522e342736",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/a10_studio_2307011403_-_SYEQ.up"
+ },
+ {
+  "package": "a12pro",
+  "catalog_version": "2410231600",
+  "chip": "SL6801",
+  "internal_version": 2410231555,
+  "size": 1027664,
+  "sha256_16": "e2d0917494ffbe42",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/a12_pro_2410231555.up"
+ },
+ {
+  "package": "a6pro",
+  "catalog_version": "2307011406",
+  "chip": "SL6801",
+  "internal_version": 2307011406,
+  "size": 1027664,
+  "sha256_16": "65f06a6a024ddb95",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/a6_pro_2307011406.up"
+ },
+ {
+  "package": "a8",
+  "catalog_version": "2307011406",
+  "chip": "SL6801",
+  "internal_version": 2307011406,
+  "size": 1027664,
+  "sha256_16": "7de94c4dadd392e5",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/a8_2307011406.up"
+ },
+ {
+  "package": "b24",
+  "catalog_version": "2307011405",
+  "chip": "SL6801",
+  "internal_version": 2307011405,
+  "size": 1027664,
+  "sha256_16": "9bc900f81d5a9a88",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/b24_2307011405_-_DQEQ.up"
+ },
+ {
+  "package": "fit30",
+  "catalog_version": "2209242029",
+  "chip": "SL6801",
+  "internal_version": 2209242029,
+  "size": 1027232,
+  "sha256_16": "d66672dcf41963ed",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/fit30_2209242029.up"
+ },
+ {
+  "package": "fit31",
+  "catalog_version": "2307251119",
+  "chip": "SL6801",
+  "internal_version": 2307251119,
+  "size": 1027664,
+  "sha256_16": "afa97123727207e9",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/fit31_2307251119_-_DQEQ.up"
+ },
+ {
+  "package": "fit40",
+  "catalog_version": "2307011404",
+  "chip": "SL6801",
+  "internal_version": 2307011404,
+  "size": 1027664,
+  "sha256_16": "1c59ca27b9ae8114",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/fit40_2307011404_-_RYEQ.up"
+ },
+ {
+  "package": "fit50",
+  "catalog_version": "2210141125",
+  "chip": "SL6801",
+  "internal_version": 2210141125,
+  "size": 1027232,
+  "sha256_16": "89310de0d657ebea",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/fit50_2210141125.up"
+ },
+ {
+  "package": "h2slim",
+  "catalog_version": "2301172000",
+  "chip": "SL6801",
+  "internal_version": 2301171607,
+  "size": 1027664,
+  "sha256_16": "f7dc0cdaffccc1fd",
+  "partitions": "FIRM/SENC/SEN2/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2_slim_2301171607.up"
+ },
+ {
+  "package": "h2slim",
+  "catalog_version": "2308111648",
+  "chip": "SL6801",
+  "internal_version": 2308111648,
+  "size": 1027664,
+  "sha256_16": "dfa455cff6fa2596",
+  "partitions": "FIRM/SENC/SEN2/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2_slim_2308111648_-_DQEQ(1).up"
+ },
+ {
+  "package": "h2slim",
+  "catalog_version": "2311120942",
+  "chip": "SL6801",
+  "internal_version": 2311120942,
+  "size": 1027664,
+  "sha256_16": "41db3918f81b34e4",
+  "partitions": "FIRM/SENC/SEN2/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2_slim_2311120942(1)_-_DQEQ-6B32-A2698.up"
+ },
+ {
+  "package": "h2slimc",
+  "catalog_version": "2310241700",
+  "chip": "SL6801",
+  "internal_version": 2310241610,
+  "size": 1027664,
+  "sha256_16": "c7aa80f05e131092",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2slimc_2310241610.up"
+ },
+ {
+  "package": "h2slimc",
+  "catalog_version": "2311061000",
+  "chip": "SL6801",
+  "internal_version": 2311060931,
+  "size": 1027664,
+  "sha256_16": "f535ce207a9aaba1",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2slimc_2311060931.up"
+ },
+ {
+  "package": "h2spro",
+  "catalog_version": "2308091143",
+  "chip": "SL6801",
+  "internal_version": 2308091143,
+  "size": 2076240,
+  "sha256_16": "056387c17bcaa8c6",
+  "partitions": "FIRM/SENC/SEN2/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2spro_2308091143(1).up"
+ },
+ {
+  "package": "h2spro",
+  "catalog_version": "2311131723",
+  "chip": "SL6801",
+  "internal_version": 2311131723,
+  "size": 2076240,
+  "sha256_16": "b1eaf0cf6f4665ed",
+  "partitions": "FIRM/SENC/SEN2/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2spro_2311131723(1)_6B32_A2698.up"
+ },
+ {
+  "package": "h2sturbo",
+  "catalog_version": "2409211800",
+  "chip": "SL6801",
+  "internal_version": 2409191721,
+  "size": 2076240,
+  "sha256_16": "ec51bb65b5a71d85",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2s_turbo_2409191721.up"
+ },
+ {
+  "package": "h2sturbo",
+  "catalog_version": "2506281656",
+  "chip": "SL6801",
+  "internal_version": 2506281656,
+  "size": 2076240,
+  "sha256_16": "31ed185b6a58bbd9",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2s_turbo_2506281656.up"
+ },
+ {
+  "package": "h2sultra",
+  "catalog_version": "2311041607",
+  "chip": "SL6801",
+  "internal_version": 2311041607,
+  "size": 2076240,
+  "sha256_16": "6e2ed5122aa0e8d1",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2s_ultra_2311041607.up"
+ },
+ {
+  "package": "h2sultra",
+  "catalog_version": "2312191611",
+  "chip": "SL6801",
+  "internal_version": 2312191611,
+  "size": 2076240,
+  "sha256_16": "23b299fa9d683c08",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2s_ultra_2312191611(1)[6B34-A3048-61.3.0].up"
+ },
+ {
+  "package": "h2sultra",
+  "catalog_version": "2401041027",
+  "chip": "SL6801",
+  "internal_version": 2401041027,
+  "size": 2076240,
+  "sha256_16": "49aca1d5aadb5746",
+  "partitions": "FIRM/SENC/TONE/EQ2P/OTAP/PSMP",
+  "file": "fw/h2s_ultra_2401041027[6B34-A3048-61.3.0].up"
+ }
+]

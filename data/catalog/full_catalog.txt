@@ -1,0 +1,258 @@
+STARFUN OTA CATALOG  (30 entries)
+====================================================================================================
+
+package : H2S Ultra
+version : 2309162000
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/H2S Ultra/up/h2s_ultra_2309161705.up
+created : 2023-09-18T10:50:29.000Z  modified: 2023-09-18T10:53:35.000Z
+comment : 测试版本，真实版本2309161705。
+
+package : a10
+version : 2307011403
+types   : disabled
+url     : http://ota.starfun.fun/api/data/update/yiguo/a10/up/a10_2307011403 - RYEQ.up
+created : 2022-10-10T03:19:07.000Z  modified: 2023-11-25T01:49:09.000Z
+comment : 更新说明：
+1. 适配IOS17。
+2. 修复其他一些细节问题。
+（请确保APP升级至最新版本）
+
+package : a10
+version : 2311090956
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/a10/up/a10_2311090955_RYEQ.up
+created : 2023-11-25T01:50:00.000Z  modified: 2026-06-15T01:51:41.000Z
+comment : 更新说明： 
+1. 修复一些已知问题。
+（请确保APP升级至最新版本）
+
+package : a10studio
+version : 2307011403
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/a10studio/up/a10_studio_2307011403 - SYEQ.up
+created : 2022-12-02T08:03:54.000Z  modified: 2023-10-13T06:11:02.000Z
+comment : 更新说明： 
+1. 支持IOS17。
+2. 修复其他一些细节问题。
+（请确保APP升级至最新版本）
+
+package : a12pro
+version : 2410231600
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/a12pro/up/a12_pro_2410231555.up
+created : 2024-10-23T03:22:26.000Z  modified: 2024-10-24T01:22:55.000Z
+comment : 测试版本，实际版本号2410231555。
+
+package : a6pro
+version : 2307011406
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/a6pro/up/a6_pro_2307011406.up
+created : 2022-10-10T03:17:47.000Z  modified: 2023-10-13T06:09:47.000Z
+comment : 更新说明：
+1. 支持IOS17。
+2. 修复其他一些细节问题。
+（请确保APP升级至最新版本）
+
+package : a8
+version : 2307011406
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/a8/up/a8_2307011406.up
+created : 2022-09-24T08:37:13.000Z  modified: 2023-10-14T02:06:41.000Z
+comment : 更新说明： 
+1. 支持IOS17。 
+2. 修复其他一些细节问题。
+（请确保APP升级至最新版本）
+
+package : b24
+version : 2307011405
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/b24/up/b24_2307011405 - DQEQ.up
+created : 2022-10-10T03:19:38.000Z  modified: 2023-10-12T06:05:18.000Z
+comment : 更新说明：
+1. 支持IOS17。
+2. 修复其他一些细节问题。
+（请确保APP升级至最新版本）
+
+package : com.fun.app
+version : 1.9.7
+types   : disabled
+url     : http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/apk/starfun_1.9.7_202312011550.apk
+created : 2023-12-26T01:22:15.000Z  modified: 2024-10-15T10:10:36.000Z
+comment : 1. 优化用户体验。
+
+package : com.fun.app
+version : 1.9.8
+types   : disabled
+url     : http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/apk/starfun_1.9.8_202409191815.apk
+created : 2024-10-15T10:10:28.000Z  modified: 2024-12-23T12:21:28.000Z
+comment : 1. 优化用户体验。
+
+package : com.fun.app
+version : 2.0.5
+types   : disabled
+url     : http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/apk/starfun_2.0.5_202412231958.apk
+created : 2024-12-23T12:21:20.000Z  modified: 2025-07-10T10:28:36.000Z
+comment : 优化用户体验。
+
+package : com.fun.app
+version : 2.0.7
+types   : disabled
+url     : http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/1/starfun_2.0.7.016_202507071452.apk.1
+created : 2025-07-10T11:03:01.000Z  modified: 2026-06-15T01:54:29.000Z
+comment : 匹配377H3机型使用
+
+package : com.fun.app
+version : 2.0.7.017
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/1/starfun_2.0.7.017_202507102118.apk.1.1
+created : 2026-06-17T09:30:38.000Z  modified: 2026-06-17T09:36:58.000Z
+comment : 增加EQ调节（仅支持个别机型）
+
+package : com.fun.app
+version : 3.0.1
+types   : disabled
+url     : http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/apk/starfun_1.9.3_202306301603.apk
+created : 2023-06-30T12:04:16.000Z  modified: 2026-06-17T09:31:27.000Z
+comment : 1. 优化用户体验。
+
+package : fit30
+version : 2209242029
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/fit30/up/fit30_2209242029.up
+created : 2022-09-24T16:06:41.000Z  modified: 2022-09-24T16:06:41.000Z
+comment : （请确保APP升级至最新版本） 
+更新说明： 
+1. 优化云连接。 
+2. 优化回连。 
+3. 修复其他一些细节问题。
+
+package : fit31
+version : 2307251119
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/fit31/up/fit31_2307251119 - DQEQ.up
+created : 2022-09-24T16:07:16.000Z  modified: 2023-10-14T02:08:26.000Z
+comment : 更新说明： 
+1. 支持IOS17。 
+2. 修复其他一些细节问题。
+（请确保APP升级至最新版本）
+
+package : fit40
+version : 2307011404
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/fit40/up/fit40_2307011404 - RYEQ.up
+created : 2022-09-24T16:07:58.000Z  modified: 2023-10-13T06:13:03.000Z
+comment : 更新说明： 
+1. 支持IOS17。 
+2.修复其他一些细节问题。
+（请确保APP升级至最新版本）
+
+package : fit50
+version : 2210141125
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/fit50/up/fit50_2210141125.up
+created : 2022-10-14T12:08:36.000Z  modified: 2022-10-15T07:03:50.000Z
+comment : （更新前保证APP升级至最新）
+更新说明：
+1. 优化连接、回连。
+2. 优化音质。
+
+package : h2slim
+version : 2301172000
+types   : disabled
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2slim/up/h2_slim_2301171607.up
+created : 2023-01-18T06:30:11.000Z  modified: 2023-10-14T02:09:21.000Z
+comment : 测试固件，真实版本（2301171607）。
+
+package : h2slim
+version : 2308111648
+types   : disabled
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2slim/up/h2_slim_2308111648 - DQEQ(1).up
+created : 2023-10-14T02:10:47.000Z  modified: 2023-11-16T01:54:46.000Z
+comment : 更新说明： 
+1. 支持IOS17。 
+2. 修复其他一些细节问题。
+（请确保APP升级至最新版本）
+
+package : h2slim
+version : 2311120942
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2slim/up/h2_slim_2311120942(1) - DQEQ-6B32-A2698.up
+created : 2023-11-16T01:54:39.000Z  modified: 2023-11-16T01:54:39.000Z
+comment : 更新说明： 
+1. 优化用户体验。
+（请确保APP升级至最新版本）
+
+package : h2slimc
+version : 2310241700
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2slimc/up/h2slimc_2310241610.up
+created : 2023-10-24T08:17:34.000Z  modified: 2026-06-15T01:36:51.000Z
+comment : 测试。
+
+package : h2slimc
+version : 2311061000
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2slimc/up/h2slimc_2311060931.up
+created : 2023-11-06T01:46:42.000Z  modified: 2023-11-06T01:46:42.000Z
+comment : 测试版本，版本号2311060931。
+
+package : h2spro
+version : 2308091143
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2spro/up/h2spro_2308091143(1).up
+created : 2023-10-14T02:12:11.000Z  modified: 2026-06-15T02:00:50.000Z
+comment : 更新说明： 
+1. 支持IOS17。 
+2. 修复其他一些细节问题。
+（请确保APP升级至最新版本）
+
+package : h2spro
+version : 2311131723
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2spro/up/h2spro_2311131723(1)_6B32_A2698.up
+created : 2023-11-16T01:55:45.000Z  modified: 2023-11-16T01:55:45.000Z
+comment : 更新说明： 
+1. 优化用户体验。
+（请确保APP升级至最新版本）
+
+package : h2sturbo
+version : 2409211800
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2sturbo/up/h2s_turbo_2409191721.up
+created : 2024-09-20T03:28:20.000Z  modified: 2026-06-15T02:01:02.000Z
+comment : 测试版本，真实版本号2409191721
+
+package : h2sturbo
+version : 2506281656
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2sturbo/up/h2s_turbo_2506281656.up
+created : 2025-07-01T02:56:25.000Z  modified: 2025-07-01T02:56:25.000Z
+comment : eq测试3
+
+package : h2sultra
+version : 2311041607
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2sultra/up/h2s_ultra_2311041607.up
+created : 2023-11-04T08:57:56.000Z  modified: 2026-06-15T02:03:22.000Z
+comment : 更新说明： 
+1. 修复一些已知问题。
+（请确保APP升级至最新版本）
+
+package : h2sultra
+version : 2312191611
+types   : all
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2sultra/up/h2s_ultra_2312191611(1)[6B34-A3048-61.3.0].up
+created : 2023-12-26T01:18:49.000Z  modified: 2026-06-15T02:03:18.000Z
+comment : 更新说明： 
+1. 优化用户体验。
+（请确保APP升级至最新版本）
+
+package : h2sultra
+version : 2401041027
+types   : disabled
+url     : http://ota.starfun.fun/api/data/update/yiguo/h2sultra/up/h2s_ultra_2401041027[6B34-A3048-61.3.0].up
+created : 2024-01-05T03:03:42.000Z  modified: 2026-06-15T02:03:27.000Z
+comment : 更新说明： 
+1. 优化用户体验。
+（请确保APP升级至最新版本）

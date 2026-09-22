@@ -1,0 +1,74 @@
+Unsupported opcode: MAP_ADD (188)
+Unsupported opcode: MAP_ADD (188)
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Unsupported opcode: MAP_ADD (188)
+PycBuffer::getByte(): Unexpected end of stream
+PycBuffer::getByte(): Unexpected end of stream
+Warning: block stack is not empty!
+Warning: block stack is not empty!
+Unsupported opcode: CALL_FUNCTION_EX (170)
+Unsupported argument found for LIST_EXTEND
+Unsupported opcode: LIST_TO_TUPLE (102)
+Warning: block stack is not empty!
+Warning: block stack is not empty!
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+Warning: block stack is not empty!
+Warning: block stack is not empty!
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+PycBuffer::getByte(): Unexpected end of stream
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+PycBuffer::getByte(): Unexpected end of stream
+Warning: block stack is not empty!
+Warning: Stack history is empty, something wrong might have happened
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+Warning: block stack is not empty!
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+WARNING: Circular reference detected
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+Warning: block stack is not empty!
+Warning: block stack is not empty!
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Warning: block stack is not empty!
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Unsupported opcode: MAP_ADD (188)
+Unsupported opcode: LOAD_ASSERTION_ERROR (101)
+PycBuffer::getByte(): Unexpected end of stream
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Warning: block stack is not empty!
+Unsupported opcode: LOAD_ASSERTION_ERROR (101)
+Unsupported opcode: LOAD_ASSERTION_ERROR (101)
+PycBuffer::getByte(): Unexpected end of stream
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Warning: Stack history is empty, something wrong might have happened
+PycBuffer::getByte(): Unexpected end of stream
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Unsupported argument found for LIST_EXTEND
+Unsupported opcode: LIST_TO_TUPLE (102)
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Warning: Stack history is empty, something wrong might have happened
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Unsupported opcode: DICT_MERGE (213)
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+Unsupported opcode: JUMP_IF_NOT_EXC_MATCH (210)
+Warning: Stack history is not empty!
+Warning: block stack is not empty!
+PycBuffer::getByte(): Unexpected end of stream
+Warning: block stack is not empty!

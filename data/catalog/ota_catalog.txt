@@ -1,0 +1,35 @@
+StarFun OTA catalog (account: yiguo, host: ota.starfun.fun) — 30 entries
+
+FIRMWARE (.up) packages:
+  H2S Ultra    v2309162000   http://ota.starfun.fun/api/data/update/yiguo/H2S Ultra/up/h2s_ultra_2309161705.up
+  a10          v2307011403   http://ota.starfun.fun/api/data/update/yiguo/a10/up/a10_2307011403 - RYEQ.up
+  a10          v2311090956   http://ota.starfun.fun/api/data/update/yiguo/a10/up/a10_2311090955_RYEQ.up
+  a10studio    v2307011403   http://ota.starfun.fun/api/data/update/yiguo/a10studio/up/a10_studio_2307011403 - SYEQ.up
+  a12pro       v2410231600   http://ota.starfun.fun/api/data/update/yiguo/a12pro/up/a12_pro_2410231555.up
+  a6pro        v2307011406   http://ota.starfun.fun/api/data/update/yiguo/a6pro/up/a6_pro_2307011406.up
+  a8           v2307011406   http://ota.starfun.fun/api/data/update/yiguo/a8/up/a8_2307011406.up
+  b24          v2307011405   http://ota.starfun.fun/api/data/update/yiguo/b24/up/b24_2307011405 - DQEQ.up
+  fit30        v2209242029   http://ota.starfun.fun/api/data/update/yiguo/fit30/up/fit30_2209242029.up
+  fit31        v2307251119   http://ota.starfun.fun/api/data/update/yiguo/fit31/up/fit31_2307251119 - DQEQ.up
+  fit40        v2307011404   http://ota.starfun.fun/api/data/update/yiguo/fit40/up/fit40_2307011404 - RYEQ.up
+  fit50        v2210141125   http://ota.starfun.fun/api/data/update/yiguo/fit50/up/fit50_2210141125.up
+  h2slim       v2301172000   http://ota.starfun.fun/api/data/update/yiguo/h2slim/up/h2_slim_2301171607.up
+  h2slim       v2308111648   http://ota.starfun.fun/api/data/update/yiguo/h2slim/up/h2_slim_2308111648 - DQEQ(1).up
+  h2slim       v2311120942   http://ota.starfun.fun/api/data/update/yiguo/h2slim/up/h2_slim_2311120942(1) - DQEQ-6B32-A2698.up
+  h2slimc      v2310241700   http://ota.starfun.fun/api/data/update/yiguo/h2slimc/up/h2slimc_2310241610.up
+  h2slimc      v2311061000   http://ota.starfun.fun/api/data/update/yiguo/h2slimc/up/h2slimc_2311060931.up
+  h2spro       v2308091143   http://ota.starfun.fun/api/data/update/yiguo/h2spro/up/h2spro_2308091143(1).up
+  h2spro       v2311131723   http://ota.starfun.fun/api/data/update/yiguo/h2spro/up/h2spro_2311131723(1)_6B32_A2698.up
+  h2sturbo     v2409211800   http://ota.starfun.fun/api/data/update/yiguo/h2sturbo/up/h2s_turbo_2409191721.up
+  h2sturbo     v2506281656   http://ota.starfun.fun/api/data/update/yiguo/h2sturbo/up/h2s_turbo_2506281656.up
+  h2sultra     v2311041607   http://ota.starfun.fun/api/data/update/yiguo/h2sultra/up/h2s_ultra_2311041607.up
+  h2sultra     v2312191611   http://ota.starfun.fun/api/data/update/yiguo/h2sultra/up/h2s_ultra_2312191611(1)[6B34-A3048-61.3.0].up
+  h2sultra     v2401041027   http://ota.starfun.fun/api/data/update/yiguo/h2sultra/up/h2s_ultra_2401041027[6B34-A3048-61.3.0].up
+
+APK packages:
+  com.fun.app  v1.9.7        http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/apk/starfun_1.9.7_202312011550.apk
+  com.fun.app  v1.9.8        http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/apk/starfun_1.9.8_202409191815.apk
+  com.fun.app  v2.0.5        http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/apk/starfun_2.0.5_202412231958.apk
+  com.fun.app  v2.0.7        http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/1/starfun_2.0.7.016_202507071452.apk.1
+  com.fun.app  v2.0.7.017    http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/1/starfun_2.0.7.017_202507102118.apk.1.1
+  com.fun.app  v3.0.1        http://ota.starfun.fun/api/data/update/yiguo/com.fun.app/apk/starfun_1.9.3_202306301603.apk
