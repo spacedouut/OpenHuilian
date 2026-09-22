@@ -55,6 +55,16 @@ def hid_decode(b):
     i, depth, out = 0, 0, []
     while i < len(b):
         p = b[i]; i += 1
+        if p == 0xFE:
+            if i + 2 > len(b):
+                raise ValueError('truncated HID long item header')
+            size, ltag = b[i], b[i + 1]
+            i += 2
+            if i + size > len(b):
+                raise ValueError('truncated HID long item payload')
+            out.append('  ' * max(depth, 0) + f'LongItem tag=0x{ltag:02x} {b[i:i+size].hex()}')
+            i += size
+            continue
         sz = p & 3
         sz = 4 if sz == 3 else sz
         t, tag = (p >> 2) & 3, p >> 4
