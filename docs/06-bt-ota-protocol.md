@@ -35,8 +35,10 @@ The app parses the `.up` into `UpInfoData`:
   `indexPosition`.
 
 So the device is treated as a dumb flash writer: `(absolute address, 512 bytes, CRC8)` frames land
-wherever the `.up` index says. Writing the index last means a half-finished update leaves the old
-index (and thus a bootable layout) in place until the very end. **[inferred]**
+wherever the `.up` index says. Writing the index last means the *old index* stays in place until the
+very end — but the partitions it points at may already have been erased (`81`) or partially
+overwritten (`83`) by then, so this alone does not guarantee an interrupted update leaves the buds
+bootable. Recovery presumably relies on the separate `OTAP` updater stub / bootloader. **[inferred]**
 
 Sequence (`ota_step` 1 → 2 → 3):
 

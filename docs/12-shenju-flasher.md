@@ -4,7 +4,7 @@ Shenju (珠海绅聚 / Smartlink, `shenjugroup.com`) is the chip vendor behind t
 `ota.shenjugroup.com` host in StarFun. Their Windows production/flashing tool was recovered from the
 git history of `zeroproj/OpenPod` (deleted from HEAD as "not ours") and, being a PyInstaller
 bundle, decompiled to readable Python with Decompyle++. Archived under
-[`vendor/shenju-flashloader/`](../vendor/shenju-flashloader/):
+[`vendor/shenju-flashloader/`](../vendor/shenju-flashloader/) — see its [README](../vendor/shenju-flashloader/README.md) for provenance and rights (third-party, **not** AGPL):
 
 ```
 decompiled-src/     Python 3.10 source (some functions marked "Decompyle incomplete")
