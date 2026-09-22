@@ -29,7 +29,7 @@ self-contained and marks every claim as one of:
 | 02 | [StarFun app](docs/02-starfun-app.md) | Versions, servers, auth flow, hidden local-file OTA path |
 | 03 | [OTA catalog](docs/03-ota-catalog.md) | All 24 public firmware images and what they are |
 | 04 | [`.up` container format](docs/04-up-format.md) | Header, HLKJ body, partition index, flash map |
-| 05 | [CRCs & integrity model](docs/05-crc-and-integrity.md) | The only "security": CRC16/CCITT-FALSE, no signing |
+| 05 | [CRCs & integrity model](docs/05-crc-and-integrity.md) | The only "security" seen so far: CRC16/CCITT-FALSE, no signing — confirmed on the 24 catalog images + SL6806 bootloader; **unverified on H3Pro** |
 | 06 | [Bluetooth OTA protocol](docs/06-bt-ota-protocol.md) | `55AA80..84` frames, 512-byte writes, per-ear sequence |
 | 07 | [TONE / sound effects](docs/07-tone-sfx.md) | Voice-prompt archive; proven replace + repack |
 | 08 | [EQ2P & SENC tables](docs/08-eq2p-senc.md) | Float parameter tables, factory H2S Turbo EQ decoded |

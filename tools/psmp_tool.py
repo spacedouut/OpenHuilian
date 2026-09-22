@@ -33,10 +33,13 @@ def parse(p):
         chk = struct.unpack_from("<I", p, o + 3)[0]
         vl, kid = struct.unpack_from("<HH", p, o + 7)
         kl = p[o + 11]
+        end = o + 12 + kl + vl
+        if end > len(p):
+            raise ValueError(f"record at 0x{o:x} runs past end of partition")
         key = p[o + 12:o + 12 + kl]
-        val = p[o + 12 + kl:o + 12 + kl + vl]
+        val = p[o + 12 + kl:end]
         recs.append((o, flag, chk, kid, key, val))
-        o += 12 + kl + vl
+        o = end
     return recs, o
 
 def main():

@@ -1,7 +1,9 @@
 STARFUN / SHENJU (Huilian SmartLink) — KNOWN OTA FIRMWARE PACKAGES
 Source: https://ota.starfun.fun  (tenant 'yiguo', auth from StarFun APK)
 Retrieved: 2026-09-22.  All images downloaded, CONFIG-validated and partition-parsed.
-Every device is a Huilian/SmartLink SL6801 (1MB or 2MB flash class).
+Every image's CONFIG header reports SL6801 (1MB or 2MB flash class). NB: the newest h2sturbo build
+self-identifies as "377 Super++" in its FIRM strings while its header still says SL6801, so the header
+names the target flash/bootloader class, not necessarily the silicon generation.
 ==============================================================================
 
 16 device products, 24 firmware images.

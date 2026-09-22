@@ -1,9 +1,9 @@
 """Search 52bluetooth via the logged-in Chrome (CDP) and dump results/threads as text."""
-import asyncio, json, re, sys, time, urllib.parse
+import asyncio, json, os, re, sys, time, urllib.parse
 from playwright.async_api import async_playwright
 
-OUT = "/home/ubuntu/starfun/bt52"
-import os; os.makedirs(OUT, exist_ok=True)
+OUT = os.environ.get("BT52_OUT", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "52bluetooth"))
+os.makedirs(OUT, exist_ok=True)
 
 async def text(page):
     return await page.evaluate("() => document.body.innerText")
@@ -59,7 +59,8 @@ async def main(kws, fetch_threads):
             for it in items:
                 print("  -", it["title"], "|", it["href"])
             await page.wait_for_timeout(16000)
-        json.dump(allres, open(f"{OUT}/search.json", "a"), ensure_ascii=False)
+        with open(f"{OUT}/search.json", "w", encoding="utf-8") as fh:
+            json.dump(allres, fh, ensure_ascii=False, indent=1)
         if fetch_threads:
             seen = set()
             for kw, items in allres.items():

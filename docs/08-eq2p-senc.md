@@ -13,7 +13,7 @@ kind  0x00 = main playback EQ      param 0x00 = frequency (Hz), 0x01 = Q, 0x02 =
 kind  0x02..0x05 = further band tables (mic / ANC / sidetone paths, 25 Hz – 16 kHz)
 ```
 
-### Factory H2S Turbo tuning (10-band parametric)
+### Factory H2S Turbo tuning (11-band parametric, band IDs 0–10)
 
 | Freq | Q | Gain |
 |---|---|---|

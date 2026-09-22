@@ -15,6 +15,7 @@ import os, sys, json, struct, urllib.request
 
 AUTH_URL = "https://ota.starfun.fun/api/v1/authentication/user"
 LOOKUP   = "https://ota.starfun.fun/api/v1/_/appversions/update"
+TIMEOUT  = float(os.environ.get("STARFUN_TIMEOUT", "60"))
 CREDS    = {"username": os.environ.get("STARFUN_USER", ""),
             "password": os.environ.get("STARFUN_PASS", "")}
 if not CREDS["username"] or not CREDS["password"]:
@@ -24,12 +25,12 @@ if not CREDS["username"] or not CREDS["password"]:
 def post(url, obj):
     req = urllib.request.Request(url, data=json.dumps(obj).encode(),
                                  headers={"Content-Type": "application/json"})
-    return json.load(urllib.request.urlopen(req))
+    return json.load(urllib.request.urlopen(req, timeout=TIMEOUT))
 
 
 def get(url, token):
     req = urllib.request.Request(url, headers={"Authorization": token})
-    return urllib.request.urlopen(req).read()
+    return urllib.request.urlopen(req, timeout=TIMEOUT).read()
 
 
 def token():

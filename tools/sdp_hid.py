@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Decode the SDP record blob and Apple accessory HID report descriptors
-embedded in a Huilian/SmartLink FIRM image."""
+embedded in a Huilian/SmartLink FIRM image.
+
+usage: sdp_hid.py <firm.bin> <start_hex> <end_hex> [sdp|hid]   (default: sdp)"""
 import sys, struct
 
 def parse_de(b, i):
@@ -70,6 +72,11 @@ def main():
     start = int(sys.argv[2], 16)
     end = int(sys.argv[3], 16)
     b = f[start:end]
+    mode = sys.argv[4] if len(sys.argv) > 4 else 'sdp'
+    if mode == 'hid':
+        print('=== HID report descriptor ===')
+        print(hid_decode(b))
+        return
     i = 0
     print('=== SDP data elements ===')
     while i < len(b) - 2:

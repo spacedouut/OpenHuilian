@@ -118,8 +118,13 @@ def cmd_extract(path, outdir):
     p = get_part(data, info, "TONE")
     tone = data[p["addr"] + BODY: p["addr"] + BODY + p["length"]]
     os.makedirs(outdir, exist_ok=True)
+    root = os.path.realpath(outdir)
     for name, size, off in read_dir(tone):
-        open(os.path.join(outdir, name), "wb").write(tone[off:off + size])
+        dest = os.path.realpath(os.path.join(root, name))
+        if os.path.commonpath([root, dest]) != root:
+            sys.exit(f"refusing to write outside {outdir}: {name!r}")
+        with open(dest, "wb") as fh:
+            fh.write(tone[off:off + size])
         print(f"  wrote {name} ({size} B)")
 
 

@@ -1,6 +1,9 @@
 H2S TURBO 2506281656 (377 Super++) — FIRMWARE INTERNALS & CFW FEASIBILITY
 ==========================================================================
 Analysis only. Nothing flashed.
+Raw working notes. Evidence labels: CRC results = [confirmed] on the files named; "no signature/encryption"
+= [confirmed] absent from the 24 catalog containers + SL6806 bootloader RE, [unverified] for H3Pro;
+reseller explanation = [inferred]. The curated, labelled version is docs/05-crc-and-integrity.md.
 
 1. INTEGRITY MODEL  (the CFW gatekeeper)
    - Partition CRC field  = CRC16/CCITT-FALSE (poly 0x1021, init 0xFFFF) over payload.  5/5 match.

@@ -23,7 +23,8 @@ The app self-update endpoint pushes .017 as "suggested". Stay on .016 for these 
 | `https://ota.shenjugroup.com` | Shenju OTA v2. Public Swagger at `/v2/api-docs` (saved as [`data/catalog/shenju_api.json`](../data/catalog/shenju_api.json)). Endpoints: `release/auth`, `release/last`, `release/report`. No list endpoint; keyed by `firmware_id`. The IDs hardcoded in the app belong to a smartwatch (`w10_watch_2.0.4.up`). | app_id/app_secret from APK, no user login |
 
 Download URLs look like
-`http://ota.starfun.fun/api/data/update/yiguo/<package>/up/<file>.up` and need the JWT.
+`https://ota.starfun.fun/api/data/update/yiguo/<package>/up/<file>.up` and need the JWT (the catalog
+returns `http://`; `tools/pull_ota.py` upgrades it to `https://` before sending the token).
 Directory listing on the CDN is 403; guessing `h3promax3` paths gives 404.
 
 > The tenant username/password are **not** in this repo. `tools/pull_ota.py` reads
