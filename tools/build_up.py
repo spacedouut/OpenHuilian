@@ -66,7 +66,10 @@ def main():
     struct.pack_into("<I", hdr, 0x10, len(body))
     struct.pack_into("<H", hdr, 0x14, crc16(body))
     if chip:
-        hdr[0x16:0x16 + len(chip)] = chip.encode()
+        chip_bytes = chip.encode()
+        if len(chip_bytes) > 0xFE - 0x16:
+            raise SystemExit("chip name does not fit in the CONFIG header")
+        hdr[0x16:0x16 + len(chip_bytes)] = chip_bytes
     hdr[0xFE:0x100] = b"\x55\xaa"
     with open(out, "wb") as fh:
         fh.write(bytes(hdr) + body)

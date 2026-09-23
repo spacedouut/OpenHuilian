@@ -4,8 +4,9 @@ A wiki-style archive of everything learned while trying to obtain, decode and ev
 modify the firmware of a pair of **H3Pro Max3** earbuds (Huilian **377H3** chip, sold as an
 AirPods-Pro-style replica, controlled by the **StarFun** Android/iOS app).
 
-Nothing here has been flashed to any earbud. Every experiment was done offline on downloaded
-firmware images. Read [Safety & ground rules](docs/00-start-here.md#safety--ground-rules) first.
+Nothing here has been flashed to any earbud. Experiments were done offline on downloaded firmware
+images, plus one strictly **read-only** live acquisition of the H3Pro Max3's flash over Bluetooth
+([16](docs/16-live-flash-dump.md)). Read [Safety & ground rules](docs/00-start-here.md#safety--ground-rules) first.
 
 ## How to read this
 
