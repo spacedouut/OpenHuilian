@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Rebuild a CONFIG/.up container from a raw flash dump + its partition index.
 
-Usage: build_up.py <flash.bin> <out.up> [chip_name] [index_flash_addr_hex]
+Usage: build_up.py [--force] <flash.bin> <out.up> [chip_name] [index_flash_addr_hex]
+
+Refuses to write an image whose stored partition CRCs do not verify unless --force is given.
 
 Layout (from catalog images + Shenju flasher source):
   file = 256-byte outer header + body, body[k] == flash[k]
@@ -31,10 +33,13 @@ def parse_index(flash, idx_off):
 
 
 def main():
-    flash = open(sys.argv[1], "rb").read()
-    out = sys.argv[2]
-    chip = sys.argv[3] if len(sys.argv) > 3 else None
-    idx_off = int(sys.argv[4], 16) if len(sys.argv) > 4 else struct.unpack_from("<I", flash, 0x20)[0]
+    args = sys.argv[1:]
+    force = "--force" in args
+    args = [a for a in args if a != "--force"]
+    flash = open(args[0], "rb").read()
+    out = args[1]
+    chip = args[2] if len(args) > 2 else None
+    idx_off = int(args[3], 16) if len(args) > 3 else struct.unpack_from("<I", flash, 0x20)[0]
 
     ver, parts = parse_index(flash, idx_off)
     print(f"index @0x{idx_off:x}  version={ver}  ({ver:#x})")
@@ -51,6 +56,8 @@ def main():
         if tag != "PSMP":
             end = max(end, addr + ln)
     print("all stored partition CRCs valid" if ok else "SOME CRCs INVALID")
+    if not ok and not force:
+        raise SystemExit(f"refusing to build {out} from a dump with invalid partition CRCs (use --force to override)")
 
     body = flash[:end]
     hdr = bytearray(0x100)
