@@ -18,26 +18,27 @@ written to a real H3Pro Max3. Nothing has been flashed to any device during this
 | Write PSMP NV store | blocked: record check algorithm unknown | [09](09-psmp-nvds.md) |
 | ANC/transparency filters | code-level (in FIRM), not data | [11](11-anc-transparency.md) |
 | AAP improvements | code-level, a few 2-byte data tweaks | [10](10-aap-airpods.md) |
-| **A 377H3 / H3Pro base image** | **missing** — the gating item | [03](03-ota-catalog.md) |
+| **A 377H3 / H3Pro base image** | **done** — read off the buds, CRC-valid (chip-name header field unknown) | [16](16-live-flash-dump.md) |
+| Read-back / verify path over Bluetooth | done (read-only, via the app's socket) | [16](16-live-flash-dump.md) |
 | Physical recovery path for buds | unknown (UART boot ROM likely, unverified) | [12](12-shenju-flasher.md) |
 | On-device acceptance of a modified image | unverified on any TWS device | — |
 
 ## The path, in order
 
-1. **Get a genuine `h3promax3` `.up`.** Options: (a) wait for StarFun to publish one (poll the
-   exact request in [01](01-device.md); 204 → nothing yet); (b) a reseller/377Youth channel;
-   (c) read flash off the live buds via the `C0 83` flash-read command the app already uses for
-   EQ2P/TONE ([06](06-bt-ota-protocol.md)) — untested for FIRM-sized reads and needs the keyed
-   command-channel handshake.
-2. **Confirm the container matches** (`CONFIG`, chip mark string, `HLKJ` table, CRCs) with
-   `tools/tone_tool.py list` — it should just work if conventions carried over.
+1. ~~Get a genuine `h3promax3` `.up`.~~ **Done** — option (c) worked: the `C0 83` flash-read was
+   driven through StarFun's own authenticated socket, sidestepping the handshake
+   ([16](16-live-flash-dump.md)). A published OTA would still be valuable as the reference for the
+   header's chip-name field.
+2. ~~Confirm the container matches.~~ **Done** — `HLKJ` body, index at `0x3000`, same partition
+   names, all CRCs valid; `tone_tool.py list/verify` and `psmp_tool.py` run unchanged.
 3. **Data-only mods first**: TONE prompts, EQ2P profiles. Zero code changes, CRC-only, and the
    original image is the recovery path.
 4. **Flash via the app's own transport**, not a hand-rolled client: StarFun already has the dormant
    local-file OTA path (`chooseFile` → `BtOtaHelper`) in [02](02-starfun-app.md). Wiring a button to
    it is a one-line smali/Java patch. The app flashes L then R and handles reconnects.
 5. Only then: code-level work on FIRM (AAP model bytes, XAPL features, ANC listen-mode handling,
-   transparency filters), with the ~1 MiB free flash region as room to grow.
+   transparency filters). Note the H3Pro Max3 is a **1 MiB** part with almost no free flash
+   ([16](16-live-flash-dump.md)) — the ~1 MiB spare region only exists on the 2 MiB H2S-class devices.
 
 ## Risks that stay real
 
@@ -58,6 +59,10 @@ written to a real H3Pro Max3. Nothing has been flashed to any device during this
 - [ ] Extract `encryptData` / challenge-response from StarFun's native lib into Python
 - [ ] Does FIRM honour EQ2P pages 51–57 if present? (needs a live device or code read)
 - [ ] Which EQ2P profile binds to transparency vs. ANC-on
-- [ ] Is H3Pro's TONE/EQ2P/PSMP layout identical to SL6801's
+- [x] Is H3Pro's TONE/EQ2P/PSMP layout identical to SL6801's — TONE and PSMP yes; EQ2P is a new
+      7-profile `SLEQ 02 07` layout ([16](16-live-flash-dump.md))
+- [ ] What goes in the `.up` header's chip-name field for 377H3 (`H3Pro`? `SL68xx`?)
+- [ ] Disassemble the live H3Pro OTAP (same 167,248-byte size as SL6801's) for its acceptance rules
+- [ ] Meaning of EQ2P params `0x3C–0x41` (page 0 compressor block?) and `0xFC`
 - [ ] Periodic watcher on the `h3promax3` OTA endpoint
 - [ ] 52bluetooth re-check for `377H3` every few months ([14](14-52bluetooth.md))

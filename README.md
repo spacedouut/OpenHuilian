@@ -40,6 +40,7 @@ self-contained and marks every claim as one of:
 | 13 | [Open-source tooling](docs/13-open-source-tooling.md) | `smartlink_flash`, `sl6806`, OpenPod CFW |
 | 14 | [52bluetooth forum sweep](docs/14-52bluetooth.md) | What the Chinese forum has (and doesn't) on Huilian |
 | 15 | [CFW roadmap & open questions](docs/15-cfw-roadmap.md) | What is data-only vs code, what's gated, next steps |
+| 16 | [Live flash dump](docs/16-live-flash-dump.md) | **The real H3Pro Max3 firmware, read off the buds** via StarFun's own `C0 83` flash-read; first look inside |
 
 ## Repo layout
 
@@ -53,6 +54,8 @@ data/tones-h2sturbo/          all 17 voice prompts extracted bit-exact from h2st
 data/partitions-h2sturbo/     raw EQ2P and SENC partitions
 data/reports/                 HTML write-ups (AAP + ANC/transparency deep dive)
 data/52bluetooth/             forum search results and thread dumps
+firmware/h3promax3/           the genuine H3Pro Max3 2607061716 image, read from the buds (see docs/16)
+data/partitions-h3promax3/    its TONE / EQ2P / SENC partitions, live index, FIRM strings, decoded EQ profiles
 firmware/starfun-catalog/     the 24 public .up images (all SL6801-class)
 firmware/openpod-sl6801/      OpenPod .up + a full 2 MB raw SL6801 flash dump
 vendor/shenju-flashloader/    decompiled Shenju "Flashloader SL-DEV 6.9.5" + RAM loaders + DLLs
@@ -63,7 +66,9 @@ reference/starfun-app/        the decompiled StarFun Java that matters (OTA SDK,
 
 Container format, CRCs, the Bluetooth OTA wire protocol, the voice-prompt archive, the EQ tables
 and the AirPods emulation layer are all decoded from real images, and a TONE/EQ edit → CRC fix →
-re-validate round-trip works offline. The missing piece is a **genuine 377H3 base image**: the
-public StarFun catalog only hosts SL6801-generation firmware (newest June 2025) and the H3Pro Max3
-query returns `204 No Content`. Until such an image is published (or dumped), no modification can
-be built for these specific buds, and nothing has been or will be flashed without an explicit go.
+re-validate round-trip works offline. The public StarFun catalog only hosts SL6801-generation
+firmware (newest June 2025) and the H3Pro Max3 query returns `204 No Content` — so the **genuine
+377H3 base image was read directly off the buds** over Bluetooth, using the app's own authenticated
+connection and its flash-read command ([docs/16](docs/16-live-flash-dump.md)). It is CRC-valid, uses
+the exact same container conventions, and every tool here works on it. Nothing has been or will be
+flashed without an explicit go.
