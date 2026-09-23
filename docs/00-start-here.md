@@ -28,7 +28,8 @@ change it?* Along the way we ended up decoding most of the platform.
 
 ## Safety & ground rules
 
-1. **Nothing has been written to the earbuds.** All experiments are on downloaded files.
+1. **Nothing has been written to the earbuds.** All experiments are on downloaded files or on the
+   read-only flash dump ([16](16-live-flash-dump.md)).
 2. **An SL6801 image must never be flashed to an H3Pro / 377H3 device.** Different silicon
    generation; the chip name in the header would differ, and the bootloader's chip-name check
    (see [13](13-open-source-tooling.md)) exists precisely to stop this — but do not rely on it.
@@ -38,7 +39,7 @@ change it?* Along the way we ended up decoding most of the platform.
 4. Credentials (the app's tenant login, JWTs, ADB pairing codes) are intentionally **not** stored
    in this repo. `tools/pull_ota.py` reads them from environment variables.
 
-## The story in five steps
+## The story in six steps
 
 1. **Identify the buds.** StarFun on an Android device (an Echo Show running LineageOS, driven over
    ADB via Tailscale) showed: product `H3Pro Max3`, chip `H3Pro`, manufacturer `377Youth·心动版`,
@@ -57,6 +58,10 @@ change it?* Along the way we ended up decoding most of the platform.
    reverse-engineering effort (`sl6806`) and a shipped custom firmware (OpenPod) for the same
    chip family — and OpenPod's git history contained Shenju's **official factory flasher**, which
    decompiled cleanly to Python. → [12](12-shenju-flasher.md), [13](13-open-source-tooling.md)
+6. **Read the real firmware off the buds.** With the catalog empty for `h3promax3`, the app's own
+   `C0 83` flash-read command was driven through StarFun's authenticated Bluetooth socket (Frida on
+   the rooted Echo Show) to dump the whole 1 MiB flash. Result: a CRC-valid, genuine
+   **H3Pro Max3 2607061716** image, same container conventions as SL6801. → [16](16-live-flash-dump.md)
 
 ## Status board
 
@@ -74,4 +79,5 @@ change it?* Along the way we ended up decoding most of the platform.
 | ANC/transparency tunables | gains **[source]**; filters compiled in FIRM **[confirmed]** absent from data |
 | Bootloader accepts CRC-only images | **[source]** for SL6806 (public RE), **[unverified]** for H3Pro |
 | Physical write path into earbuds | **[inferred]** UART boot-ROM via case pins; **[unverified]** |
-| **A genuine H3Pro Max3 / 377H3 image** | **missing** — the blocker for everything device-specific |
+| **A genuine H3Pro Max3 / 377H3 image** | **[confirmed]** read off the buds, all CRCs valid — [16](16-live-flash-dump.md) |
+| Read-only flash dump path via the app's socket | **[confirmed]** ~1.1 KB/s, 200 B/reply, `tools/flashdump.py` |
