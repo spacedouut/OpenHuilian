@@ -39,9 +39,11 @@ reply. **[confirmed]**
 | Throughput | ~1.1 KB/s → full 1 MiB in ~15.5 min (5,243 replies, zero gaps, zero retries needed) |
 
 ```bash
-# on the Echo Show: frida-server 16.5.9 listening on 0.0.0.0:27042, StarFun open, buds connected
-FRIDA_HOST=<echo-show-ip>:27042 python3 tools/flashdump.py 0x3000 200      index.bin   200
-FRIDA_HOST=<echo-show-ip>:27042 python3 tools/flashdump.py 0x0    0x100000 flash.bin   200
+# on the Echo Show: frida-server 16.5.9 on loopback only (its default, 127.0.0.1:27042), StarFun open,
+# buds connected. Reach it through ADB rather than exposing 27042 on the network:
+adb forward tcp:27042 tcp:27042
+FRIDA_HOST=127.0.0.1:27042 python3 tools/flashdump.py 0x3000 200      index.bin   200
+FRIDA_HOST=127.0.0.1:27042 python3 tools/flashdump.py 0x0    0x100000 flash.bin   200
 python3 tools/build_up.py flash.bin h3promax3_live.up          # parse index, check CRCs, wrap as .up
 python3 tools/tone_tool.py verify h3promax3_live.up            # independent second check
 ```
