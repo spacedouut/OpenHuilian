@@ -8,6 +8,7 @@ writes firm.elf, otap.elf, boot.elf
 import os
 import struct
 import sys
+from pathlib import Path
 
 PT_LOAD, R, W, X = 1, 4, 2, 1
 
@@ -53,7 +54,7 @@ def partitions(flash):
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    data = open(sys.argv[1], "rb").read()
+    data = Path(sys.argv[1]).read_bytes()
     out = sys.argv[2] if len(sys.argv) > 2 else "."
     flash = data[0x100:] if data[:6] == b"CONFIG" else data
     if flash[:4] != b"HLKJ":

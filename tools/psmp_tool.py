@@ -14,6 +14,7 @@ Record layout (derived from the OpenPod SL6801 dump, see docs/09-psmp-nvds.md):
 Read-only: the 4-byte check is not yet reproduced, so this tool does not rebuild PSMP.
 """
 import struct, sys
+from pathlib import Path
 
 def find_psmp(data):
     if data[:4] != b"HLKJ":
@@ -45,7 +46,7 @@ def parse(p):
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    data = open(sys.argv[1], "rb").read()
+    data = Path(sys.argv[1]).read_bytes()
     p = find_psmp(data)
     recs, end = parse(p)
     show_all = "--all" in sys.argv
