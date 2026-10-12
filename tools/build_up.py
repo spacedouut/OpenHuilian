@@ -15,22 +15,7 @@ import struct
 import sys
 from pathlib import Path
 
-
-def crc16(data, crc=0xFFFF):
-    for b in data:
-        crc ^= b << 8
-        for _ in range(8):
-            crc = ((crc << 1) ^ 0x1021) & 0xFFFF if crc & 0x8000 else (crc << 1) & 0xFFFF
-    return crc
-
-
-def parse_index(flash, idx_off):
-    count, ver = struct.unpack_from("<II", flash, idx_off)
-    parts = []
-    for i in range(count):
-        tag, addr, ln, crc = struct.unpack_from("<4sIII", flash, idx_off + 16 + 16 * i)
-        parts.append((tag.decode("ascii", "replace"), addr, ln, crc))
-    return ver, parts
+from upfmt import crc16, index_offset, parse_index
 
 
 def main():
@@ -40,13 +25,14 @@ def main():
     flash = Path(args[0]).read_bytes()
     out = args[1]
     chip = args[2] if len(args) > 2 else None
-    idx_off = int(args[3], 16) if len(args) > 3 else struct.unpack_from("<I", flash, 0x20)[0]
+    idx_off = int(args[3], 16) if len(args) > 3 else index_offset(flash)
 
     ver, parts = parse_index(flash, idx_off)
     print(f"index @0x{idx_off:x}  version={ver}  ({ver:#x})")
     ok = True
     end = 0
     for tag, addr, ln, crc in parts:
+        tag = tag.decode("ascii", "replace")
         blob = flash[addr:addr + ln]
         c = crc16(blob)
         stored = tag == "PSMP" and crc == 0
