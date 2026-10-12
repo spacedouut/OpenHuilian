@@ -10,10 +10,10 @@ the 2409191721 build. Nothing here was observed on the H3Pro Max3 itself. Full n
 A real Apple Accessory Protocol server, not a spoofed name. It's published over SDP on its own
 L2CAP PSM, with two Apple accessory HID services (one of them a head-motion service that's new in
 the 377 build), a BLE proximity-pairing advertisement, and the Apple HFP extensions.
-**[confirmed]** The AAP opcode handling itself is code rather than tables, so how complete it is
-next to real AirPods is **[unverified]**.
+The AAP opcode handling itself is code rather than tables, so how complete it is
+next to real AirPods is unknown.
 
-## SDP records (FIRM 0x55000–0x55930) — [confirmed]
+## SDP records (FIRM 0x55000–0x55930)
 
 | Record | Identity | Transport |
 |---|---|---|
@@ -21,7 +21,7 @@ next to real AirPods is **[unverified]**.
 | **Device ID (PnP)** | vendor `0x004C` (Apple), products `0x2014` and `0x200F`, versions `0xE415` / `0xD415` | SDP attribute |
 | **Accessory identity blob** | vendor `0x05AC`, `SerialNumber GX1H9C05KE90000B31` (one hardcoded string → every unit reports the same serial), `CFG# B768/MP/2430RYUK/*/*`, `ProtectedAccess`, `ProtUpdate`, `PrimaryVendorUsages 0xFF0C/0x0D`, `H2HTransformation`, `LocationID` | SDP attribute `0xA001` |
 
-## HID report descriptors embedded in the identity blob — [confirmed]
+## HID report descriptors embedded in the identity blob
 
 **`devmotion6`** (96-byte descriptor, max report 191 B) — head-motion sensor service, **377 build only**
 * Report 1 input: 64-bit field (page `0xFF15` usage 4) + 1456-bit vendor field (`0xFF0C`/`0x0D`) — the motion payload
@@ -33,7 +33,7 @@ next to real AirPods is **[unverified]**.
 * Report 1 input: 552-bit field; reports 2–4: 8, 16, 8 bits
 * Feature `0x030E` (32-bit) on reports 1 and 2
 
-## BLE proximity pairing — [confirmed bytes, inferred meaning]
+## BLE proximity pairing
 
 One Continuity advertisement template at FIRM `0x591E0` (identical in both builds):
 
@@ -58,12 +58,12 @@ Those two model bytes decide the iOS pop-up artwork and name. The string table a
 `AirPods`, `AirPods Pro` and `AirPods Pro2`, and the SDP product `0x2014` is the AirPods Pro 2 ID,
 yet the advertisement still claims gen 1.
 
-## HFP — [confirmed]
+## HFP
 
 `AT+XAPL=0042-0887-0100,2` — feature bit 1 (battery reporting) is the only bit set. Also
 `+APLSIRI:1` and `AT+BVRA` handling.
 
-## What the 377 build added vs. the SL6800 build — [confirmed strings]
+## What the 377 build added vs. the SL6800 build
 
 | New string | Reads as |
 |---|---|
@@ -76,7 +76,7 @@ yet the advertisement still claims gen 1.
 
 Both builds already had the AAP server, SDP records, XAPL, Siri, and the advertisement.
 
-## Plausible gaps for a CFW — [inferred]
+## Plausible gaps for a CFW
 
 * Stale model spoof: BLE `0x0E20` (Pro gen 1) against SDP `0x2014` (Pro 2). Two bytes.
 * XAPL features = 2 (battery only); no case-battery or other feature bits.
