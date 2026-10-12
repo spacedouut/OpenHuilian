@@ -4,6 +4,7 @@ embedded in a Huilian/SmartLink FIRM image.
 
 usage: sdp_hid.py <firm.bin> <start_hex> <end_hex> [sdp|hid]   (default: sdp)"""
 import sys, struct
+from pathlib import Path
 
 def parse_de(b, i):
     """Parse one SDP data element. Returns (value, next_index)."""
@@ -78,7 +79,7 @@ def hid_decode(b):
     return '\n'.join(out)
 
 def main():
-    f = open(sys.argv[1], 'rb').read()
+    f = Path(sys.argv[1]).read_bytes()
     start = int(sys.argv[2], 16)
     end = int(sys.argv[3], 16)
     b = f[start:end]
