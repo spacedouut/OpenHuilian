@@ -1,11 +1,11 @@
 # 03 · The public StarFun OTA catalog
 
-Retrieved 2026-09-22 from `ota.starfun.fun` (tenant `yiguo`). 30 records total: 24 firmware images
+The public catalog on `ota.starfun.fun` (tenant `yiguo`) has 30 records: 24 firmware images
 across 16 product packages, plus APK self-update entries. Every image was downloaded,
 `CONFIG`-validated and partition-parsed; they live in
 [`firmware/starfun-catalog/`](../firmware/starfun-catalog/). Raw dumps: `data/catalog/`.
 
-**All 24 images declare chip `SL6801`.** There is no `h3promax3`, no `377`, no `h3*` package. **[confirmed]**
+**All 24 images declare chip `SL6801`.** There is no `h3promax3`, no `377`, no `h3*` package.
 
 | Package | Catalog version | Internal build | Flash class | Size | Partitions | File |
 |---|---|---|---|---|---|---|
@@ -36,33 +36,28 @@ across 16 product packages, plus APK self-update entries. Every image was downlo
 
 ## Reading the catalog
 
-* **Silicon generations inside FIRM** **[confirmed]**: 21 images carry the marker `LHK-SL6800-TEST`
+* **Silicon generations inside FIRM**: 21 images carry the marker `LHK-SL6800-TEST`
   (2022–2024); `h2sturbo 2506281656` alone carries `377 Super++` and the model string `H2S Turbo`;
   `a12pro 2410231555` and `h2sturbo 2409191721` carry neither. So the catalog straddles Huilian's
   SL6800 → 377 migration while the container header still says `SL6801`. The H3Pro Max3 (377H3)
-  is the generation *after* the newest thing here. **[inferred]**
+  is the generation *after* the newest thing here.
 * File-name suffixes `RYEQ` / `DQEQ` / `SYEQ` are reseller EQ re-tunes; those images carry the
   "extended" EQ2P page set ([08](08-eq2p-senc.md)).
 * `h2slim` and `h2spro` are the only products with a second sensor blob `SEN2`.
 * `a10 2311090955_RYEQ` has valid partition CRCs but a **stale outer container CRC** — consistent with
-  a re-tune that fixed one checksum and not the other ([05](05-crc-and-integrity.md)). **[inferred]**
-* Catalog metadata: `types = all | disabled`, a `comment` with a Chinese changelog, and
-  `created/modified` timestamps. The `modified` on the a10 entry is 2026-06-15 — the server is
-  still maintained.
-* OTA IDs appear to be minted on demand (there is no pre-created entry per product); a product only
-  shows up once the vendor decides to push something. **[inferred]**
+  a re-tune that fixed one checksum and not the other ([05](05-crc-and-integrity.md)).
 
-## Full images, not patches — [confirmed]
+## Full images, not patches
 
 Every `.up` is a complete image sized to the flash class (≈1.0 MB or ≈2.0 MB) with the whole
 partition table; the transport writes raw 512-byte blocks to absolute addresses
 ([06](06-bt-ota-protocol.md)); and the h2sturbo 2409191721 → 2506281656 diff shows FIRM changed
-end-to-end (737,080 → 746,256 bytes). A future `h3promax3` OTA would therefore **be** the base image.
+end-to-end (737,080 → 746,256 bytes). So a published `.up` is a full base image. For the H3Pro we already have one from the buds ([16](16-live-flash-dump.md)).
 
 ## Tools
 
 ```
 export STARFUN_USER=… STARFUN_PASS=…
 python3 tools/pull_ota.py a10                    # download + parse newest a10
-python3 tools/pull_ota.py h3promax3 2607061716   # the watch: currently "No update returned"
+python3 tools/pull_ota.py h3promax3 2607061716   # "No update returned" so far
 ```

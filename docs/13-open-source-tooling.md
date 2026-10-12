@@ -3,8 +3,7 @@
 Three public GitHub projects target the same Shenju/SmartLink silicon family as the StarFun
 catalog images. None of them touch earbuds or 377H3, but together they independently confirm the
 container format, the CRC, and — most importantly — that the bootloader does not check a
-signature. Local clones live at `~/starfun/{smartlink_flash,sl6806,OpenPod}` on the research VM;
-only the derived artifacts are in this repo.
+signature.
 
 ## `ilyakurdyukov/smartlink_flash` — USB boot-ROM dumper/writer (C, Linux/MSYS2)
 
@@ -17,14 +16,14 @@ only the derived artifacts are in this repo.
   **independent confirmation of [04](04-up-format.md)** (`file_offset = flash_addr + 0x100`,
   index at body `0x20` → `0x3000`).
 * SL6806 is the MP3-player chip (YP3 / "云P3", Jointbees); SL6801 is what all 24 StarFun images
-  and OpenPod's player use. **[confirmed]**
+  and OpenPod's player use.
 
 ## `take-cheeze/sl6806` — Arduino-style framework + bootloader RE (docs/)
 
 <https://github.com/take-cheeze/sl6806>
 
 Its `docs/BOOTLOADER.md`, `FLASHING.md`, `DUMPING.md` read the 61 KB `HLKJ` bootloader end to end.
-Key facts for us **[source, SL6806]**:
+Key facts:
 
 * Boot flow: mask ROM → boot-mode pin check (~1 s) → load HLKJ to `0x0081FC00`, enter
   `0x00820000` → main chooses *update from PC* (USB), *forced restore* (`restore.up`),
@@ -37,7 +36,7 @@ Key facts for us **[source, SL6806]**:
 * USB download mode is in mask ROM → the chip is recoverable over USB regardless of flash contents.
 
 Caveat: this is SL6806. The StarFun images are SL6801 (same vendor, same container; the mark
-string there is `SL6801`). Extending this to 377H3 is **[inferred]**.
+string there is `SL6801`). On the H3Pro the updater doesn't check a mark string at all ([17](17-firmware-internals.md)).
 
 ## `zeroproj/OpenPod` — a shipped custom firmware on SL6801
 
@@ -45,9 +44,8 @@ string there is `SL6801`). Extending this to 377H3 is **[inferred]**.
 
 * Rewrites the UI of the Iigenai GN-438 MP3 player (yp3_2.0.43 base) as an iPod-nano clone.
   Distributed as `.up` binaries; RE notes and tools are **not public**.
-* Proves the method on this silicon: dump → patch FIRM → fix CRCs → flash via the vendor tool.
-  **[confirmed for GN-438 only]**
-* Its git history contained two things the project later deleted, both preserved here:
+* Proves the method on this silicon: dump → patch FIRM → fix CRCs → flash via the vendor tool (only checked on the GN-438).
+* Two files from its git history are archived here:
   * Shenju's `SetupFlashloaderSL-DEV(6.9.5).exe` → [12-shenju-flasher](12-shenju-flasher.md)
   * `GN438_sl6801_fulldump.bin`, a raw 2 MiB SL6801 flash image with bootloader, partition table
     and a **live PSMP log** → [`firmware/openpod-sl6801/`](../firmware/openpod-sl6801/), used by

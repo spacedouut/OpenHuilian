@@ -1,8 +1,8 @@
 # 07 · TONE partition — voice prompts & sound effects
 
 The easiest thing in the image to change, and the one that needs no code reverse-engineering.
-Everything here is **[confirmed]** by extraction and a full replace/repack round-trip on
-`h2s_turbo_2506281656.up`.
+All of it was checked by extracting and doing a full replace/repack round-trip on
+`h2s_turbo_2506281656.up`. The live H3Pro image uses the same format (see the end of this page).
 
 ## Layout
 
@@ -57,7 +57,7 @@ untouched prompts byte-identical; only 4 bytes changed outside the TONE payload 
 ## Constraints when making your own prompts
 
 1. **Match the original encoding**: MP3 mono at 16 kHz/24 kbps (or 48 kHz/56 kbps) or WAV PCM16
-   mono 48 kHz. The on-device decoder's exact capabilities are **[unverified]**, so stick to formats
+   mono 48 kHz. The on-device decoder's exact capabilities are untested, so stick to formats
    that already ship.
 2. **Fit the partition**: stock TONE is exactly full; there is ~2.8 KB of slack before EQ2P
    (`0xBC000 + 0x144C7` vs EQ2P at `0xD1000`… check per image). To grow it, move TONE into the
@@ -66,7 +66,8 @@ untouched prompts byte-identical; only 4 bytes changed outside the TONE payload 
 3. Directory has 0x400 bytes for names+sizes (~1 KB), plenty for ~17–40 entries.
 4. Keep filenames identical — FIRM looks prompts up by name (the strings appear in FIRM).
 
-## Caveat
+## On the H3Pro
 
-Everything above was done on an SL6801 H2S Turbo image. A 377H3 image is expected to use the same
-TONE format (same vendor, same container) but that is **[inferred]** until one exists.
+The round-trip above was on an SL6801 H2S Turbo image. The live H3Pro image
+([16](16-live-flash-dump.md)) uses the same TONE format: `tools/tone_tool.py` lists its 18 prompts
+and its CRC verifies. A replaced prompt hasn't been played on the buds yet.
