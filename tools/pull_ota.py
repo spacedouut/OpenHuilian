@@ -12,6 +12,7 @@ e.g. python3 pull_ota.py a10
      python3 pull_ota.py h3promax3 2607061716   # currently -> 204, no update
 """
 import os, sys, json, urllib.request
+from pathlib import Path
 
 from upfmt import BODY, MAGIC, index_offset, parse_index
 
@@ -39,8 +40,7 @@ def token():
     return post(AUTH_URL, CREDS)["tokenId"]
 
 
-def lookup(model, version=None, tok=None):
-    tok = tok or token()
+def lookup(model, version, tok):
     q = f"{LOOKUP}?package={model}"
     if version:
         q += f"&version={version}"
@@ -71,10 +71,10 @@ if __name__ == "__main__":
     print(json.dumps(info, indent=2))
     url = info["url"].replace("http:", "https:")
     fn = url.rsplit("/", 1)[-1]
-    open(fn, "wb").write(get(url, tok))
+    Path(fn).write_bytes(get(url, tok))
     print(f"\nDownloaded {fn}")
     if fn.endswith(".up") or url.endswith(".up"):
-        meta = parse_up(open(fn, "rb").read())
+        meta = parse_up(Path(fn).read_bytes())
         print(f"chip={meta['chip']} version={meta['version']} "
               f"index@0x{meta['index_off']:x}")
         for tag, addr, length, crc in meta["partitions"]:
