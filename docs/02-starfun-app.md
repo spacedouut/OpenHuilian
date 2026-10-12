@@ -19,7 +19,6 @@ The app self-update endpoint pushes .017 as "suggested". Stay on .016 for these 
 | `https://ota.starfun.fun` | Firmware/APK catalog. `POST /api/v1/authentication/user` → JWT; `GET /api/v1/_/appversions` (list, 30 records); `GET /api/v1/_/appversions/update?package=&version=&deviceid=` (per-device check) | Tenant login baked into the APK (`OtaPresenter.getUserToken`). Tenant name `yiguo` appears in every download URL path. |
 | `https://api.starfun.fun` | Main app API (accounts etc.) | user JWT |
 | `https://info-api.starfun.fun` | New in .017: `/api/client/query?id=` — unused, returns empty for everything | none |
-| `https://dev.izhiju.cn/api` | JWT **issuer** of the tokens stored on the device — the real backend identity | — |
 | `https://ota.shenjugroup.com` | Shenju OTA v2. Public Swagger at `/v2/api-docs` (saved as [`data/catalog/shenju_api.json`](../data/catalog/shenju_api.json)). Endpoints: `release/auth`, `release/last`, `release/report`. No list endpoint; keyed by `firmware_id`. The IDs hardcoded in the app belong to a smartwatch (`w10_watch_2.0.4.up`). | app_id/app_secret from APK, no user login |
 
 Download URLs look like

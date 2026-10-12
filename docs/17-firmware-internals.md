@@ -1,10 +1,9 @@
 # 17 · Inside the H3Pro firmware: memory map, boot, and how updates get accepted
 
-Up to [16](16-live-flash-dump.md) everything we knew about the code came from strings. This page
-is the first real disassembly of the live H3Pro Max3 `2607061716` image: where things load, how
+This page covers the disassembly of the H3Pro Max3 `2607061716` image: where things load, how
 the bootloader picks what to run, and what the OTA updater checks before it takes an image.
 
-How it was done: the partitions from [16](16-live-flash-dump.md) were wrapped into ARM ELFs with
+Method: the partitions from [16](16-live-flash-dump.md) were wrapped into ARM ELFs with
 [`tools/h3pro_elf.py`](../tools/h3pro_elf.py), then read with Capstone and Ghidra (through REA).
 There are no symbols, so functions are named by address (`FUN_0080e770` and so on). All of it is
 static analysis. **Nothing was run on, or written to, the buds.**

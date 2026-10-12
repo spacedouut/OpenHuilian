@@ -1,6 +1,6 @@
 # 03 · The public StarFun OTA catalog
 
-Retrieved 2026-09-22 from `ota.starfun.fun` (tenant `yiguo`). 30 records total: 24 firmware images
+The public catalog on `ota.starfun.fun` (tenant `yiguo`) has 30 records: 24 firmware images
 across 16 product packages, plus APK self-update entries. Every image was downloaded,
 `CONFIG`-validated and partition-parsed; they live in
 [`firmware/starfun-catalog/`](../firmware/starfun-catalog/). Raw dumps: `data/catalog/`.
@@ -46,11 +46,6 @@ across 16 product packages, plus APK self-update entries. Every image was downlo
 * `h2slim` and `h2spro` are the only products with a second sensor blob `SEN2`.
 * `a10 2311090955_RYEQ` has valid partition CRCs but a **stale outer container CRC** — consistent with
   a re-tune that fixed one checksum and not the other ([05](05-crc-and-integrity.md)).
-* Catalog metadata: `types = all | disabled`, a `comment` with a Chinese changelog, and
-  `created/modified` timestamps. The `modified` on the a10 entry is 2026-06-15 — the server is
-  still maintained.
-* OTA IDs appear to be minted on demand (there is no pre-created entry per product); a product only
-  shows up once the vendor decides to push something.
 
 ## Full images, not patches
 
@@ -64,5 +59,5 @@ end-to-end (737,080 → 746,256 bytes). So a published `.up` is a full base imag
 ```
 export STARFUN_USER=… STARFUN_PASS=…
 python3 tools/pull_ota.py a10                    # download + parse newest a10
-python3 tools/pull_ota.py h3promax3 2607061716   # the watch: currently "No update returned"
+python3 tools/pull_ota.py h3promax3 2607061716   # "No update returned" so far
 ```
