@@ -15,13 +15,12 @@ Read-only: the 4-byte check is not yet reproduced, so this tool does not rebuild
 """
 import struct, sys
 
+from upfmt import parse_index
+
 def find_psmp(data):
     if data[:4] != b"HLKJ":
         return data
-    tbl = struct.unpack_from("<I", data, 0x20)[0]
-    n = struct.unpack_from("<I", data, tbl)[0]
-    for i in range(1, n + 1):
-        tag, addr, ln = struct.unpack_from("<4sII", data, tbl + 16 * i)
+    for tag, addr, ln, _ in parse_index(data)[1]:
         if tag == b"PSMP":
             return data[addr:addr + ln]
     sys.exit("no PSMP partition in table")

@@ -11,7 +11,9 @@ Usage:
 e.g. python3 pull_ota.py a10
      python3 pull_ota.py h3promax3 2607061716   # currently -> 204, no update
 """
-import os, sys, json, struct, urllib.request
+import os, sys, json, urllib.request
+
+from upfmt import BODY, MAGIC, index_offset, parse_index
 
 AUTH_URL = "https://ota.starfun.fun/api/v1/authentication/user"
 LOOKUP   = "https://ota.starfun.fun/api/v1/_/appversions/update"
@@ -47,18 +49,12 @@ def lookup(model, version=None, tok=None):
 
 
 def parse_up(data):
-    assert data[:6] == b"CONFIG", "not a .up (missing CONFIG magic)"
+    assert data[:6] == MAGIC, "not a .up (missing CONFIG magic)"
     chip = data[0x16:0x16 + 16].split(b"\0")[0].decode("latin1")
-    body = data[0x100:]
-    I = struct.unpack_from("<I", body, 0x20)[0]
-    N = struct.unpack_from("<I", body, I)[0]
-    ver = struct.unpack_from("<I", body, I + 4)[0]
-    parts = []
-    for k in range(1, N + 1):
-        off = I + 16 * k
-        tag = body[off:off + 4].decode("latin1")
-        addr, length, crc = struct.unpack_from("<III", body, off + 4)
-        parts.append((tag, addr, length, crc))
+    body = data[BODY:]
+    I = index_offset(body)
+    ver, entries = parse_index(body, I)
+    parts = [(tag.decode("latin1"), addr, length, crc) for tag, addr, length, crc in entries]
     return {"chip": chip, "version": ver, "index_off": I, "partitions": parts}
 
 
