@@ -10,16 +10,9 @@ import struct
 import sys
 from pathlib import Path
 
+from upfmt import crc16, parse_index
+
 PT_LOAD, R, W, X = 1, 4, 2, 1
-
-
-def crc16(data, crc=0xFFFF):
-    for b in data:
-        crc ^= b << 8
-        for _ in range(8):
-            crc = ((crc << 1) ^ 0x1021) if crc & 0x8000 else crc << 1
-            crc &= 0xFFFF
-    return crc
 
 
 def write_elf(path, segs, entry):
@@ -41,16 +34,6 @@ def write_elf(path, segs, entry):
           ", ".join(f"{v:#x}+{max(m, len(d)):#x}" for v, d, m, _ in segs))
 
 
-def partitions(flash):
-    idx = struct.unpack_from("<I", flash, 0x20)[0]
-    count = struct.unpack_from("<I", flash, idx)[0]
-    parts = {}
-    for i in range(count):
-        tag, addr, length, crc = struct.unpack_from("<4sIII", flash, idx + 16 + 16 * i)
-        parts[tag.decode()] = (addr, length, crc & 0xFFFF)
-    return parts
-
-
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -59,7 +42,8 @@ def main():
     flash = data[0x100:] if data[:6] == b"CONFIG" else data
     if flash[:4] != b"HLKJ":
         sys.exit("no HLKJ header at flash 0")
-    parts = partitions(flash)
+    parts = {tag.decode(): (addr, length, crc & 0xFFFF)
+             for tag, addr, length, crc in parse_index(flash)[1]}
 
     for name in ("FIRM", "OTAP"):
         addr, length, crc = parts[name]

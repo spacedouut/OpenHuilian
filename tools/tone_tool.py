@@ -26,37 +26,23 @@ import sys
 import os
 from pathlib import Path
 
-MAGIC = b"CONFIG"
-BODY = 0x100
+from upfmt import BODY, MAGIC, crc16, index_offset, parse_index
+
 TONE_DATA_START = 0x400
-
-
-def crc16(data: bytes, crc: int = 0xFFFF) -> int:
-    """CRC16/CCITT-FALSE (poly 0x1021, init 0xFFFF) - matches the firmware."""
-    for b in data:
-        crc ^= b << 8
-        for _ in range(8):
-            crc = ((crc << 1) ^ 0x1021) & 0xFFFF if crc & 0x8000 else (crc << 1) & 0xFFFF
-    return crc
 
 
 def parse(data: bytes):
     assert data[:6] == MAGIC, "not a .up (missing CONFIG magic)"
     body = data[BODY:]
-    index_off = struct.unpack_from("<I", body, 0x20)[0]
-    count = struct.unpack_from("<I", body, index_off)[0]
-    version = struct.unpack_from("<I", body, index_off + 4)[0]
-    parts = []
-    for k in range(1, count + 1):
-        off = index_off + 16 * k
-        tag = body[off:off + 4].decode("latin1")
-        addr, length, crc = struct.unpack_from("<III", body, off + 4)
-        parts.append({"tag": tag, "addr": addr, "length": length,
-                      "crc": crc, "index_entry": BODY + off})
+    index_off = index_offset(body)
+    version, entries = parse_index(body, index_off)
+    parts = [{"tag": tag.decode("latin1"), "addr": addr, "length": length, "crc": crc,
+              "index_entry": BODY + index_off + 16 * k}
+             for k, (tag, addr, length, crc) in enumerate(entries, 1)]
     return {"version": version, "index_off": index_off, "partitions": parts}
 
 
-def get_part(data, info, tag):
+def get_part(info, tag):
     for p in info["partitions"]:
         if p["tag"] == tag:
             return p
@@ -97,11 +83,15 @@ def build_tone(entries, blobs, total_len):
     return out + b"\0" * (total_len - len(out)), len(out)
 
 
-def cmd_list(path):
+def load_tone(path):
     data = Path(path).read_bytes()
     info = parse(data)
-    p = get_part(data, info, "TONE")
-    tone = data[p["addr"] + BODY: p["addr"] + BODY + p["length"]]
+    p = get_part(info, "TONE")
+    return data, info, p, data[p["addr"] + BODY: p["addr"] + BODY + p["length"]]
+
+
+def cmd_list(path):
+    _, info, p, tone = load_tone(path)
     entries = read_dir(tone)
     print(f"{path}  version={info['version']}")
     print(f"TONE @ 0x{p['addr']:06x} len={p['length']} crc=0x{p['crc']:04x} "
@@ -114,10 +104,7 @@ def cmd_list(path):
 
 
 def cmd_extract(path, outdir):
-    data = Path(path).read_bytes()
-    info = parse(data)
-    p = get_part(data, info, "TONE")
-    tone = data[p["addr"] + BODY: p["addr"] + BODY + p["length"]]
+    _, _, p, tone = load_tone(path)
     os.makedirs(outdir, exist_ok=True)
     root = os.path.realpath(outdir)
     for name, size, off in read_dir(tone):
@@ -130,11 +117,9 @@ def cmd_extract(path, outdir):
 
 
 def cmd_replace(path, swaps, outpath):
-    data = bytearray(Path(path).read_bytes())
-    info = parse(bytes(data))
-    p = get_part(bytes(data), info, "TONE")
+    data, _, p, tone = load_tone(path)
+    data = bytearray(data)
     start = p["addr"] + BODY
-    tone = bytes(data[start:start + p["length"]])
     entries = read_dir(tone)
     names = [e[0] for e in entries]
 
@@ -159,7 +144,7 @@ def cmd_replace(path, swaps, outpath):
     print(f"  TONE crc 0x{p['crc']:04x} -> 0x{new_crc:04x}   ({used}/{p['length']} B used)")
 
     # outer container checksum over body
-    outer = crc16(bytes(data[BODY:]))
+    outer = crc16(data[BODY:])
     old_outer = struct.unpack_from("<H", data, 0x14)[0]
     struct.pack_into("<H", data, 0x14, outer)
     print(f"  container crc 0x{old_outer:04x} -> 0x{outer:04x}")
