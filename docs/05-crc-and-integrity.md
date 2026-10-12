@@ -27,7 +27,7 @@ def crc16(init, bytes_to_calc):
 # called with init = 65535 (0xFFFF)
 ```
 
-`tools/tone_tool.py` contains the same function in table form.
+`tools/upfmt.py` has the same function; every tool in `tools/` imports it from there.
 
 ## Where CRCs live
 
