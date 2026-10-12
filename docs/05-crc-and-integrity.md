@@ -3,7 +3,7 @@
 **Short version: the only integrity check on a `.up` image is CRC16. No signature, no encryption,
 no hash chain.** This is the fact that makes custom firmware realistic on this platform.
 
-## The algorithm — [confirmed]
+## The algorithm
 
 **CRC16/CCITT-FALSE**: polynomial `0x1021`, initial value `0xFFFF`, no reflection, no final XOR.
 
@@ -40,20 +40,20 @@ def crc16(init, bytes_to_calc):
 
 `PSMP` has crc 0 because it isn't shipped.
 
-## Validation results across the catalog — [confirmed]
+## Validation results across the catalog
 
 * Partition CRCs: **match in 24/24 images** (5 or 6 partitions each).
 * Container CRC: **match in 23/24**. The exception, `a10_2311090955_RYEQ.up`, has correct
   partition CRCs and a stale outer CRC — looks like a reseller EQ re-tune that fixed the inner
   checksum but not the outer one, and StarFun still serves it as `types: all`. Whether devices
-  accept it (i.e. whether the container CRC is even checked by the app/device) is **[unverified]**;
+  accept it (i.e. whether the container CRC is even checked by the app/device) is untested;
   the app's own OTA path recomputes its whole-payload CRC from the bytes it sends, so the outer
   header CRC may only matter for the vendor flasher.
 * `smartlink_flash/fwhelper scan` independently reproduced both mismatches on that file.
 * The OpenPod `B27_251112.up` also reports a FIRM CRC mismatch under `fwhelper` — a modified/test
   artifact or table-version quirk; not generalised.
 
-## Round-trips performed — [confirmed]
+## Round-trips performed
 
 1. **EQ2P edit** → recompute partition CRC + container CRC → all CRCs re-validate; output file same
    size (`repack_test.up`, not kept in repo).
@@ -74,4 +74,4 @@ The SL6806 bootloader RE ([13](13-open-source-tooling.md)) shows the update vali
 This used to be the big unknown. It's now answered from the H3Pro's own code
 ([17](17-firmware-internals.md)): the OTAP updater checks one CRC16 over everything from the index
 onwards against the CRC the phone declares in `82`, and the bootloader checks nothing at all.
-**[confirmed, static]** It still hasn't been tried on a real bud.
+It still hasn't been tried on a real bud.

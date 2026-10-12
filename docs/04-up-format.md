@@ -3,7 +3,6 @@
 Derived from all 24 catalog images, then **cross-checked against the vendor's own parser**
 (`vendor/shenju-flashloader/decompiled-src/burn_service/flash_loader/up_parser.py`) and two
 independent open-source implementations (`smartlink_flash/fwhelper/main.c`, `sl6806/docs`).
-Everything in this page is **[confirmed]** unless marked.
 
 ## Big picture
 
