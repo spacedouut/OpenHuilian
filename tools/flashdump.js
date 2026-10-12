@@ -2,14 +2,6 @@
 // Read-only: only C0 83 (flash read) frames are ever sent.
 'use strict';
 
-var ADDR = parseInt(get_env('DUMP_ADDR', '0x3000'), 16);
-var LEN = parseInt(get_env('DUMP_LEN', '200'), 10);
-var CHUNK = parseInt(get_env('DUMP_CHUNK', '100'), 10);
-
-function get_env(k, d) {
-  try { return (typeof CONF !== 'undefined' && CONF[k]) ? CONF[k] : d; } catch (e) { return d; }
-}
-
 Java.perform(function () {
   var BtClient = Java.use('com.sjbt.base.bt.BtClient');
   var BtBase = Java.use('com.sjbt.base.bt.BtBase');
