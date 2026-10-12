@@ -25,7 +25,7 @@ The `C0` command channel sits behind a keyed challenge/response in a native libr
 reproduce it, we let StarFun do the handshake as normal and then borrowed its socket. Frida
 attached to the running app on the rooted Echo Show, called `CMDConfig.getReadFlashCmdArray(addr,len)`
 plus `BtClient.sendBytes(cmd, 1)` in a loop, and
-hooked `BtBase.notifyUI` to catch every `C083…` reply. **[confirmed]**
+hooked `BtBase.notifyUI` to catch every `C083…` reply.
 
 ## Setup that worked
 
@@ -48,7 +48,7 @@ python3 tools/build_up.py flash.bin h3promax3_live.up          # parse index, ch
 python3 tools/tone_tool.py verify h3promax3_live.up            # independent second check
 ```
 
-## What came back — the live partition index **[confirmed]**
+## What came back — the live partition index
 
 Read from flash `0x3000`. Same 16-byte-record layout as every catalog image ([04](04-up-format.md)).
 
@@ -82,7 +82,7 @@ shrinking something else.
   we have never seen a real 377H3 `.up`, so we do not know whether Huilian writes `H3Pro`,
   `SL68xx` or something else there. StarFun's BT OTA path only checks the `CONFIG` magic
   ([06](06-bt-ota-protocol.md)); the desktop flasher and possibly the bootloader do look at it
-  ([12](12-shenju-flasher.md), [13](13-open-source-tooling.md)). **[unverified]**
+  ([12](12-shenju-flasher.md), [13](13-open-source-tooling.md)).
 * PSMP is intentionally **excluded** from the committed image and from this repo: it contains the
   owner's Bluetooth address, `authorization_code`, both ear serial numbers, the Apple `air_adv_key`
   and the phone's address. The raw 1 MiB dump exists only on the owner's side.
@@ -108,7 +108,7 @@ but the partition is packed 84,903 / 84,903 and only ~1 KiB of flash follows bef
 **EQ2P — 4,172 bytes, a new layout with 7 profiles.** Header `SLEQ 02 07`, then 7 `u16` record
 counts (92, 71 ×6), 28-byte header, then 8-byte records `[kind u8][param u8][band u16][f32]`:
 
-| param | meaning **[inferred]** |
+| param | meaning |
 |---|---|
 | `0x00` / `0x01` / `0x02` | frequency Hz / Q / gain dB |
 | `0x03` | band enable (1/0) |

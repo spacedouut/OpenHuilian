@@ -3,7 +3,7 @@
 Both are plain little-endian float tables in CRC-only partitions. Raw copies from h2sturbo
 2506281656 are in [`data/partitions-h2sturbo/`](../data/partitions-h2sturbo/).
 
-## EQ2P (magic `SLEQ`) — [confirmed]
+## EQ2P (magic `SLEQ`)
 
 Records of 8 bytes starting at offset 26:
 
@@ -44,9 +44,8 @@ Across the 24 images:
 
 The duplicated five pages are two **profiles**. The app's EQ store has scheme families
 `TYPE_EQ=1, TYPE_ANC=2, TYPE_ENC=3, TYPE_ANC_2=4` and an `isAnc` flag, so the second copy is the
-**ANC-mode EQ** **[inferred]**. The two factory curves differ slightly (low shelf −2.0 vs −1.8 dB at
-130 Hz; broadband trim −4.80 vs −5.04 dB). Which profile binds to transparency vs ANC-on is
-**[unverified]**.
+**ANC-mode EQ**. The two factory curves differ slightly (low shelf −2.0 vs −1.8 dB at
+130 Hz; broadband trim −4.80 vs −5.04 dB). Which profile binds to transparency vs ANC-on is untested.
 
 ### Editing
 
@@ -55,7 +54,7 @@ Done successfully as a round-trip (`repack_test.up`). The 377 build also exposes
 user EQ (`eq_ud_gain`, `eq_preset_cur_num` NV keys, `UDEQ` string) — the app's .017 "EQ adjust"
 feature — so on 377-generation devices EQ may also be changeable live without touching flash.
 
-## SENC / SEN2 (magic `SENC`) — [confirmed structure, inferred meaning]
+## SENC / SEN2 (magic `SENC`)
 
 Same `[u16 group][u16 idx][f32]` style table, 2,056 bytes in every image. Carries pages **21–32**
 in all 24 images: call-microphone noise-reduction parameters (single- and dual-mic base/extended

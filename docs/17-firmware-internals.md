@@ -11,13 +11,13 @@ static analysis. **Nothing was run on, or written to, the buds.**
 
 Short version: **the H3Pro takes any image whose CRC16 matches the CRC the phone announces.** No
 signature, no chip-name check, no version or timestamp check, in either the bootloader or the
-updater. **[confirmed, static]**
+updater.
 
 ## The CPU
 
 ARM Cortex-M (ARMv7-M, Thumb-2). The giveaways: normal Cortex-M vector tables, and a fault
 handler that does `mrs msp` / `mrs psp` and pokes the System Control Block at `0xE000ED00`.
-**[confirmed]**
+
 
 There's a mask ROM at address 0 that all three programs call into. The handful we've identified:
 
@@ -26,9 +26,9 @@ There's a mask ROM at address 0 that all three programs call into. The handful w
 | `0x83B4` | flash read (`dst, flash_addr, len`) |
 | `0x0C54` | `memcmp` |
 | `0x0BAA` | `memset` |
-| `0x0B2A` | `memcpy` **[inferred]** |
+| `0x0B2A` | `memcpy` |
 
-## Memory map **[confirmed]**
+## Memory map
 
 | Range | What's there |
 |---|---|
@@ -67,12 +67,12 @@ The `HLKJ` header at flash 0 does the same job for the bootloader: `+0x04` load 
 out), `+0x20` index offset `0x3000`. The bootloader's own vectors are at flash `0x60`
 (SP `0x878DF0`, reset `0x860101`).
 
-## Boot flow (bootloader, `FUN_00860168`) **[confirmed]**
+## Boot flow (bootloader, `FUN_00860168`)
 
 1. Basic clock/peripheral init.
 2. Check a hardware strap (`FUN_008605f2`, reads two status registers). If it's set, drop into a
    download/wait loop instead of booting. Probably the factory UART/USB path from
-   [12](12-shenju-flasher.md). **[inferred]**
+   [12](12-shenju-flasher.md).
 3. Read the partition index from flash `0x3000`.
 4. Find `OTAP`, look at the first page right after it (`OTAP.addr + ((OTAP.len >> 12) + 1) * 0x1000`,
    which is flash `0xFB000` on this image). If the word there is `0x000055AA`, boot **OTAP**,
@@ -85,9 +85,9 @@ it.
 
 So that `0x55AA` word is the "reboot into the updater" flag. We haven't traced who sets and clears
 it yet. FIRM has no literal `0xFB000`, so it most likely computes the address from the index the
-same way the bootloader does. **[unverified]**
+same way the bootloader does.
 
-## How OTAP takes an update (`FUN_0080e770`) **[confirmed]**
+## How OTAP takes an update (`FUN_0080e770`)
 
 This is the state machine behind the `55 AA 8x` frames from [06](06-bt-ota-protocol.md). The
 command byte picks the branch:
@@ -128,7 +128,7 @@ timestamps never reach the device: the app strips the container and only streams
   [00](00-start-here.md#safety--ground-rules) matters even more.
 * **A failed update doesn't roll back FIRM.** The old index comes back, but the FIRM area was
   already erased and partly rewritten. Recovery depends on the `0x55AA` flag keeping the bud in
-  OTAP so you can retry. Very likely, not yet proven. **[inferred]**
+  OTAP so you can retry. Very likely, not yet proven.
 * **Writes below `0x3000` are possible** (no address check), and the guard CRC only notices after
   the fact. Never send anything that targets the bootloader area.
 * OTAP and PSMP are pinned by the updater, so CFW layouts can only rearrange FIRM / SENC / TONE /

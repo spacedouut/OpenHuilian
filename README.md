@@ -11,15 +11,7 @@ images, plus one strictly **read-only** live acquisition of the H3Pro Max3's fla
 ## How to read this
 
 Start at **[docs/00-start-here.md](docs/00-start-here.md)** — a plain-English overview of what the
-buds are, what we know, what we still don't, and how the pieces fit. Each page in `docs/` is
-self-contained and marks every claim as one of:
-
-| Tag | Meaning |
-|---|---|
-| **[confirmed]** | Seen directly in tool output, a live capture, or vendor source code |
-| **[source]** | Read from decompiled app / vendor code or a public repo |
-| **[inferred]** | Our interpretation; consistent with evidence but not directly observed |
-| **[unverified]** | Plausible, would need a device or a 377H3 image to prove |
+buds are, what we know, what we still don't, and how the pieces fit. Each page in `docs/` stands on its own.
 
 ## Wiki index
 

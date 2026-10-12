@@ -1,8 +1,7 @@
 # 06 · The Bluetooth OTA protocol
 
 Read from the `com.shenju.ota` SDK bundled in StarFun (archived in
-[`reference/starfun-app/2.0.7.016/ota/`](../reference/starfun-app/2.0.7.016/ota/)). Everything is
-**[source]** unless marked. Not exercised against hardware.
+[`reference/starfun-app/2.0.7.016/ota/`](../reference/starfun-app/2.0.7.016/ota/)). Not exercised against hardware.
 
 ## Transport
 
@@ -18,9 +17,9 @@ Read from the `com.shenju.ota` SDK bundled in StarFun (archived in
 | Frame | Layout | Purpose |
 |---|---|---|
 | **Control** `80` / `81` / `84` | `55 AA <cmd> <side> 00 <crc8>` | 80 = enter OTA (retried up to 6×), 81 = prepare/erase, 84 = finalize |
-| **Declare** `82` | `55 AA 82 <side> 08 <crc32 LE: 4 B> <total_len LE: 4 B> <crc8>` | Announces CRC and length of everything about to be sent, so the device can verify at the end. The CRC is computed by native `BtUtils.getCrc` (the same CRC16/CCITT-FALSE, padded to 4 bytes) over the payload region **[confirmed]** |
+| **Declare** `82` | `55 AA 82 <side> 08 <crc32 LE: 4 B> <total_len LE: 4 B> <crc8>` | Announces CRC and length of everything about to be sent, so the device can verify at the end. The CRC is computed by native `BtUtils.getCrc` (the same CRC16/CCITT-FALSE, padded to 4 bytes) over the payload region |
 | **Data** `83` | `55 AA 83 <len16 LE> <flash_addr LE: 4 B> <data_len LE: 4 B> <data> <crc8>` where `len16 = data_len + 8` | Raw write. Normal chunks are **512 bytes** (`len16 = 520`); the last chunk may be shorter |
-| **Flash read** `C0 83` | `C0 83 <addr LE 4> <len LE 4>` (20-byte buffer, `getReadFlashCmdArray`) | Not an OTA frame — a normal command the app uses to read back EQ2P/TONE from the buds before flashing so settings can be preserved **[inferred]** |
+| **Flash read** `C0 83` | `C0 83 <addr LE 4> <len LE 4>` (20-byte buffer, `getReadFlashCmdArray`) | Not an OTA frame — a normal command the app uses to read back EQ2P/TONE from the buds before flashing so settings can be preserved |
 
 Constants of note: `VERIFY_CODE = "534C"` (`"SL"`), `CMD_READ_SUPPORT_OTA = C013`,
 `CMD_READ_LEFT_RIGHT_VERSION_STATUS = C012`, `CMD_READ_SOFTWARE_VERSION_05 = C005`.
@@ -37,7 +36,7 @@ The app parses the `.up` into `UpInfoData`:
 So the device is treated as a dumb flash writer: `(absolute address, 512 bytes, CRC8)` frames land
 wherever the `.up` index says. Writing the index last keeps the old index in place until the very
 end, but by then the partitions it points at may already be erased (`81`) or half overwritten
-(`83`). On its own that doesn't leave the buds bootable if the update is interrupted. Recovery presumably relies on the separate `OTAP` updater stub / bootloader. **[inferred]**
+(`83`). On its own that doesn't leave the buds bootable if the update is interrupted. Recovery presumably relies on the separate `OTAP` updater stub / bootloader.
 
 Sequence (`ota_step` 1 → 2 → 3):
 
@@ -62,10 +61,10 @@ splices them into the image so user settings survive ([02](02-starfun-app.md), l
 
 * CRC8 per frame.
 * Whole-payload CRC + length from `82`.
-* That's it. OTAP doesn't check partition CRCs, chip name or version; details in [17](17-firmware-internals.md). **[confirmed, static]**
+* That's it. OTAP doesn't check partition CRCs, chip name or version; details in [17](17-firmware-internals.md).
 
 Nothing in the protocol carries a signature or key. Whether the `55AA` frames are accepted without
-first passing the command-channel challenge/response (`verificationCmd`) is **[unverified]**.
+first passing the command-channel challenge/response (`verificationCmd`) hasn't been tested.
 
 ## Practical notes for a future CFW push
 

@@ -6,7 +6,7 @@ thread dumps: [`data/52bluetooth/`](../data/52bluetooth/) (`search.json` = searc
 `t<tid>.txt` = thread text + attachment links). Helper: [`tools/bt52.py`](../tools/bt52.py)
 (needs a browser session; it drives the logged-in Chrome via CDP).
 
-## Result: nothing on 377H3 / H3Pro / StarFun — [confirmed]
+## Result: nothing on 377H3 / H3Pro / StarFun
 
 Terms with **zero relevant hits**: `377H3`, `H3Pro`, `H3Pro Max3`, `377Youth`, `心动版`,
 `StarFun`, `SL6801`, `SL6806`, `SmartLink 蓝牙`, `慧联 SDK`, `慧联 烧录`, `慧联 固件`,
@@ -30,7 +30,7 @@ posted by one vendor account (`332316195`) plus one distributor (`278341399`).
 2021 test utility of unknown scope; none plausibly contains 377H3 firmware, SDK, or OTA material,
 and everything in [12](12-shenju-flasher.md)/[13](13-open-source-tooling.md) was more useful and
 free. Product-name overlap (TWS300 / WS300A) between these "慧联" posts and Shenju's site
-`shenjugroup.com` supports Huilian ≈ Shenju/SmartLink being one family — **[inferred]**.
+`shenjugroup.com` supports Huilian ≈ Shenju/SmartLink being one family.
 
 ## If someone wants to dig further
 

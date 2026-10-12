@@ -68,17 +68,17 @@ change it?* Along the way we ended up decoding most of the platform.
 
 | Area | State |
 |---|---|
-| Device identity & exact OTA request | **[confirmed]** captured live |
-| StarFun auth + catalog enumeration + downloads | **[confirmed]** working (`tools/pull_ota.py`) |
-| `.up` container format | **[confirmed]** on 24/24 images, and against vendor source |
-| CRC algorithm (partition + container) | **[confirmed]** CRC16/CCITT-FALSE, matches vendor `up_parser.py` |
-| Bluetooth OTA wire protocol | **[source]** fully read from the app SDK |
-| TONE replace + repack round-trip | **[confirmed]** offline |
-| EQ2P edit + repack round-trip | **[confirmed]** offline |
+| Device identity & exact OTA request | captured live |
+| StarFun auth + catalog enumeration + downloads | working (`tools/pull_ota.py`) |
+| `.up` container format | checked on 24/24 images, and against vendor source |
+| CRC algorithm (partition + container) | CRC16/CCITT-FALSE, matches vendor `up_parser.py` |
+| Bluetooth OTA wire protocol | fully read from the app SDK |
+| TONE replace + repack round-trip | done offline |
+| EQ2P edit + repack round-trip | done offline |
 | PSMP / NV record format | partially — keys known, binary layout **not** fully decoded |
-| AAP surface | **[confirmed]** what's present; behaviour **[unverified]** |
-| ANC/transparency tunables | gains **[source]**; filters compiled in FIRM **[confirmed]** absent from data |
-| Bootloader / updater accept CRC-only images | **[confirmed]** on H3Pro from the OTAP and bootloader code ([17](17-firmware-internals.md)) |
-| Physical write path into earbuds | **[inferred]** UART boot-ROM via case pins; **[unverified]** |
-| **A genuine H3Pro Max3 / 377H3 image** | **[confirmed]** read off the buds, all CRCs valid — [16](16-live-flash-dump.md) |
-| Read-only flash dump path via the app's socket | **[confirmed]** ~1.1 KB/s, 200 B/reply, `tools/flashdump.py` |
+| AAP surface | present; behaviour untested |
+| ANC/transparency tunables | gains known from app source; filters are compiled into FIRM, not shipped as data |
+| Bootloader / updater accept CRC-only images | confirmed on H3Pro from the OTAP and bootloader code ([17](17-firmware-internals.md)) |
+| Physical write path into earbuds | probably UART boot-ROM via the case pins; untested |
+| **A genuine H3Pro Max3 / 377H3 image** | read off the buds, all CRCs valid — [16](16-live-flash-dump.md) |
+| Read-only flash dump path via the app's socket | working, ~1.1 KB/s, 200 B/reply, `tools/flashdump.py` |

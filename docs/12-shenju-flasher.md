@@ -19,7 +19,7 @@ ram_run_bin/         RAM-loader / helper binaries the tool pushes to the chip
 The original installer `SetupFlashloaderSL-DEV-6.9.5.exe` is *not* in the repo (large, and the
 extracted content is what matters); OpenPod's history has it.
 
-## What it confirms — [source]
+## What it confirms
 
 * `.up` = 256-byte `CONFIG` header + verbatim flash image; header CRC16 poly `0x1021` init
   `0xFFFF` over the body (`make_up_header`) — matches our derivation exactly ([04](04-up-format.md), [05](05-crc-and-integrity.md)).
@@ -33,7 +33,7 @@ extracted content is what matters); OpenPod's history has it.
 * Writes flash in **4 KiB blocks** with a 64 KiB erase granularity; changelog 6.7.5 fixed "erase
   touching PSM at the end of flash", 6.7.7 fixed zero-padding of the last non-aligned block.
 
-## Two physical paths into the chip — [source]
+## Two physical paths into the chip
 
 ### USB mass-storage boot ROM
 Hold **PB9 low while powering on** → the mask-ROM enumerates as a USB disk; the tool writes via
@@ -58,10 +58,10 @@ Extra loaders: `reset_6801.bin` (reboot), `cal_frequent_drift*.bin` (crystal cal
 the `freq_drift` NV key), `base_board.bin` / `6801_intel_flash*.bin` (RF check / flash helpers).
 
 UART is the realistic factory path for earbuds (charging-case contacts routinely double as
-UART/boot pins on TWS designs) — **[inferred]**. The byte-level serial protocol is inside `COM.dll`
+UART/boot pins on TWS designs). The byte-level serial protocol is inside `COM.dll`
 and the loader binaries and has **not** been disassembled yet.
 
-## Relevance to H3Pro — [inferred / unverified]
+## Relevance to H3Pro
 
 * This tool knows SL6801 and SL6806 only. "377H3"/"H3Pro" is a newer Huilian generation; whether
   it shares the boot ROM, loader addresses, or even the `HLKJ` layout is unknown.

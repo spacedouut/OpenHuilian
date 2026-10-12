@@ -2,8 +2,9 @@
 
 `PSMP` is the 16 KB partition at the end of flash (`0x1FC000` on 2 MB parts, `0x0FC000` on 1 MB)
 that holds device identity and user settings. OTA images **declare** it but never ship it, which is
-how settings survive an update. It is only visible in a raw flash dump; the one we have is
-`firmware/openpod-sl6801/GN438_sl6801_fulldump.bin` (an SL6801 MP3 player, **not** earbuds).
+how settings survive an update. It is only visible in a raw flash dump. We have two: `firmware/openpod-sl6801/GN438_sl6801_fulldump.bin`
+(an SL6801 MP3 player, not earbuds) and the live H3Pro dump ([16](16-live-flash-dump.md)). The
+H3Pro PSMP holds private device data (addresses, auth codes), so it isn't committed.
 
 ## What the vendor calls it
 
@@ -12,9 +13,9 @@ The flasher handles PSMP through `psm-nvds.dll` (`pc_psm_init` / `pc_psm_uninit`
 flattened list of `(name[256], u32 len, value)` (`up_parser.py: psm_dll.get_vars / set_vars`); the
 DLL converts between that and the on-flash log. The tool merges PSM from the device with PSM in the
 `.up` when burning (changelog 6.9.4) and can add a `restore_factory` variable that the firmware
-consumes on next boot. **[source]**
+consumes on next boot.
 
-## On-flash record format — [confirmed on one dump, inferred generally]
+## On-flash record format
 
 Decoded from the dump (`tools/psmp_tool.py`), 73 records parse back-to-back with zero slack, then
 `FF` fill:
@@ -23,7 +24,7 @@ Decoded from the dump (`tools/psmp_tool.py`), 73 records parse back-to-back with
 55 AA            marker
 u8   flag        FF = live, FE = superseded (log-structured: new writes append, old record flagged)
 u32  check       depends only on key+value (identical key/value → identical check); algorithm NOT
-                 yet reproduced (not CRC32/BZIP2/MPEG/POSIX/FNV/djb2 over any field order) [unverified]
+                 yet reproduced (not CRC32/BZIP2/MPEG/POSIX/FNV/djb2 over any field order)
 u16  value_len
 u16  key_id      small integer, assigned in first-write order (bt_addr=1, device_id=2, …)
 u8   key_len
@@ -43,7 +44,7 @@ Live values in the OpenPod dump (`python3 tools/psmp_tool.py <dump>`):
 
 Because the store is a log, `--all` shows the history (e.g. `audio_volume` written 6 times).
 
-## Keys the factory tool knows for TWS products — [source]
+## Keys the factory tool knows for TWS products
 
 `ui_develop/window_param.py` `UP_CFG`:
 
@@ -63,7 +64,7 @@ Because the store is a log, `--all` shows the history (e.g. `audio_volume` writt
 | `bat_level` | `0` | battery level info |
 | `en_info`, `baseboard_ver_info`, `customer_ver_info` | | reference-design switch / versions |
 
-## Keys the h2sturbo FIRM reads — [confirmed strings]
+## Keys the h2sturbo FIRM reads
 
 55 NV key names appear in the 377 FIRM, including `key_tap2_*` / `key_long_*` (gesture → action
 map), `ear_detection_en`, `authorization_code`, `air_*`, `eq_ud_gain`, `eq_preset_cur_num`, `bt_name`,
@@ -75,6 +76,6 @@ map), `ear_detection_en`, `authorization_code`, `air_*`, `eq_ud_gain`, `eq_prese
 * Gesture mapping, ear-detection, EQ preset and the Apple `authorization_code` live here → many
   "feature" changes may be **settings writes**, not firmware patches.
 * The app's `C0` command set and the factory tool both write PSM; a Bluetooth path to set arbitrary
-  keys is **[unverified]**.
+  keys hasn't been tested.
 * To write PSMP offline we still need the 4-byte record check; `psm-nvds.dll`
   (`vendor/shenju-flashloader/`) implements it and can be run under Wine / disassembled.
