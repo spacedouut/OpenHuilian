@@ -49,8 +49,8 @@ private void chooseFile() {
 ```
 
 See `reference/starfun-app/2.0.7.017/SettingMoreActivity.java` around lines 613–651.
-Implication: once a 377H3 `.up` exists, it can be pushed with the app's own transport by a
-one-line patch that exposes `chooseFile()` — no server needed. **[inferred]**
+So once a 377H3 `.up` exists, it can be pushed with the app's own transport by a one-line patch
+that exposes `chooseFile()`, with no server involved. **[inferred]**
 
 ## Command channel security — [source]
 
@@ -73,6 +73,6 @@ Whether OTA frames are accepted without passing this handshake is **[unverified]
   in any public image — [11](11-anc-transparency.md)).
 * Local EQ store has scheme families `TYPE_EQ=1, TYPE_ANC=2, TYPE_ENC=3, TYPE_ANC_2=4`, and
   `EqScheme.isAnc` — explains the duplicated profile in EQ2P ([08](08-eq2p-senc.md)).
-* `AncCalRespParam`, `CurveAncAssist`, `CurveAncReference`, `EqCoeffAnc` model classes exist
-  (frequency lists, amplitude/phase curves, biquad coefficients) — an ANC calibration UI exists
-  somewhere in the vendor's world.
+* `AncCalRespParam`, `CurveAncAssist`, `CurveAncReference` and `EqCoeffAnc` model classes exist,
+  holding frequency lists, amplitude/phase curves and biquad coefficients. There's an ANC
+  calibration UI somewhere in the vendor's world.

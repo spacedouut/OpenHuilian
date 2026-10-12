@@ -30,7 +30,7 @@ self-contained and marks every claim as one of:
 | 02 | [StarFun app](docs/02-starfun-app.md) | Versions, servers, auth flow, hidden local-file OTA path |
 | 03 | [OTA catalog](docs/03-ota-catalog.md) | All 24 public firmware images and what they are |
 | 04 | [`.up` container format](docs/04-up-format.md) | Header, HLKJ body, partition index, flash map |
-| 05 | [CRCs & integrity model](docs/05-crc-and-integrity.md) | The only "security" seen so far: CRC16/CCITT-FALSE, no signing — confirmed on the 24 catalog images + SL6806 bootloader; **unverified on H3Pro** |
+| 05 | [CRCs & integrity model](docs/05-crc-and-integrity.md) | The only "security" there is: CRC16/CCITT-FALSE, no signing. Confirmed on the catalog images, and on H3Pro from its own updater code ([17](docs/17-firmware-internals.md)) |
 | 06 | [Bluetooth OTA protocol](docs/06-bt-ota-protocol.md) | `55AA80..84` frames, 512-byte writes, per-ear sequence |
 | 07 | [TONE / sound effects](docs/07-tone-sfx.md) | Voice-prompt archive; proven replace + repack |
 | 08 | [EQ2P & SENC tables](docs/08-eq2p-senc.md) | Float parameter tables, factory H2S Turbo EQ decoded |
@@ -42,6 +42,7 @@ self-contained and marks every claim as one of:
 | 14 | [52bluetooth forum sweep](docs/14-52bluetooth.md) | What the Chinese forum has (and doesn't) on Huilian |
 | 15 | [CFW roadmap & open questions](docs/15-cfw-roadmap.md) | What is data-only vs code, what's gated, next steps |
 | 16 | [Live flash dump](docs/16-live-flash-dump.md) | **The real H3Pro Max3 firmware, read off the buds** via StarFun's own `C0 83` flash-read; first look inside |
+| 17 | [Firmware internals](docs/17-firmware-internals.md) | Disassembly of the real image: memory map, boot flow, and exactly what the OTA updater checks (just a CRC) |
 
 ## Repo layout
 
@@ -63,7 +64,7 @@ vendor/shenju-flashloader/    decompiled Shenju "Flashloader SL-DEV 6.9.5" + RAM
 reference/starfun-app/        the decompiled StarFun Java that matters (OTA SDK, command config)
 ```
 
-## Status in one paragraph
+## Where things stand
 
 Container format, CRCs, the Bluetooth OTA wire protocol, the voice-prompt archive, the EQ tables
 and the AirPods emulation layer are all decoded from real images, and a TONE/EQ edit → CRC fix →

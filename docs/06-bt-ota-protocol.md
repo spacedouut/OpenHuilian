@@ -35,10 +35,9 @@ The app parses the `.up` into `UpInfoData`:
   `indexPosition`.
 
 So the device is treated as a dumb flash writer: `(absolute address, 512 bytes, CRC8)` frames land
-wherever the `.up` index says. Writing the index last means the *old index* stays in place until the
-very end — but the partitions it points at may already have been erased (`81`) or partially
-overwritten (`83`) by then, so this alone does not guarantee an interrupted update leaves the buds
-bootable. Recovery presumably relies on the separate `OTAP` updater stub / bootloader. **[inferred]**
+wherever the `.up` index says. Writing the index last keeps the old index in place until the very
+end, but by then the partitions it points at may already be erased (`81`) or half overwritten
+(`83`). On its own that doesn't leave the buds bootable if the update is interrupted. Recovery presumably relies on the separate `OTAP` updater stub / bootloader. **[inferred]**
 
 Sequence (`ota_step` 1 → 2 → 3):
 
@@ -63,7 +62,7 @@ splices them into the image so user settings survive ([02](02-starfun-app.md), l
 
 * CRC8 per frame.
 * Whole-payload CRC + length from `82`.
-* Whatever the OTAP updater / bootloader does with the written index and partition CRCs.
+* That's it. OTAP doesn't check partition CRCs, chip name or version; details in [17](17-firmware-internals.md). **[confirmed, static]**
 
 Nothing in the protocol carries a signature or key. Whether the `55AA` frames are accepted without
 first passing the command-channel challenge/response (`verificationCmd`) is **[unverified]**.
