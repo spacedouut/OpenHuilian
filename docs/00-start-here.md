@@ -31,8 +31,9 @@ change it?* Along the way we ended up decoding most of the platform.
 1. **Nothing has been written to the earbuds.** All experiments are on downloaded files or on the
    read-only flash dump ([16](16-live-flash-dump.md)).
 2. **An SL6801 image must never be flashed to an H3Pro / 377H3 device.** Different silicon
-   generation; the chip name in the header would differ, and the bootloader's chip-name check
-   (see [13](13-open-source-tooling.md)) exists precisely to stop this — but do not rely on it.
+   generation. SL6806 has a chip-name check in its bootloader ([13](13-open-source-tooling.md)), but
+   the H3Pro doesn't: its updater only checks a CRC ([17](17-firmware-internals.md)), so nothing on
+   the device would stop a wrong image.
 3. Modified images must have **both** the partition CRC and the outer container CRC recomputed
    ([05](05-crc-and-integrity.md)); a stale outer CRC is exactly the failure mode seen in one
    reseller image in the public catalog.
@@ -77,7 +78,7 @@ change it?* Along the way we ended up decoding most of the platform.
 | PSMP / NV record format | partially — keys known, binary layout **not** fully decoded |
 | AAP surface | **[confirmed]** what's present; behaviour **[unverified]** |
 | ANC/transparency tunables | gains **[source]**; filters compiled in FIRM **[confirmed]** absent from data |
-| Bootloader accepts CRC-only images | **[source]** for SL6806 (public RE), **[unverified]** for H3Pro |
+| Bootloader / updater accept CRC-only images | **[confirmed]** on H3Pro from the OTAP and bootloader code ([17](17-firmware-internals.md)) |
 | Physical write path into earbuds | **[inferred]** UART boot-ROM via case pins; **[unverified]** |
 | **A genuine H3Pro Max3 / 377H3 image** | **[confirmed]** read off the buds, all CRCs valid — [16](16-live-flash-dump.md) |
 | Read-only flash dump path via the app's socket | **[confirmed]** ~1.1 KB/s, 200 B/reply, `tools/flashdump.py` |
