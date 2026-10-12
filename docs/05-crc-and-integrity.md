@@ -69,8 +69,9 @@ challenge/response to unlock the **command channel**, not an image signature ([0
 The SL6806 bootloader RE ([13](13-open-source-tooling.md)) shows the update validator checks
 `CONFIG` magic + chip-name string + timestamp compare + write-verify CRC — nothing cryptographic.
 
-## The caveat
+## Does the device actually only check a CRC?
 
-CRC-only acceptance by the **on-device** OTAP updater / HLKJ bootloader on **H3Pro** is
-**[unverified]**. It is confirmed for SL6806 by public RE and demonstrated in practice by OpenPod on
-SL6801; for 377H3 it stays an expectation until an image or a test unit exists.
+This used to be the big unknown. It's now answered from the H3Pro's own code
+([17](17-firmware-internals.md)): the OTAP updater checks one CRC16 over everything from the index
+onwards against the CRC the phone declares in `82`, and the bootloader checks nothing at all.
+**[confirmed, static]** It still hasn't been tried on a real bud.

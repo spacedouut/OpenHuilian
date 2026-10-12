@@ -30,7 +30,7 @@ Authorization: <tenant JWT>
 → HTTP 204 No Content
 ```
 
-* `package` is the product name lower-cased with spaces removed — the server key.
+* `package` is the product name lower-cased with spaces removed. That's the server key.
 * **204 means "no update for you"**, not an auth failure: replaying the request with our own
   token at other `version` values (including `0`) also returns 204, while known packages such as
   `a10` return JSON with a download URL.
@@ -44,7 +44,7 @@ The buds were paired to an **Amazon Echo Show 5 (2nd gen) running LineageOS 18.1
 that is on the owner's Tailscale network. From a Devin VM on the same tailnet:
 
 1. `adb pair <ip>:<pair-port> <code>` then `adb connect <ip>:<port>` (Wireless debugging).
-   Note: requesting `adb root` restarts adbd and changes the port — don't.
+   Note: requesting `adb root` restarts adbd and changes the port, so don't.
 2. Install StarFun **2.0.7.016** (`adb install -r -d`) — 2.0.7.017 refuses these buds with
    "This device is not supported, please replace it" ([02](02-starfun-app.md)).
 3. Put the buds in / power on so they auto-connect to the Echo Show.

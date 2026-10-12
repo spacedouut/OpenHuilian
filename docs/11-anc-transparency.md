@@ -1,8 +1,8 @@
 # 11 · ANC and transparency ("talk-through")
 
-Question asked: *can transparency be made better, and is it a data edit or a code patch?*
-Answer: **code patch (or live gain tweaking)** — the filters ship compiled into FIRM, and the
-container's dedicated ANC data pages are empty in every image we have. Details below; narrative
+Can transparency be made better, and is that a data edit or a code patch? It's a code patch, or
+live gain tweaking. The filters ship compiled into FIRM, and the container's dedicated ANC data
+pages are empty in every image we have. Details below; narrative
 version in [`data/reports/aap-transparency-analysis.html`](../data/reports/aap-transparency-analysis.html).
 
 ## Live tuning interface in FIRM — [confirmed strings/dispatch, inferred semantics]

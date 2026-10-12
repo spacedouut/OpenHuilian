@@ -7,9 +7,9 @@ connection. The result is a complete, CRC-valid, genuine **H3Pro Max3 firmware 2
 
 Nothing was written to the device. The only command ever sent was a flash *read*.
 
-## The idea
+## How it works
 
-The app's OTA SDK has a raw flash-read command it uses before every update to preserve the user's
+The app's OTA SDK has a raw flash-read command it uses before every update, to preserve the user's
 EQ and voice-prompt partitions ([06](06-bt-ota-protocol.md)):
 
 ```
@@ -22,10 +22,10 @@ reply: C0 83 <address> <length> <data…>
 stops the same call from being pointed at address 0 with the whole flash as the range.
 
 The `C0` command channel sits behind a keyed challenge/response in a native library. Rather than
-reproduce it, we let StarFun do the handshake as normal and then **borrow its socket**: Frida
+reproduce it, we let StarFun do the handshake as normal and then borrowed its socket. Frida
 attached to the running app on the rooted Echo Show, called `CMDConfig.getReadFlashCmdArray(addr,len)`
-+ `BtClient.sendBytes(cmd, 1)` in a loop, and hooked `BtBase.notifyUI` to catch every `C083…`
-reply. **[confirmed]**
+plus `BtClient.sendBytes(cmd, 1)` in a loop, and
+hooked `BtBase.notifyUI` to catch every `C083…` reply. **[confirmed]**
 
 ## Setup that worked
 
@@ -92,9 +92,9 @@ shrinking something else.
 Everything below is from `firm_strings.txt` / the extracted partitions in
 [`data/partitions-h3promax3/`](../data/partitions-h3promax3/).
 
-**Build identity.** FIRM carries `377Super PRO3` and `Super2026+` — vs. `377 Super++` in the newest
-catalog image and `LHK-SL6800-TEST` in the older ones. So this is the third named generation seen,
-and it is a July-2026 build (`2607061716` = 26-07-06 17:16). PSMP's `device_id` record begins
+**Build identity.** FIRM carries `377Super PRO3` and `Super2026+`, against `377 Super++` in the
+newest catalog image and `LHK-SL6800-TEST` in the older ones. That makes this the third named
+generation we've seen, and it's a July-2026 build (`2607061716` = 26-07-06 17:16). PSMP's `device_id` record begins
 `XCWX01TWS---247-------H3PROMAX3` — the **247** family tag the Shenju PSM editor lists
 ([12](12-shenju-flasher.md)), so 247Youth/377Youth are one product line.
 
@@ -118,8 +118,8 @@ counts (92, 71 ×6), 28-byte header, then 8-byte records `[kind u8][param u8][ba
 
 Page 1 is **byte-for-byte the H2S Turbo factory curve** (80/130/240/420/900/2421/4100/6100/7990/
 9750/12200 Hz, 12.2 kHz +6.3 dB) padded to 14 bands — the same house sound. Pages 2–6 are five
-alternative 14-band curves (bass-heavy, vocal, treble-cut, …) — almost certainly the presets behind
-StarFun .017's "EQ adjustment (only some models)" and the `eq_preset_cur_num` NV key. Page 0 is a
+alternative 14-band curves (bass-heavy, vocal, treble-cut and so on), almost certainly the presets
+behind StarFun .017's "EQ adjustment (only some models)" and the `eq_preset_cur_num` NV key. Page 0 is a
 different, more aggressive 14-band curve with the extra compressor block. Full decoded table:
 [`eq2p_profiles.txt`](../data/partitions-h3promax3/eq2p_profiles.txt). ANC/talk-through pages 51–57
 are **still absent** — consistent with [11](11-anc-transparency.md): filters live in FIRM code.
@@ -150,8 +150,7 @@ strings.
 * The gating item in [15](15-cfw-roadmap.md) — **"a genuine 377H3 base image"** — is done.
 * The app's flash-read also gives a **free, safe verification path**: after any future write, the
   same `C0 83` loop can read the flash back and diff it against what was sent.
-* The still-open acceptance question (does the H3Pro OTAP/bootloader take a CRC-only image with a
-  new timestamp?) can now be studied offline on the real OTAP (`0xD2000`, 167,248 bytes — the same
-  length as every SL6801 OTAP, so probably the same updater).
+* The acceptance question (does the H3Pro take a CRC-only image?) is answered from the real OTAP
+  code: yes, see [17](17-firmware-internals.md).
 * Any write is still a **write to real hardware with no proven recovery path**. Nothing here
   authorises one.
