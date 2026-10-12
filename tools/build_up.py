@@ -13,6 +13,7 @@ Layout (from catalog images + Shenju flasher source):
 """
 import struct
 import sys
+from pathlib import Path
 
 
 def crc16(data, crc=0xFFFF):
@@ -36,7 +37,7 @@ def main():
     args = sys.argv[1:]
     force = "--force" in args
     args = [a for a in args if a != "--force"]
-    flash = open(args[0], "rb").read()
+    flash = Path(args[0]).read_bytes()
     out = args[1]
     chip = args[2] if len(args) > 2 else None
     idx_off = int(args[3], 16) if len(args) > 3 else struct.unpack_from("<I", flash, 0x20)[0]

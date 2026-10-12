@@ -24,6 +24,7 @@ TONE layout:
 import struct
 import sys
 import os
+from pathlib import Path
 
 MAGIC = b"CONFIG"
 BODY = 0x100
@@ -97,7 +98,7 @@ def build_tone(entries, blobs, total_len):
 
 
 def cmd_list(path):
-    data = open(path, "rb").read()
+    data = Path(path).read_bytes()
     info = parse(data)
     p = get_part(data, info, "TONE")
     tone = data[p["addr"] + BODY: p["addr"] + BODY + p["length"]]
@@ -113,7 +114,7 @@ def cmd_list(path):
 
 
 def cmd_extract(path, outdir):
-    data = open(path, "rb").read()
+    data = Path(path).read_bytes()
     info = parse(data)
     p = get_part(data, info, "TONE")
     tone = data[p["addr"] + BODY: p["addr"] + BODY + p["length"]]
@@ -129,7 +130,7 @@ def cmd_extract(path, outdir):
 
 
 def cmd_replace(path, swaps, outpath):
-    data = bytearray(open(path, "rb").read())
+    data = bytearray(Path(path).read_bytes())
     info = parse(bytes(data))
     p = get_part(bytes(data), info, "TONE")
     start = p["addr"] + BODY
@@ -140,7 +141,7 @@ def cmd_replace(path, swaps, outpath):
     blobs = []
     for name, size, off in entries:
         if name in swaps:
-            blob = open(swaps[name], "rb").read()
+            blob = Path(swaps[name]).read_bytes()
             print(f"  {name}: {size} B -> {len(blob)} B  ({swaps[name]})")
         else:
             blob = tone[off:off + size]
@@ -163,13 +164,13 @@ def cmd_replace(path, swaps, outpath):
     struct.pack_into("<H", data, 0x14, outer)
     print(f"  container crc 0x{old_outer:04x} -> 0x{outer:04x}")
 
-    open(outpath, "wb").write(bytes(data))
+    Path(outpath).write_bytes(data)
     print(f"  wrote {outpath} ({len(data)} B)")
 
 
 def cmd_verify(path):
     """Independently re-validate every CRC in an image."""
-    data = open(path, "rb").read()
+    data = Path(path).read_bytes()
     info = parse(data)
     ok = True
     outer = struct.unpack_from("<H", data, 0x14)[0]
