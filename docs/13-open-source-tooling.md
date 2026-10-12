@@ -58,6 +58,6 @@ string there is `SL6801`). Extending this to 377H3 is **[inferred]**.
 | Transfers (same vendor conventions) | Does not (yet) |
 |---|---|
 | `.up` container, `HLKJ` table, CRC16, PSMP NV store | any base image (377H3 vs SL6801) |
-| bootloader philosophy: mark string + CRC, no signature | boot ROM addresses, loader binaries, USB IDs |
+| no signature (H3Pro is even looser: CRC only, no mark string, see [17](17-firmware-internals.md)) | boot ROM addresses, loader binaries, USB IDs |
 | Shenju flasher's `.up`/PSM logic | a physical write path — buds have no USB |
-| BT OTA ([06](06-bt-ota-protocol.md)) as the intended field update route | verified acceptance on H3Pro |
+| BT OTA ([06](06-bt-ota-protocol.md)) as the intended field update route | acceptance tested on real H3Pro hardware |

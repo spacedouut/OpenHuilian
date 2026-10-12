@@ -5,13 +5,13 @@ the 2409191721 build. Nothing here was observed on the H3Pro Max3 itself. Full n
 [`data/reports/aap_anc_body.html`](../data/reports/aap_anc_body.html); decoder:
 [`tools/sdp_hid.py`](../tools/sdp_hid.py).
 
-## Conclusion
+## What it is
 
-It is a **real Apple Accessory Protocol (AAP) server**, not just a spoofed name: published over SDP
-on its own L2CAP PSM, with two Apple accessory HID services (one a head-motion sensor service new in
-the 377 build), BLE proximity-pairing advertisement, and HFP Apple extensions. **[confirmed]**
-What it does *with* AAP opcodes lives in code, not tables, so completeness vs. real AirPods is
-**[unverified]**.
+A real Apple Accessory Protocol server, not a spoofed name. It's published over SDP on its own
+L2CAP PSM, with two Apple accessory HID services (one of them a head-motion service that's new in
+the 377 build), a BLE proximity-pairing advertisement, and the Apple HFP extensions.
+**[confirmed]** The AAP opcode handling itself is code rather than tables, so how complete it is
+next to real AirPods is **[unverified]**.
 
 ## SDP records (FIRM 0x55000–0x55930) — [confirmed]
 
@@ -54,9 +54,9 @@ One Continuity advertisement template at FIRM `0x591E0` (identical in both build
  └ AD length 30
 ```
 
-Those two model bytes decide the iOS pop-up artwork/name. The string table already has
-`AirPods`, `AirPods Pro`, `AirPods Pro2`, and the SDP product `0x2014` is the AirPods Pro 2 ID —
-but the advertisement still claims gen 1.
+Those two model bytes decide the iOS pop-up artwork and name. The string table already has
+`AirPods`, `AirPods Pro` and `AirPods Pro2`, and the SDP product `0x2014` is the AirPods Pro 2 ID,
+yet the advertisement still claims gen 1.
 
 ## HFP — [confirmed]
 
@@ -78,7 +78,7 @@ Both builds already had the AAP server, SDP records, XAPL, Siri, and the adverti
 
 ## Plausible gaps for a CFW — [inferred]
 
-* Stale model spoof: BLE `0x0E20` (Pro gen 1) vs SDP `0x2014` (Pro 2). Two bytes.
+* Stale model spoof: BLE `0x0E20` (Pro gen 1) against SDP `0x2014` (Pro 2). Two bytes.
 * XAPL features = 2 (battery only); no case-battery or other feature bits.
 * Shared serial number for every unit.
 * No string/descriptor evidence of conversation awareness, adaptive audio, loud-sound reduction.
