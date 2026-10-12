@@ -2,9 +2,10 @@
 
 `PSMP` is the 16 KB partition at the end of flash (`0x1FC000` on 2 MB parts, `0x0FC000` on 1 MB)
 that holds device identity and user settings. OTA images **declare** it but never ship it, which is
-how settings survive an update. It is only visible in a raw flash dump. We have two: `firmware/openpod-sl6801/GN438_sl6801_fulldump.bin`
-(an SL6801 MP3 player, not earbuds) and the live H3Pro dump ([16](16-live-flash-dump.md)). The
-H3Pro PSMP holds private device data (addresses, auth codes), so it isn't committed.
+how settings survive an update. You only see it in a raw flash dump. The H3Pro's PSMP uses the same record format as SL6801's;
+`tools/psmp_tool.py` parses it cleanly. It holds per-bud data (addresses, serials, Apple pairing
+keys), so don't publish yours. The example dump below is the SL6801 OpenPod player in
+`firmware/openpod-sl6801/`.
 
 ## What the vendor calls it
 
@@ -32,15 +33,13 @@ char key[key_len]     ASCII, not NUL-terminated
 u8   value[value_len]
 ```
 
-Live values in the OpenPod dump (`python3 tools/psmp_tool.py <dump>`):
+What the first records hold:
 
-| key | value | meaning |
-|---|---|---|
-| `bt_addr` | `57 33 00 C1 B2 C0` | BD_ADDR little-endian → `C0:B2:C1:00:33:57` |
-| `device_id` | `CBKJ01MP3---MP3-------T90026----------C0B2C100335785…` | 64-char factory serial/SN string incl. the address |
-| `freq_drift` | `59 00` | crystal frequency-offset calibration (flasher: `freq_drift`) |
-| `language`, `bright`, `offscr`, `scr_clock` | … | MP3-player UI settings |
-| `profile`, `pass`, `record`, `music`, `audio_volume`, `voltage` | … | player state |
+| key | value |
+|---|---|
+| `bt_addr` | 6-byte BD_ADDR, little-endian |
+| `device_id` | 64-char factory serial string that includes the address |
+| `freq_drift` | crystal frequency-offset calibration (flasher: `freq_drift`) |
 
 Because the store is a log, `--all` shows the history (e.g. `audio_volume` written 6 times).
 
@@ -70,6 +69,16 @@ Because the store is a log, `--all` shows the history (e.g. `audio_volume` writt
 map), `ear_detection_en`, `authorization_code`, `air_*`, `eq_ud_gain`, `eq_preset_cur_num`, `bt_name`,
 `bt_addr`, `paired_flag`, `ear_type`. The full list is in
 [`data/analysis/firmware_internals.txt`](../data/analysis/firmware_internals.txt).
+
+## Keys on the H3Pro
+
+Names only: `authorization_code`, `authorization_code_length`, `bt_addr`, `ble_addr`, `bt_addr_backup`,
+`addr_backup_flag`, `device_id`, `freq_drift`, `paired_flag`, `bootup_flag`, `ear_type`,
+`vc30fx_oscclk_freq`, `product_mode`, `date_of_manufacture`, `product_id`, `sn_l_info`, `sn_r_info`,
+`sn_info`, `air_en`, `air_reset`, `air_link`, `air_adv_key`, `air_pair`, `air_phone_addr`,
+`air_callctrl_setting`, `air_volumectrl_setting`, `air_audio_setting`, `air_clean`, `kws_en`,
+`anc_mode_sel`, `anc_mode_phone_sel`, `link_phone_type`, `eq_preset_cur_num`, `eq_ud_gain`, `bt_name`,
+`bt_vol`, `bat_level`, `link_info`. A typical log uses about `0xD20` of the `0x4000` bytes.
 
 ## Why it matters for CFW
 

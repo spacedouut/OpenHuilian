@@ -1,7 +1,6 @@
 # 15 · Custom-firmware roadmap and open questions
 
-Where things stand, what's proven, and what's still needed before anything could sensibly be
-written to a real H3Pro Max3. Nothing has been flashed to any device during this research.
+What's done, what's open, and what's needed before writing anything to an H3Pro Max3.
 
 ## Status board
 
@@ -26,11 +25,8 @@ written to a real H3Pro Max3. Nothing has been flashed to any device during this
 
 ## The path, in order
 
-1. ~~Get a genuine `h3promax3` `.up`.~~ **Done** — option (c) worked: the `C0 83` flash-read was
-   driven through StarFun's own authenticated socket, sidestepping the handshake
-   ([16](16-live-flash-dump.md)). A published OTA would still be valuable as the reference for the
-   header's chip-name field.
-2. ~~Confirm the container matches.~~ **Done** — `HLKJ` body, index at `0x3000`, same partition
+1. **Base image**: done. Read off the buds with `C0 83` ([16](16-live-flash-dump.md)).
+2. **Container check**: done. `HLKJ` body, index at `0x3000`, same partition
    names, all CRCs valid; `tone_tool.py list/verify` and `psmp_tool.py` run unchanged.
 3. **Data-only mods first**: TONE prompts, EQ2P profiles. Zero code changes, CRC-only, and the
    original image is the recovery path.
@@ -68,4 +64,3 @@ written to a real H3Pro Max3. Nothing has been flashed to any device during this
 - [ ] Who sets/clears the `0x55AA` boot-to-OTAP flag ([17](17-firmware-internals.md))
 - [ ] Meaning of EQ2P params `0x3C–0x41` (page 0 compressor block?) and `0xFC`
 - [ ] Periodic watcher on the `h3promax3` OTA endpoint
-- [ ] 52bluetooth re-check for `377H3` every few months ([14](14-52bluetooth.md))
