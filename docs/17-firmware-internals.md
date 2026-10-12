@@ -82,9 +82,22 @@ What the bootloader **doesn't** do: check any CRC on FIRM or OTAP. The CRC16 rou
 the bootloader (no `0x1021` anywhere in it). The `+0x1C` header CRC is there but nothing here reads
 it.
 
-So that `0x55AA` word is the "reboot into the updater" flag. We haven't traced who sets and clears
-it yet. FIRM has no literal `0xFB000`, so it most likely computes the address from the index the
-same way the bootloader does.
+So that `0x55AA` word is the "reboot into the updater" flag, and both sides of it are in the code:
+
+* **FIRM sets it** in `FUN_00C6AD1C`: look up `OTAP` in the index, then write the 4 bytes
+  `AA 55 00 00` to `OTAP.addr + ((OTAP.len >> 12) + 1) * 0x1000`. That's the same address the
+  bootloader computes, so neither side hard-codes `0xFB000`. It's called from the FIRM event
+  dispatcher (`FUN_00C4FBC0`) on event `0xF600000F` with payload byte 1, which is the app's
+  "enter OTA" handshake from [06](06-bt-ota-protocol.md); the handler then arms a 5 s
+  `otaStateTimer` and the bud reboots into OTAP.
+* **OTAP clears it** in `FUN_0080FE80`, the same routine with a zero word. The OTA state machine
+  calls it on the `04` command that follows `84` finalize, then reboots. If `FUN_00819FD4` says
+  to stay in the updater, it arms a 2 s `otaStateTimer` instead and leaves the flag alone.
+* The bootloader only reads it.
+
+So the flag is one flash page, set by FIRM on request and cleared by the updater when it's done.
+If OTAP never gets that far, the flag stays set and the bud comes back up in the updater. That's
+the retry path a half-written FIRM depends on.
 
 ## How OTAP takes an update (`FUN_0080e770`)
 
@@ -149,6 +162,11 @@ timestamps never reach the device: the app strips the container and only streams
 | OTAP | `0x82BCA4` / `0x82BCC8` | CRC16 byte / buffer |
 | OTAP | `0x82BD48` / `0x82BD9C` | flash page write / erase |
 | FIRM | `0x8052A0` | `main`, creates `"task main"` |
+| FIRM | `0xC6AD1C` | set the `0x55AA` boot-to-OTAP flag |
+| FIRM | `0xC4FBC0` | event dispatcher (`0xF600000F` = enter OTA) |
+| FIRM | `0x805444` | partition lookup by tag, returns addr + length |
+| FIRM | `0xC714AC` | CRC32 accumulator (PSMP record check, [09](09-psmp-nvds.md)) |
+| OTAP | `0x80FE80` | clear the `0x55AA` flag |
 
 ## Reproduce it
 
@@ -159,6 +177,7 @@ python3 tools/h3pro_elf.py firmware/h3promax3/h3promax3_2607061716_live.up out/
 
 ## Still open
 
-* Who sets and clears the `0x55AA` flag, and what FIRM does before rebooting into OTAP.
 * What the bootloader's download loop speaks (likely the UART protocol in [12](12-shenju-flasher.md)).
-* The PSMP 4-byte record check ([09](09-psmp-nvds.md)). It's in FIRM somewhere; not found yet.
+* Whether the flag page survives an OTA that rewrites the index: OTAP erases `0x4000` up to
+  `0x3000 + total`, which on a full image stops well below the flag page, but a larger layout
+  could reach it.
