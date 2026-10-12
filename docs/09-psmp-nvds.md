@@ -24,14 +24,34 @@ Decoded from the dump (`tools/psmp_tool.py`), 73 records parse back-to-back with
 ```
 55 AA            marker
 u8   flag        FF = live, FE = superseded (log-structured: new writes append, old record flagged)
-u32  check       depends only on key+value (identical key/value → identical check); algorithm NOT
-                 yet reproduced (not CRC32/BZIP2/MPEG/POSIX/FNV/djb2 over any field order)
+u32  check       CRC32, see below
 u16  value_len
 u16  key_id      small integer, assigned in first-write order (bt_addr=1, device_id=2, …)
 u8   key_len
 char key[key_len]     ASCII, not NUL-terminated
 u8   value[value_len]
 ```
+
+## The 4-byte check
+
+It's a plain reflected CRC32 (poly `0xEDB88320`, init 0, no final xor; the firmware's table sits
+at FIRM `0xC451F4`), taken in three chunks and chained through the running value:
+
+1. the key bytes,
+2. the value bytes,
+3. the 12-byte header, with the flag forced to `FF` and the check field set to `FF FF FF FF`.
+
+Step 3 is why the check also covers the lengths and the key id, and why the flag is masked: a
+record keeps its check when it's later flagged `FE`. `psmp_tool.py verify` reproduces all 73
+records of the OpenPod dump, and `psmp_tool.py set` writes records the firmware will accept.
+
+In FIRM the accumulator is `FUN_00C714AC(buf, len, crc)` and the header pass is `FUN_00C6E7E4`;
+the write path (`FUN_00C6F168` → `FUN_00C6EAE8` → `FUN_00C6EB40`) chains key, value and header in
+that order. Worth knowing: **the read path never checks it.** The log scan (`FUN_00C6EEE0`) and
+the key lookup (`FUN_00C6F004`) only look at the `55 AA` marker, the lengths, the flag bit and the
+key bytes. The stored CRC is used as a key hash for the lookup cache, not as an integrity gate.
+A record with a wrong check still reads back fine; getting it right only matters for the vendor
+flasher and for staying consistent with how the firmware rewrites the store.
 
 What the first records hold:
 
@@ -86,5 +106,6 @@ Names only: `authorization_code`, `authorization_code_length`, `bt_addr`, `ble_a
   "feature" changes may be **settings writes**, not firmware patches.
 * The app's `C0` command set and the factory tool both write PSM; a Bluetooth path to set arbitrary
   keys hasn't been tested.
-* To write PSMP offline we still need the 4-byte record check; `psm-nvds.dll`
-  (`vendor/shenju-flashloader/`) implements it and can be run under Wine / disassembled.
+* Offline PSMP writes work now that the record check is reproduced (`psmp_tool.py set`). It has
+  only been round-tripped against dumps, never written to a bud; PSMP also holds `paired_flag`,
+  `ear_type` and `authorization_code`, so a bad write costs you the pairing.

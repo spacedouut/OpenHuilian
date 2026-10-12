@@ -61,7 +61,7 @@ them appears to be **Shenju (珠海绅聚 / shenjugroup.com)**. The control app 
 | Bluetooth OTA wire protocol | fully read from the app SDK |
 | TONE replace + repack round-trip | done offline |
 | EQ2P edit + repack round-trip | done offline |
-| PSMP / NV record format | layout and keys known; the 4-byte record check isn't |
+| PSMP / NV record format | layout, keys and the 4-byte record check (CRC32) all known |
 | AAP surface | present; behaviour untested |
 | ANC/transparency tunables | gains known from app source; filters are compiled into FIRM, not shipped as data |
 | Bootloader / updater accept CRC-only images | confirmed on H3Pro from the OTAP and bootloader code ([17](17-firmware-internals.md)) |
