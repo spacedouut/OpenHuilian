@@ -37,8 +37,7 @@ def token():
     return post(AUTH_URL, CREDS)["tokenId"]
 
 
-def lookup(model, version=None, tok=None):
-    tok = tok or token()
+def lookup(model, version, tok):
     q = f"{LOOKUP}?package={model}"
     if version:
         q += f"&version={version}"
