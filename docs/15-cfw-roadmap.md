@@ -32,7 +32,10 @@ What's done, what's open, and what's needed before writing anything to an H3Pro 
    original image is the recovery path.
 4. **Flash via the app's own transport**, not a hand-rolled client: StarFun already has the dormant
    local-file OTA path (`chooseFile` → `BtOtaHelper`) in [02](02-starfun-app.md). Wiring a button to
-   it is a one-line smali/Java patch. The app flashes L then R and handles reconnects.
+   it is a one-line smali/Java patch. The app flashes L then R and handles reconnects, but it copies
+   the bud's current EQ2P/TONE into your image first, which undoes prompt mods.
+   [`tools/flashota.py`](../tools/flashota.py) sends the same frames through StarFun's socket
+   without that step, one bud per run. Not yet run against a bud.
 5. Only then: code-level work on FIRM (AAP model bytes, XAPL features, ANC listen-mode handling,
    transparency filters). Note the H3Pro Max3 is a **1 MiB** part with almost no free flash
    ([16](16-live-flash-dump.md)) — the ~1 MiB spare region only exists on the 2 MiB H2S-class devices.
