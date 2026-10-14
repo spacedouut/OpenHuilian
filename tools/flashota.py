@@ -2,7 +2,7 @@
 """Push a .up image to one H3Pro bud over StarFun's authenticated SPP link (55 AA OTA frames).
 
   flashota.py plan  <image.up> --stock <stock.up> [--frames frames.txt]
-  flashota.py send  <image.up> --stock <stock.up> --side L|R [--yes]
+  flashota.py send  <image.up> --stock <stock.up> --side L|R [--yes] [--resume]
   flashota.py selftest
 
 `plan` is offline: it runs every check below and prints the frames it would send. `send` is
@@ -19,8 +19,11 @@ Refuses an image unless:
   * the OTAP and PSMP index entries and the OTAP bytes are identical to --stock,
   * nothing else reaches into OTAP, and index padding matches stock images (zeros).
 Nothing below 0x4000 is written except the index page, and nothing at or above OTAP at all,
-so the bootloader, OTAP and PSMP stay as they are. If 84 reports a CRC failure, 04 is not sent
-and the bud stays in OTAP (old index restored) so you can retry. See docs/06 and docs/17.
+so the bootloader, OTAP and PSMP stay as they are. Before 80, `send` reads the bud's live index
+(C0 83) and refuses unless its FIRM/OTAP/PSMP entries match the image. A bud already sitting in OTAP
+after an interrupted run can't answer that read; `--resume` skips it for that case only.
+If 84 reports a CRC failure, 04 is not sent and the bud stays in OTAP (old index restored) so you
+can retry. See docs/06 and docs/17.
 """
 import argparse
 import os
@@ -151,6 +154,7 @@ def plan(image, stock, side=0x11):
     summary = {"crc": crc, "total": total, "otap": otap, "index_len": index_len,
                "writes": sum(1 for k, _ in frames if k == "83"),
                "parts": [(t.decode("latin1"), a, n) for t, a, n, _ in entries]}
+    summary["entries"] = {t: (a, n, c) for t, a, n, c in entries}
     return frames, summary
 
 
@@ -168,7 +172,25 @@ def print_plan(frames, s):
     print(f"  first 83: {frames[3][1][:13].hex(' ')} ... ({len(frames[3][1])} B)")
 
 
-def send(frames, side, yes):
+def check_live_index(raw: bytes, entries):
+    """Compare the bud's index (read at 0x3000) with the image; return a list of problems."""
+    if len(raw) < 16:
+        return ["live index read came back short"]
+    count = struct.unpack_from("<I", raw, 0)[0]
+    if not 1 <= count <= INDEX_MAX // 16 - 1 or len(raw) < (count + 1) * 16:
+        return [f"live index has an implausible count ({count})"]
+    live = {t: (a, n, c) for t, a, n, c in
+            (struct.unpack_from("<4sIII", raw, 16 + 16 * i) for i in range(count))}
+    bad = []
+    for tag in (b"OTAP", b"PSMP"):
+        if live.get(tag) != entries[tag]:
+            bad.append(f"live {tag.decode()} entry {live.get(tag)} != image {entries[tag]}")
+    if live.get(b"FIRM", (None,))[0] != FIRM_ADDR:
+        bad.append(f"live FIRM is not at 0x{FIRM_ADDR:x}")
+    return bad
+
+
+def send(frames, side, yes, entries, resume=False):
     import frida
 
     if not yes:
@@ -180,7 +202,7 @@ def send(frames, side, yes):
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "flashota.js")) as fh:
         script = ses.create_script(fh.read())
 
-    replies, lock = [], threading.Condition()
+    replies, flash, lock = [], {}, threading.Condition()
     ready, link = threading.Event(), {"up": True, "drops": 0}
 
     def on_message(msg, _data):
@@ -198,6 +220,10 @@ def send(frames, side, yes):
                 link["drops"] += 1
             elif p["t"] == "conn":
                 link["up"] = True
+            elif p["t"] == "flash":
+                b = bytes.fromhex(p["hex"])
+                if len(b) >= 10:
+                    flash[int.from_bytes(b[2:6], "little")] = b[10:10 + int.from_bytes(b[6:10], "little")]
             elif p["t"] == "rx":
                 r = parse_reply(bytes.fromhex(p["hex"]))
                 if r:
@@ -232,6 +258,27 @@ def send(frames, side, yes):
             while link["up"] != up and time.time() < end:
                 lock.wait(end - time.time())
             return link["up"] == up
+
+    if resume:
+        print("--resume: skipping the live index check (bud should already be in OTAP)")
+    else:
+        want = INDEX_MAX
+        for _ in range(3):
+            script.exports_sync.read(INDEX_ADDR, want)
+            end = time.time() + 6
+            with lock:
+                while INDEX_ADDR not in flash and time.time() < end:
+                    lock.wait(end - time.time())
+            if INDEX_ADDR in flash:
+                break
+        if INDEX_ADDR not in flash:
+            raise SystemExit("could not read the live index at 0x3000. If the bud is already in "
+                             "OTAP from an interrupted run, pass --resume. Nothing written.")
+        bad = check_live_index(flash[INDEX_ADDR], entries)
+        if bad:
+            raise SystemExit("refusing, the connected bud doesn't match this image:\n  "
+                             + "\n  ".join(bad))
+        print("live index matches the image")
 
     ok = lambda r: r["payload"][:1] == b"\x00"  # noqa: E731
     f = dict((k, v) for k, v in frames if k != "83")
@@ -271,9 +318,15 @@ def send(frames, side, yes):
     if not r or not ok(r):
         raise SystemExit(f"84 reports failure ({r}); NOT sending 04, the bud stays in OTAP "
                          "with its old index. Rerun to retry.")
-    xfer(f["04"], 1, 3, lambda r: True)
-    print("verified; 04 sent, bud is rebooting into the new firmware")
+    # 04 is confirmed by its ack or by the link dropping as the bud reboots.
+    for _ in range(3):
+        if xfer(f["04"], 1, 3, ok) or wait_link(False, 5):
+            print("verified; 04 acknowledged, bud is rebooting into the new firmware")
+            ses.detach()
+            return
     ses.detach()
+    raise SystemExit("update verified, but 04 was never confirmed: the bud may still be in OTAP. "
+                     "Rerun with --resume (the image is already in place, it just rewrites it).")
 
 
 def selftest():
@@ -289,6 +342,13 @@ def selftest():
     ack = seal(bytes.fromhex("55aa831109") + b"\0" + struct.pack("<II", 0x4000, 512))
     assert parse_reply(ack)["payload"][1:9] == struct.pack("<II", 0x4000, 512)
     assert parse_reply(ack[:-1] + bytes([ack[-1] ^ 1])) is None
+    idx = struct.pack("<II", 2, 1) + bytes(8)
+    ents = {b"FIRM": (0x4000, 0x100, 1), b"OTAP": (0xD2000, 0x10, 2), b"PSMP": (0xFC000, 0x4000, 3)}
+    raw = struct.pack("<II", 3, 1) + bytes(8) + b"".join(
+        struct.pack("<4sIII", t, *v) for t, v in ents.items())
+    assert check_live_index(raw, ents) == []
+    moved = {**ents, b"OTAP": (0xD1000, 0x10, 2)}
+    assert check_live_index(raw, moved) and check_live_index(idx, ents)
     print("selftest OK")
 
 
@@ -300,6 +360,8 @@ def main():
     ap.add_argument("--side", choices=sorted(SIDES), help="bud to flash (send mode)")
     ap.add_argument("--frames", help="plan: write every frame as hex, one per line")
     ap.add_argument("--yes", action="store_true", help="send: skip the confirmation prompt")
+    ap.add_argument("--resume", action="store_true",
+                    help="send: bud is already in OTAP after an interrupted run, skip the live index read")
     a = ap.parse_args()
     if a.mode == "selftest":
         return selftest()
@@ -315,7 +377,7 @@ def main():
             fh.writelines(f"{fr.hex()}\n" for _, fr in frames)
         print(f"wrote {len(frames)} frames to {a.frames}")
     if a.mode == "send":
-        send(frames, side, a.yes)
+        send(frames, side, a.yes, s["entries"], a.resume)
 
 
 if __name__ == "__main__":
