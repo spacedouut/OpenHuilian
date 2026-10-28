@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>hl · huilian buds</title>
+<style>
+  :root { --bg:#0a0a0b; --fg:#e8e8ea; --dim:#8b8b90; --acc:#ff4d2e; --card:#141416; --line:#26262a; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--fg); font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:18px; font-weight:600; letter-spacing:.02em; }
+  h1 span { color:var(--acc); }
+  h2 { font-size:12px; color:var(--dim); text-transform:uppercase; letter-spacing:.12em; margin:28px 0 10px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  button { background:var(--acc); border:0; color:#fff; font:inherit; padding:8px 14px; border-radius:8px; cursor:pointer; }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--fg); }
+  button:disabled { opacity:.4; cursor:default; }
+  select,input[type=text],input[type=number] { background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:inherit; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  .kv { display:grid; grid-template-columns:150px 1fr; gap:2px 12px; }
+  .kv b { color:var(--dim); font-weight:400; }
+  #log { white-space:pre-wrap; font-size:12px; color:var(--dim); max-height:220px; overflow:auto; margin-top:10px; }
+  .warn { color:var(--acc); }
+  label.s { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:5px 0; }
+  label.s small { color:var(--dim); }
+  .hidden { display:none; }
+  a { color:var(--acc); }
+</style>
+</head>
+<body>
+<main>
+  <h1>hl <span>·</span> huilian buds</h1>
+  <p style="color:var(--dim);font-size:12px;margin-top:4px">
+    C0 + 55AA over Web Serial. Chrome/Edge only. Untested on real hardware — order: connect → info → auth → small read → writes.
+  </p>
+
+  <h2>link</h2>
+  <div class="card">
+    <div class="row">
+      <button id="btnConnect">Connect</button>
+      <button id="btnInfo" class="ghost" disabled>Info</button>
+      <button id="btnAuth" class="ghost" disabled>Auth</button>
+      <span id="linkState" style="color:var(--dim)">not connected</span>
+    </div>
+    <div id="info" class="kv hidden" style="margin-top:10px"></div>
+  </div>
+
+  <h2>settings</h2>
+  <div class="card" id="settings">
+    <div class="row" style="margin-top:0"><button id="btnReadAll" class="ghost" disabled>Read all</button></div>
+    <div id="setRows" class="hidden"></div>
+  </div>
+
+  <h2>flash</h2>
+  <div class="card">
+    <div class="row" style="margin-top:0">
+      <span style="color:var(--dim)">addr</span><input id="rdAddr" type="text" value="0x0" size="10">
+      <span style="color:var(--dim)">len</span><input id="rdLen" type="text" value="0x100000" size="10">
+      <button id="btnRead" class="ghost" disabled>Dump</button>
+    </div>
+    <div class="row">
+      <input id="upFile" type="file" accept=".up" hidden>
+      <button id="btnPickUp" class="ghost">Pick .up</button>
+      <span id="upName" style="color:var(--dim)"></span>
+      <select id="side"><option value="both">both</option><option value="l">left</option><option value="r">right</option></select>
+      <button id="btnOta" class="ghost" disabled>Flash OTA</button>
+    </div>
+    <div class="warn hidden" id="otaWarn">OTAP is never written. Same risk as a stock OTA, zero if it fails — read docs/19 first.</div>
+  </div>
+
+  <h2>patch</h2>
+  <div class="card">
+    <div class="row" style="margin-top:0">
+      <input id="fwFile" type="file" accept=".up" hidden>
+      <input id="patchFiles" type="file" accept=".json" multiple hidden>
+      <button id="btnPickFw" class="ghost">firmware .up</button>
+      <span id="fwName" style="color:var(--dim)"></span>
+      <button id="btnPickPatches" class="ghost">patches</button>
+      <span id="patchNames" style="color:var(--dim)"></span>
+    </div>
+    <div id="knobs" class="hidden" style="margin-top:8px"></div>
+    <div class="row"><button id="btnPatch" class="ghost" disabled>Apply &amp; download</button></div>
+  </div>
+
+  <h2>tones</h2>
+  <div class="card">
+    <div class="row" style="margin-top:0">
+      <button id="btnToneList" class="ghost">List prompts in .up</button>
+    </div>
+    <div id="toneRows" class="hidden" style="margin-top:8px"></div>
+    <div class="row"><button id="btnToneApply" class="ghost" disabled>Replace &amp; download</button></div>
+  </div>
+
+  <div id="log"></div>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
