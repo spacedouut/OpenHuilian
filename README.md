@@ -29,6 +29,7 @@ Start at **[docs/00-start-here.md](docs/00-start-here.md)**. Each page stands on
 | 15 | [CFW roadmap & open questions](docs/15-cfw-roadmap.md) | What's data-only vs code, what's open |
 | 16 | [Live flash dump](docs/16-live-flash-dump.md) | Reading flash over Bluetooth with `C0 83`, and what's in the 2607061716 image |
 | 17 | [Firmware internals](docs/17-firmware-internals.md) | Memory map, boot flow, what the OTA updater checks (just a CRC) |
+| 19 | [Patching your own firmware](docs/19-cfw-patching.md) | `cfw.py`, version-pinned patch files with knobs, first patch: faster head tracking |
 
 ## Repo layout
 
