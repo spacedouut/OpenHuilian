@@ -16,11 +16,12 @@ match.
 3. `python3 tools/cfw.py apply my.up my-cfw.up patches/2607061716/head-tracking.json`
    applies the patch with its defaults. Add `--set name=value` to turn a knob, for example
    `--set tx_ms=25 --set alpha=0.4`.
-4. Flash `my-cfw.up` the same way a stock update goes in, through the app's local-file path or
-   [`tools/flashota.py`](../tools/flashota.py).
+4. Flash `my-cfw.up` the same way a stock update goes in: the app's local-file path, or the
+   `55AA` OTA transport from [6](06-bt-ota-protocol.md) (`tools/flashota.py` in PR #10 drives it).
 
-`cfw.py` refuses an image whose partition CRCs do not verify, refuses a patch written for another
-build, and refuses an op whose expected bytes are not there. After patching it recomputes the
+`cfw.py` refuses an image whose container CRC or partition CRCs do not verify, refuses a patch
+written for another build, refuses anything that reaches outside its partition, and refuses an op
+whose expected bytes are not there. After patching it recomputes the
 partition CRCs in the index, the `+0x1C` header CRC of `FIRM` / `OTAP` (CRC16 over
 `partition[0x30 : 0x30 + copied_block]`) and the `CONFIG` container CRC. A patched image differs
 from stock only at the patched bytes and those CRC fields.

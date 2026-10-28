@@ -39,8 +39,16 @@ def load(path):
     if data[:6] != MAGIC:
         sys.exit(f"{path}: not a CONFIG/.up container")
     flash = bytearray(data[BODY:])
+    length, crc = struct.unpack_from("<IH", data, 0x10)
+    if length != len(flash) or crc16(flash) != crc:
+        sys.exit(f"{path}: CONFIG header length/CRC does not match the body, refusing a damaged dump")
     ver, parts = parse_index(flash)
     return data[:BODY], flash, ver, parts
+
+
+def in_part(patch, pname, plen, off, n, where):
+    if off < 0 or off + n > plen:
+        sys.exit(f"{patch['name']}: {where} at {pname}+{off:#x} ({n} bytes) is outside the partition")
 
 
 def part_table(parts):
@@ -92,6 +100,7 @@ def apply_patch(flash, ver, parts, patch, overrides):
         old, new = bytes.fromhex(op["old"]), bytes.fromhex(op["new"])
         if len(old) != len(new):
             sys.exit(f"{patch['name']}: op at {op['offset']} changes length")
+        in_part(patch, pname, plen, off, len(old), "op")
         cur = bytes(flash[base + off:base + off + len(old)])
         if cur == new:
             print(f"  = {op.get('what', op['offset'])} (already applied)")
@@ -112,6 +121,9 @@ def apply_patch(flash, ver, parts, patch, overrides):
                 sys.exit(f"{st['name']}={value} outside {st.get('min')}..{st.get('max')}")
             value = v
         new = encode(typ, value)
+        if len(new) != len(stock):
+            sys.exit(f"{patch['name']}: setting {st['name']} value is {len(new)} bytes, stock is {len(stock)}")
+        in_part(patch, pname, plen, off, len(stock), f"setting {st['name']}")
         cur = bytes(flash[base + off:base + off + len(stock)])
         if cur != stock and cur != new:
             sys.exit(f"{patch['name']}: setting {st['name']} at {pname}+{st['offset']} expected "
@@ -140,6 +152,8 @@ def write_up(out, hdr, flash, chip=None):
     struct.pack_into("<I", hdr, 0x10, len(flash))
     struct.pack_into("<H", hdr, 0x14, crc16(flash))
     if chip:
+        if len(chip.encode()) > 0xFE - 0x16:
+            sys.exit("chip name does not fit in the CONFIG header")
         hdr[0x16:0xFE] = b"\0" * (0xFE - 0x16)
         hdr[0x16:0x16 + len(chip)] = chip.encode()
     Path(out).write_bytes(bytes(hdr) + bytes(flash))
