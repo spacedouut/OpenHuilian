@@ -257,7 +257,11 @@ function refreshKnobs() {
   for (const st of settings) {
     const lab = document.createElement("label");
     lab.className = "s";
-    lab.innerHTML = `<span>${st.name} <small>${st.what || ""} stock ${st.stock}</small></span>`;
+    const sp = document.createElement("span");
+    const sm = document.createElement("small");
+    sm.textContent = `${st.what || ""} stock ${st.stock}`;
+    sp.append(st.name + " ", sm);
+    lab.append(sp);
     const inp = document.createElement("input");
     inp.type = "number"; inp.value = st.default;
     if ("min" in st) inp.min = st.min;
@@ -293,7 +297,11 @@ $("btnToneList").onclick = () => {
     for (const e of toneList(fwBytes)) {
       const lab = document.createElement("label");
       lab.className = "s";
-      lab.innerHTML = `<span>${e.name} <small>${e.size}B</small></span>`;
+      const sp = document.createElement("span");
+      const sm = document.createElement("small");
+      sm.textContent = `${e.size}B`;
+      sp.append(e.name + " ", sm);
+      lab.append(sp);
       const inp = document.createElement("input");
       inp.type = "file";
       inp.dataset.name = e.name;

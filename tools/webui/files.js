@@ -66,7 +66,13 @@ export function applyPatch(flash, version, entries, patch, overrides = {}, log =
     const stock = encode(st.type, st.stock);
     let value = st.name in overrides ? overrides[st.name] : st.default;
     if (st.type !== "bytes") {
+      if (value === "" || value === null || value === undefined)
+        throw new Error(`${st.name}: empty value`);
       value = st.type === "f32" ? parseFloat(value) : Number(value);
+      if (!Number.isFinite(value))
+        throw new Error(`${st.name}=${value} is not a number`);
+      if (st.type !== "f32" && !Number.isInteger(value))
+        throw new Error(`${st.name}=${value} is not an integer`);
       if ("min" in st && value < st.min || "max" in st && value > st.max)
         throw new Error(`${st.name}=${value} outside ${st.min}..${st.max}`);
     }
