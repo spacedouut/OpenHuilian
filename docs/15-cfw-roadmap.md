@@ -15,13 +15,14 @@ What's done, what's open, and what's needed before writing anything to an H3Pro 
 | Repack prompts (TONE) | done, round-trip verified | [07](07-tone-sfx.md) |
 | Repack EQ (EQ2P) | done, round-trip verified | [08](08-eq2p-senc.md) |
 | Read PSMP NV store | done (read-only) | [09](09-psmp-nvds.md) |
-| Write PSMP NV store | blocked: record check algorithm unknown | [09](09-psmp-nvds.md) |
+| Write PSMP NV store | done offline (record check = CRC32), untried on hardware | [09](09-psmp-nvds.md) |
 | ANC/transparency filters | code-level (in FIRM), not data | [11](11-anc-transparency.md) |
 | AAP improvements | code-level, a few 2-byte data tweaks | [10](10-aap-airpods.md) |
 | **A 377H3 / H3Pro base image** | **done** — read off the buds, CRC-valid (chip-name header field unknown) | [16](16-live-flash-dump.md) |
 | Read-back / verify path over Bluetooth | done (read-only, via the app's socket) | [16](16-live-flash-dump.md) |
 | Physical recovery path for buds | unknown (UART boot ROM likely, unverified) | [12](12-shenju-flasher.md) |
 | On-device acceptance of a modified image | rules known from code (CRC only), not tried on hardware | [17](17-firmware-internals.md) |
+| Entering / leaving the updater | known: FIRM sets the `0x55AA` flag on request, OTAP clears it at finalize | [17](17-firmware-internals.md) |
 
 ## The path, in order
 
@@ -52,7 +53,7 @@ What's done, what's open, and what's needed before writing anything to an H3Pro 
 
 ## Research still open
 
-- [ ] 4-byte PSMP record check algorithm ([09](09-psmp-nvds.md))
+- [x] 4-byte PSMP record check algorithm: reflected CRC32 over key, value, masked header; `psmp_tool.py verify/set` ([09](09-psmp-nvds.md))
 - [ ] Disassemble `COM.dll` + `cal_frequent_drift_gyro_ur.bin` for the UART boot-ROM protocol
 - [ ] Extract `encryptData` / challenge-response from StarFun's native lib into Python
 - [ ] Does FIRM honour EQ2P pages 51–57 if present? (needs a live device or code read)
@@ -61,6 +62,6 @@ What's done, what's open, and what's needed before writing anything to an H3Pro 
       7-profile `SLEQ 02 07` layout ([16](16-live-flash-dump.md))
 - [ ] What goes in the `.up` header's chip-name field for 377H3 (`H3Pro`? `SL68xx`?). Only matters for the desktop flasher; the buds never see it
 - [x] Disassemble the live H3Pro OTAP for its acceptance rules: CRC16 only ([17](17-firmware-internals.md))
-- [ ] Who sets/clears the `0x55AA` boot-to-OTAP flag ([17](17-firmware-internals.md))
+- [x] Who sets/clears the `0x55AA` boot-to-OTAP flag: FIRM `FUN_00C6AD1C` on the app's enter-OTA event, OTAP `FUN_0080FE80` at finalize ([17](17-firmware-internals.md))
 - [ ] Meaning of EQ2P params `0x3C–0x41` (page 0 compressor block?) and `0xFC`
 - [ ] Periodic watcher on the `h3promax3` OTA endpoint
