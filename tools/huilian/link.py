@@ -65,7 +65,7 @@ def read_flash(ser, addr, n, timeout=3.0):
     a = int.from_bytes(r[2:6], "little")
     ln = int.from_bytes(r[6:10], "little")
     data = r[10:10 + ln]
-    if a != addr or len(data) != ln:
+    if a != addr or len(data) != ln or ln == 0:
         return None
     return a, data
 

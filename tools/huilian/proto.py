@@ -53,33 +53,36 @@ def scramble(buf, seed):
 
 
 def challenge1():
-    """64-byte body for C0 01: bytes 3..0x3f must not be all 0x00 or all 0xFF."""
+    """Request body for C0 01: the app sends `C0 01 3D` + 61 bytes
+    (CMDConfig.getHandshakeCmd). The bud rejects a body that is all 0x00
+    or all 0xFF (FUN_00c69958 counts over req[3..0x3f])."""
     import os
-    body = bytearray(os.urandom(64))
-    while all(b == 0 for b in body[3:]) or all(b == 0xFF for b in body[3:]):
-        body = bytearray(os.urandom(64))
+    body = bytearray(os.urandom(61))
+    while all(b == 0 for b in body) or all(b == 0xFF for b in body):
+        body = bytearray(os.urandom(61))
     return bytes(body)
 
 
 def challenge2():
-    """64-byte body for C0 02: req[0x10..0x2f] must not be 32 same 0x00/0xFF,
-    and req[0x30..0x3f] must not be 16 same 0x00/0xFF (FUN_00c699a6 checks)."""
+    """Request body for C0 02, sent as `C0 02 3D` + 61 bytes. The bud rejects
+    req[0x10..0x2f] all 0x00 or all 0xFF, and req[0x30..0x3f] all 0x00 or
+    all 0xFF (FUN_00c699a6). req indices are full-frame; body starts at +3."""
     import os
     while True:
-        b = bytearray(os.urandom(64))
-        ok = len(set(b[0x10:0x30])) > 1 or b[0x10] not in (0, 0xFF)
-        ok = ok and (len(set(b[0x30:0x40])) > 1 or b[0x30] not in (0, 0xFF))
+        b = bytearray(os.urandom(61))
+        mid = b[0x10 - 3:0x30 - 3]
+        tail = b[0x30 - 3:0x40 - 3]
+        ok = not (all(x == 0 for x in mid) or all(x == 0xFF for x in mid))
+        ok = ok and not (all(x == 0 for x in tail) or all(x == 0xFF for x in tail))
         if ok:
             return bytes(b)
 
 
 def c002_reply(req):
     """The bud's 61-byte reply body for a C0 02 request, per FUN_00c699a6.
-    Useful to verify a live exchange the way StarFun does."""
-    body = bytearray(0x40)
-    body[3:] = b"\x00" * 0x3D
-    body[3:0x40] = req[3:0x40]
-    r = body
+    `req` is the full request frame (`C0 02 3D` + 61 bytes). Useful to verify
+    a live exchange the way StarFun does."""
+    r = bytearray(req[:0x40])
     seg, _ = scramble(bytes(r[3:0x10]), (req[5] << 8 | req[6]) ^ 0x1728)
     r[3:0x10] = seg
     seg, _ = scramble(bytes(r[0x10:0x30]), req[0xE] << 8 | req[0xF])
@@ -131,6 +134,7 @@ def ota_write(addr, data):
 
 
 def with_crc8(frame):
-    """55AA frames carry a trailing CRC8 over all bytes after '55AA'."""
+    """55AA frames carry a trailing CRC8/Maxim over the whole frame
+    including the '55AA' marker (OtaCmdConfig.addOtaData)."""
     assert frame[0] == 0x55 and frame[1] == 0xAA
-    return frame + bytes([crc8(frame[2:])])
+    return frame + bytes([crc8(frame)])
