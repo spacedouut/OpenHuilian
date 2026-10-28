@@ -67,11 +67,20 @@ that writes.
 
 ## The WebUI
 
-`tools/webui/index.html` is the same stack reimplemented in JavaScript, served
-as a static page (open the file or any static host, no build step). Chrome and
-Edge only: it uses [Web Serial](https://developer.mozilla.org/docs/Web/API/Web_Serial_API)
+`tools/webui/index.html` is the same stack reimplemented in JavaScript, a
+static page with no build step. Chrome and Edge only: it uses
+[Web Serial](https://developer.mozilla.org/docs/Web/API/Web_Serial_API)
 to open the buds' SPP virtual COM port directly - Windows exposes paired
 RFCOMM devices as COM ports, Linux as `/dev/rfcomm*`, macOS as `/dev/cu.*`.
+
+The page uses ES modules, which browsers refuse to load over `file://`, so
+serve the directory first:
+
+```bash
+python3 -m http.server 8000 -d tools/webui   # then open http://localhost:8000
+```
+
+(Any static host works the same way; nothing leaves the browser.)
 
 Sections map 1:1 onto the CLI: connect, info/auth, get/set for the same
 SETTINGS table, flash dump, OTA flash, plus the file-side tools (`cfw.py`
