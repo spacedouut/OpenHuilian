@@ -67,6 +67,11 @@ export class Link {
   _take55() {
     const i = this.buf.indexOf(0x55);
     if (i < 0) return null;
+    if (this.buf.length === i + 1) {
+      // read ended exactly at 0x55: keep it until the next byte arrives
+      if (i > 0) this.buf = this.buf.slice(i);
+      return null;
+    }
     if (this.buf[i + 1] !== 0xAA) {
       this.buf = this.buf.slice(i + 1);
       return null;
