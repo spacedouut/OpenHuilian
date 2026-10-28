@@ -13,6 +13,7 @@ strictly read-only; the rest operate on files (or, for `pull_ota.py`, on the Sta
 | `build_up.py` | Parse the partition index of a raw flash dump, verify every partition CRC, and wrap `flash[0:end-of-OTAP]` in a `CONFIG` header to produce a `.up`. Refuses to write if any CRC mismatches (`--force` overrides). Optional chip-name argument (unknown for 377H3). | [16](../docs/16-live-flash-dump.md) |
 | `h3pro_elf.py` | Wrap the H3Pro FIRM / OTAP / bootloader from a `.up` or raw dump into ARM ELFs at their real load addresses for Ghidra. Checks CRCs first. | [17](../docs/17-firmware-internals.md) |
 | `hl` + `huilian/` | Native Python `C0`/OTA client for live buds over a serial (RFCOMM/SPP) port: `info`, `auth`, `get`/`set`, `read` (flash dump without Frida), `ota`, `tone`, `patch`. Needs `pyserial`. | [20](../docs/20-hl-cli.md) |
+| `webui/` | Static page (`index.html`, ES modules, no build step) that does the same over Web Serial — Chrome/Edge only. Connect to the buds' SPP virtual COM port, run auth/info/settings/flash dump/patch/tone replace/OTA all client-side. `selftest.mjs` checks byte-parity with `huilian/proto.py` + `cfw.py` + `tone_tool.py`. | [20](../docs/20-hl-cli.md) |
 | `upfmt.py` | Shared helpers the tools above import: `crc16`, the partition-index parser (`index_offset`, `parse_index`), `MAGIC` / `BODY`. Not a CLI. | [04](../docs/04-up-format.md) |
 
 Quick start on a catalog image:
