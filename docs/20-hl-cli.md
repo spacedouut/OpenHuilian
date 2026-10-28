@@ -64,3 +64,21 @@ Nothing in `hl` has been run against real buds yet: the framing and transforms
 come from the firmware and the app, not a captured session. First-time order of
 operations on hardware: `info`, then `auth`, then a small `read`, then anything
 that writes.
+
+## The WebUI
+
+`tools/webui/index.html` is the same stack reimplemented in JavaScript, served
+as a static page (open the file or any static host, no build step). Chrome and
+Edge only: it uses [Web Serial](https://developer.mozilla.org/docs/Web/API/Web_Serial_API)
+to open the buds' SPP virtual COM port directly - Windows exposes paired
+RFCOMM devices as COM ports, Linux as `/dev/rfcomm*`, macOS as `/dev/cu.*`.
+
+Sections map 1:1 onto the CLI: connect, info/auth, get/set for the same
+SETTINGS table, flash dump, OTA flash, plus the file-side tools (`cfw.py`
+patching and `tone_tool.py` replacement) running client-side on a `.up` you
+pick. `node tools/webui/selftest.mjs` replays fixed vectors to confirm the JS
+produces byte-identical frames to `huilian/proto.py`.
+
+Same caveat: hardware-unverified. The OTA section refuses to write the index
+until every payload chunk is acknowledged, and `side=both` re-picks the port
+between ears because the bud reboots after finalize.
