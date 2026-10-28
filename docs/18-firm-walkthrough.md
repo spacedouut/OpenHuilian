@@ -20,7 +20,7 @@ point into ROM at `0xB4F5` and `0xB5A9`, PendSV into RAM at `0x827591`). Tasks a
 | `bt audio server`, `amixer`, `tplayer`, `ain`, `audio ui` | 6 / 9 / 9 / 7 / 1 | A2DP/SCO sink, mixer, prompt player, mic input, UI sounds |
 | `talk detect` | 8 | voice activity (talk-through / sidetone gating) |
 | `tws process`, `tws_manager_task`, `tws_manager_mp_task` | 8 / 1 / 1 | ear-to-ear link and role management |
-| `task motion`, `taskB motion` | 10 / 3 | LSM6DSOX IMU (head tracking, tap, motion wake) |
+| `task motion`, `taskB motion` | 10 / 3 | IMU FIFO reader and sensor fusion (head tracking, tap, motion wake) |
 | `plxc_proximity_task`, `plxc_scan_task` | 2 / 1 | in-ear proximity sensor |
 | `sensor-hr` | 1 | VC30Fx heart-rate sensor |
 | `task siri` | 6 | voice assistant trigger (`AT+BVRA`, `AT+APLSIRI`) |
@@ -243,7 +243,29 @@ Which identity is advertised is picked at runtime by the air layer, not by a bui
 
 The layer has its own timers (`air fit timer`, `air motion timer`, `air heartrate tx timer`,
 `air resp timer`, `ble air adv open/close timer`) and feeds head-tracking frames
-(`devmotion6`, `H2HTransformation`) from the IMU task and heart rate from `sensor-hr`. HFP side strings are
+(`devmotion6`, `H2HTransformation`) from the IMU task and heart rate from `sensor-hr`.
+
+### Head tracking pipeline
+
+1. IMU setup (`FUN_00c589bc` table at `0xC34450`, `FUN_00c58bd4`, `FUN_00c5896c`): accel and gyro
+   at 240 Hz (`CTRL1` = `0x27`, `CTRL2` = `0x07`), ±2 g and 500 dps, FIFO continuous with both
+   batched at 240 Hz, watermark 2 samples, FIFO interrupts on INT1.
+2. `task motion` (`FUN_00c59298`) wakes on the interrupt and `FUN_00c58a5c` pulls up to 10 FIFO
+   entries, one tag read plus one 6-byte read over I2C per entry, and queues them for
+   `taskB motion`.
+3. `taskB motion` runs `FUN_00c68924` per entry but only steps the orientation filter every 4th
+   entry, so the pose updates at about 60 Hz. The filter is in-house (no vendor library is linked,
+   the plugin slot at `0x82db5c` is empty): per-axis 100 Hz and 10 Hz low-pass stages
+   (`FUN_00c6739c`), a motion-level classifier (`FUN_00c68600`) that picks the blend factor, and an
+   exponential smoother (`FUN_00c68284`, base factor 0.1). Output is three Euler angles stored as
+   integer degrees at `0x833d1c`.
+4. `air motion tx timer` fires every 40 ms (`FUN_00cab53c`, period `0x28`). Its callback
+   `FUN_00caaab0` converts the integer angles to a quaternion, derives angular velocity from the
+   difference since the previous tick, stamps it with the BT clock and ships it as the `devmotion6`
+   HID report. On the slave bud the angles also go to the master every 200 ms (peer opcode `0x4B`).
+
+So the phone sees 25 reports a second built from 1-degree-quantised angles that went through a
+10 Hz low-pass and a 0.1 smoother. The sampling and smoothing constants are all literals in FIRM. HFP side strings are
 `AT+XAPL=0042-0887-0100,2`, `AT+IPHONEACCEV=1,1,8`, `AT+APLSIRI`, `AT+BAC=1,2` (CVSD and mSBC),
 `AT+BRSF=157` / `159`.
 
@@ -258,8 +280,9 @@ The layer has its own timers (`air fit timer`, `air motion timer`, `air heartrat
 | `0x40097000` | audio I2S / TDM | strings `6wire mode`, `bclk1 slot num`, `bclk1 slot width`, `LR1 pol`, `gpio cfg sd7` |
 | `0xE000Exxx` | Cortex-M SCB / NVIC | |
 
-Sensors are an LSM6DSOX IMU (strings `6dsox`), a VC30Fx optical heart-rate sensor (`vc30fx_*` NV
-keys, `HeartRateService`), PLXC proximity for in-ear detection.
+Sensors are an ST LSM6DSV16BX IMU (I2C address `0x6A`, the probe wants `WHO_AM_I` = `0x71`, the
+`6dsox` string is just the driver's name), a VC30Fx optical heart-rate sensor (`vc30fx_*` NV keys,
+`HeartRateService`), PLXC proximity for in-ear detection.
 
 Factory audio tuning goes over AT. `AT+MICTEST=`, `AT+ANCTEST=`, `AT+ANCFFG=` / `ANCFBG=` / `ANCAG=` /
 `ANCDG=` set feed-forward, feedback, ambient and a fourth ANC gain live, which is the hook behind
