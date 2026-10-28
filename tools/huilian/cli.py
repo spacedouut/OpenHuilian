@@ -66,17 +66,17 @@ def _payload(r):
 def cmd_auth(ser, _a):
     print("C0 01 challenge ...")
     ch = proto.challenge1()
-    r = link.c0(ser, 0x01, ch)
+    r = link.c0(ser, 0x01, b"\x3d" + ch)
     if r is None:
         sys.exit("no reply to C0 01 - unit is not authorized (authorization_code missing/wrong)")
     print("  reply:", _fmt(r))
     print("C0 02 verify ...")
     ch2 = proto.challenge2()
-    r = link.c0(ser, 0x02, ch2)
+    r = link.c0(ser, 0x02, b"\x3d" + ch2)
     if r is None:
         sys.exit("no reply to C0 02")
     p = _payload(r)
-    ok = p is not None and p == proto.c002_reply(ch2)
+    ok = p is not None and p == proto.c002_reply(b"\xc0\x02\x3d" + ch2)
     print("  reply:", _fmt(r))
     print("  reply matches expected transform:", ok)
     print("authorized" if ok else "answered, but response did not verify")
@@ -115,13 +115,16 @@ def cmd_set(ser, a):
             sys.exit("bt_name max 31 bytes")
     else:
         v = bytes([int(a.value, 0)])
-    r = link.c0(ser, wcmd, v)
+    # app write frames carry a one-byte payload length: C06E0101 = cmd 6E len 1 val 1
+    r = link.c0(ser, wcmd, bytes([len(v)]) + v)
     print(f"{a.name} <- {_fmt(_payload(r))}   ({hint})")
 
 
 def cmd_read(ser, a):
     addr = int(a.addr, 0)
     total = int(a.length, 0)
+    if not 1 <= a.chunk <= 200:
+        sys.exit("--chunk must be 1..200 (the device reply cap)")
     data = link.read_flash_range(ser, addr, total, chunk=a.chunk)
     if data is None:
         sys.exit("read failed partway (see log)")
@@ -132,7 +135,16 @@ def cmd_read(ser, a):
 
 
 def _up_payloads(up_path):
-    """From a .up file: (payload_region_bytes, firmware_addr, index_bytes, index_addr)."""
+    """From a .up file: (payload, fw_addr, index, io, declared, last_end).
+
+    Mirrors BtUtils.getUploadContent / packCmd83Data:
+      - payload  = body[FIRM_addr : OTAP_addr]   (OTAP itself is never written)
+      - index    = body[io : io + 16*(count+1)]  (16B header + 16B per entry)
+      - declared = body[io : OTAP_addr]          (index + gap + payload, in flash
+        order - this is the region the updater CRC16-verifies afterwards)
+    If the index has no OTAP entry, the region ends at the last partition whose
+    bytes are present in the file.
+    """
     sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
     from upfmt import MAGIC, BODY, index_offset, parse_index
     data = open(up_path, "rb").read()
@@ -141,22 +153,30 @@ def _up_payloads(up_path):
     body = data[BODY:]
     io = index_offset(body)
     ver, entries = parse_index(body, io)
-    # only partitions whose bytes are actually stored in the image get written
     present = [e for e in entries if e[1] + e[2] <= len(body)]
+    if not present:
+        sys.exit("no partition in the index is backed by bytes in this file")
     fw_addr = min(e[1] for e in present)
-    last_end = max(e[1] + e[2] for e in present)
+    otap = [e for e in entries if e[0].rstrip(b"\0 ") == b"OTAP" and e[1] <= len(body)]
+    last_end = otap[0][1] if otap else max(e[1] + e[2] for e in present)
+    if last_end <= fw_addr:
+        sys.exit("payload region is empty (OTAP absent and nothing else stored)")
     payload = body[fw_addr:last_end]
-    idx_len = 8 + 16 * len(entries)
-    index = body[io:io + idx_len]
-    return payload, fw_addr, index, io, entries, last_end
+    index = body[io:io + 16 * (len(entries) + 1)]
+    declared = body[io:last_end]
+    return payload, fw_addr, index, io, declared, last_end
 
 
 def cmd_ota(ser, a):
-    payload, fw_addr, index, io, entries, last_end = _up_payloads(a.file)
+    payload, fw_addr, index, io, declared, last_end = _up_payloads(a.file)
     print(f"payload region 0x{fw_addr:x}..0x{last_end:x} ({len(payload)} bytes), "
-          f"index @{io:#x} ({len(index)} bytes)")
+          f"index @{io:#x} ({len(index)} bytes), declared {len(declared)} bytes")
     sides = [SIDES["l"], SIDES["r"]] if a.side == "both" else [SIDES[a.side]]
-    for side in sides:
+    for n, side in enumerate(sides):
+        if n:
+            print("waiting for the bud to come back ...")
+            ser.close()
+            ser = _reopen(a)
         print(f"--- side {side:#x} ---")
         for attempt in range(6):
             r = link.ota_frame(ser, proto.ota_enter(side))
@@ -166,9 +186,13 @@ def cmd_ota(ser, a):
         else:
             sys.exit("bud never answered 55AA80")
         r = link.ota_frame(ser, proto.ota_prepare(side))
-        print("prepare(81):", r.hex() if r else "<no reply>")
-        r = link.ota_frame(ser, proto.ota_declare(payload + index, side))
-        print("declare(82):", r.hex() if r else "<no reply>")
+        if not r:
+            sys.exit("no reply to prepare (55AA81)")
+        print("prepare(81):", r.hex())
+        r = link.ota_frame(ser, proto.ota_declare(declared, side))
+        if not r:
+            sys.exit("no reply to declare (55AA82)")
+        print("declare(82):", r.hex())
         pos = 0
         while pos < len(payload):
             chunk = payload[pos:pos + 512]
@@ -179,10 +203,23 @@ def cmd_ota(ser, a):
             if pos % 8192 < 512:
                 print(f"  0x{pos:x}/{len(payload):x}")
         r = link.ota_frame(ser, proto.ota_write(io, index), timeout=a.timeout)
-        print("index write:", r.hex() if r else "<no reply>")
+        if not r:
+            sys.exit("index write got no reply - aborting before finalize")
+        print("index write:", r.hex())
         r = link.ota_frame(ser, proto.ota_finalize(side), timeout=a.timeout)
         print("finalize(84):", r.hex() if r else "<link dropped / rebooting>")
     print("done. Buds reboot on their own.")
+
+
+def _reopen(a, tries=20, delay=1.0):
+    """The bud reboots on 55AA84 and drops SPP; poll the port until it is back."""
+    for _ in range(tries):
+        try:
+            return link.open_link(a.port, a.baud)
+        except Exception:
+            time.sleep(delay)
+    sys.exit("bud did not come back after OTA reboot - re-pair it and rerun "
+             "the remaining side")
 
 
 def cmd_cmd(ser, a):
@@ -223,7 +260,8 @@ def main():
 
     r = sub.add_parser("read")
     r.add_argument("addr"); r.add_argument("length"); r.add_argument("out")
-    r.add_argument("--chunk", type=int, default=100)
+    r.add_argument("--chunk", type=int, default=100,
+                   help="bytes per C0 83 read (1..200, device reply cap)")
     r.set_defaults(f=cmd_read)
 
     o = sub.add_parser("ota")
