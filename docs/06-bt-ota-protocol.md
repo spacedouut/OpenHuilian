@@ -47,7 +47,8 @@ app → buds  55AA81 <side>           prepare / erase
 app → buds  55AA82 <side> crc len   declare payload
 app → buds  55AA83 … × N            512-byte writes, absolute addresses
 app → buds  55AA83 index            partition index
-app → buds  55AA84 <side>           finalize → bud reboots, link drops
+app → buds  55AA84 <side>           finalize: reply says whether the CRC matched
+app → buds  55AA04 <side>           clear the OTA flag and reboot, link drops
         (wait for reconnect)
         repeat for the other ear (11 → 22)
 step 3 = success
@@ -56,6 +57,31 @@ step 3 = success
 Per-ear updates are **serial** — that's the two progress bars in the app. Before all of this the
 app reads the current EQ2P/TONE off the device (`C0 83`) and, when flashing from a local file,
 splices them into the image so user settings survive ([02](02-starfun-app.md), local-file path).
+
+## What the region and CRC actually are
+
+`getUploadContent` builds two buffers. The data frames carry `.up` body bytes from FIRM's address
+(`0x4000`) up to OTAP's address, in 512-byte chunks, then one more frame with just the index
+(`(count+1)*16` bytes) at `0x3000`. The `82` CRC and length cover body `0x3000` up to OTAP, so
+they include the rest of the index page (zeros in every catalog image) as well. On the H3Pro that's
+CRC16 over `0xCF000` bytes. OTAP, PSMP and anything below `0x3000` are never sent.
+
+## Replies (from OTAP `FUN_0080e770`)
+
+OTAP answers every frame with `55 AA <cmd> <side> <len> <payload> <crc8>`, where `<side>` is the
+bud that is answering (`11`/`22`). It ignores the side byte in requests, so it flashes whichever bud
+holds the link.
+
+| Request | Reply payload |
+|---|---|
+| `80`, `81`, `82`, `04` | `00` |
+| `83` | `00 <addr LE 4> <data_len LE 4>`, echoing the frame. A repeat of the last address is acked again without a second write, so resending after a timeout is safe |
+| `84` | `00` if the CRC matched and the new index was committed, nonzero if it put the old index back |
+
+OTAP counts written bytes (the index frame counts as `0x1000`) and runs the CRC check once the
+count reaches the `82` total. On `04` it clears the boot-to-OTAP flag and reboots
+([17](17-firmware-internals.md)). Sending `04` after a failed `84` would boot a half-written FIRM,
+so don't.
 
 ## Validation the device can perform (from what it is sent)
 
@@ -72,4 +98,8 @@ first passing the command-channel challenge/response (`verificationCmd`) hasn't 
 * Send FIRM and friends first, index last, exactly as the app does.
 * The app expects a reboot/disconnect after `84` and then reconnects for the other side.
 * A one-line patch exposing `SettingMoreActivity.chooseFile()` gives a local-file flasher using
-  this exact transport, on the app that already knows how to talk to the buds.
+  this exact transport, on the app that already knows how to talk to the buds. It still splices the
+  bud's current EQ2P/TONE into your file, though.
+* [`tools/flashota.py`](../tools/flashota.py) sends the same frames through StarFun's socket via
+  Frida, without the splice, one bud per run, with the safety checks listed in its docstring. It
+  hasn't been run against a bud yet.
