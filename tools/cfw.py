@@ -152,10 +152,10 @@ def write_up(out, hdr, flash, chip=None):
     struct.pack_into("<I", hdr, 0x10, len(flash))
     struct.pack_into("<H", hdr, 0x14, crc16(flash))
     if chip:
-        if len(chip.encode()) > 0xFE - 0x16:
+        name = chip.encode()
+        if len(name) > 0xFE - 0x16:
             sys.exit("chip name does not fit in the CONFIG header")
-        hdr[0x16:0xFE] = b"\0" * (0xFE - 0x16)
-        hdr[0x16:0x16 + len(chip)] = chip.encode()
+        hdr[0x16:0xFE] = name + b"\0" * (0xFE - 0x16 - len(name))
     Path(out).write_bytes(bytes(hdr) + bytes(flash))
 
 
