@@ -66,6 +66,9 @@ Whether OTA frames are accepted without passing this handshake hasn't been teste
 | `C0 83` | flash read — app uses it to pull EQ2P/TONE off the buds before an OTA |
 | `55AA 80–84` | OTA frames — see [06](06-bt-ota-protocol.md) |
 
+The firmware side of the whole `C0` set, about sixty commands, is tabled in
+[18](18-firm-walkthrough.md).
+
 ## Data model hints
 
 * `Eq2ItemType` reserves page IDs **51–57** for ANC / talk-through filter pages (never populated
