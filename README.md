@@ -31,6 +31,7 @@ Start at **[docs/00-start-here.md](docs/00-start-here.md)**. Each page stands on
 | 17 | [Firmware internals](docs/17-firmware-internals.md) | Memory map, boot flow, what the OTA updater checks (just a CRC) |
 | 18 | [FIRM walkthrough](docs/18-firm-walkthrough.md) | Event dispatcher, full `C0` command table, app auth handshake, NV keys, tasks, AirPods identity table |
 | 19 | [Patching your own firmware](docs/19-cfw-patching.md) | `cfw.py`, version-pinned patch files with knobs, first patch: faster head tracking |
+| 20 | [hl: a native CLI for the buds](docs/20-hl-cli.md) | C0 + 55AA over plain RFCOMM, no StarFun/Frida: info, settings, flash dump, OTA |
 
 ## Repo layout
 
