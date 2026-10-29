@@ -46,15 +46,18 @@ def connect(port):
             except Exception: pass
         ser = link.open_link(port)
 
+def _hx(r):
+    return r.hex() if r else None
+
 def state():
     with lock:
         out = {"settings":{}, "reads":{}}
         for name,(rc,wc,kind,_) in SETTINGS.items():
             if kind == "wonly": continue
-            try: out["settings"][name] = link.c0(ser, rc)
-            except Exception as e: out["settings"][name] = None
+            try: out["settings"][name] = _hx(link.c0(ser, rc))
+            except Exception: out["settings"][name] = None
         for name,rc in READS.items():
-            try: out["reads"][name] = link.c0(ser, rc)
+            try: out["reads"][name] = _hx(link.c0(ser, rc))
             except Exception: out["reads"][name] = None
     return out
 
