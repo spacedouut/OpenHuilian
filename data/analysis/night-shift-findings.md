@@ -112,12 +112,12 @@ is 0x1720/0x1724. Both may be true (direct vs literal-pool indirect calls).
   factory/zero-OTA test image the app can push. Analysis pending.
 - `assets/demo.eq2` (608 B) is a SLEQ v2 1-profile EQ table (the app's demo EQ).
 
-## 9. OTAP-mode C0 command set (new, corrected after the hardware run)
+## 9. OTAP-mode C0 command set (new, corrected against the earlier hardware run)
 
 OTAP's own C0 dispatcher `FUN_00810914` (1,196 B) CONTAINS handlers for: 01/02 (full app
 auth), 04 (model), 05 (version), 06 (BT addr), 07 (device_id), 09 (battery), 10 (side), 11,
-12 (link state), 13, 50/51/53/54, 60/61, 63/64, 83 (flash read, 200 B cap). But in the
-hardware run the morning after, stuck buds answered only FOUR of those - the handlers are
+12 (link state), 13, 50/51/53/54, 60/61, 63/64, 83 (flash read, 200 B cap). But in the earlier
+hardware run (before this analysis - the same one behind docs/20), stuck buds answered only FOUR of those - the handlers are
 gated (auth flag + a 0x40 channel argument for 01/02, role/peer-state checks elsewhere).
 Recovery tooling: assume the four observed replies + C0 83 reads, nothing more. Also: the
 55AA exit step `04` is MANDATORY - skipping it after 84 leaves both buds in the updater

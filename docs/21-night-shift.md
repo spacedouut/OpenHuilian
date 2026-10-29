@@ -132,7 +132,7 @@ reporting, PMU/VBUS events, the PSM/NV store (`no enough memory for psm write`,
 
 That makes it the vendor's recovery/maintenance image, and the app distributes it. Three
 reality checks before anyone treats it as a safety net (one of them learned the hard way
-on hardware the morning after this analysis):
+on hardware BEFORE this analysis - the same run behind [20](20-hl-cli.md)'s stuck-in-the-updater notes):
 
 1. **The `55AA` transport is the full dance, not a file push.** `80` enter → `81` prepare
    (erase) → `82` declare (CRC + length) → `83` data ×N (512 B writes, index last) →
@@ -205,8 +205,8 @@ While a bud is sitting in OTAP it also runs its own `C0` dispatcher, `FUN_008109
 `11`, `12` (link state), `13`, `50`/`51`/`53`/`54`, `60`/`61`, `63`/`64`, and `83`
 (flash read, 200-byte cap, same as FIRM).
 
-**Code presence is not the same as replies.** In the hardware run the morning after this
-analysis, buds stuck in OTAP answered only four of those. The gates are visible in the
+**Code presence is not the same as replies.** In the earlier hardware run (before this
+analysis), buds stuck in OTAP answered only four of those. The gates are visible in the
 dispatcher: `01` requires the auth-enabled flag (`*PTR_DAT_00810ce0`) AND a `0x40`
 channel/type argument on the frame, `02` requires the same `0x40` argument plus its own
 checks, and several read handlers have role/peer-state branches. So treat the list above
