@@ -174,10 +174,23 @@ The 2022 fit30 image and the 2026 H3Pro image carry the **same bootloader bytes*
 vendor has not touched it in four years, and the flash-size class is data, not code. For
 CFW: keep those three bytes consistent with your flash class when moving images around.
 
-## OTAP audit (confirmation)
+## OTAP audit (confirmation + the OTAP-mode C0 command set)
 
 The OTAP state machine `FUN_0080e770` handles exactly `80`, `81`, `82`, `83`, `84`, `04` -
-no hidden commands. Matches [17](17-firmware-internals.md).
+no hidden updater commands. Matches [17](17-firmware-internals.md).
+
+While a bud is sitting in OTAP it also runs its own `C0` dispatcher, `FUN_00810914`
+(1,196 bytes) - bigger than the empirically observed subset in [20](20-hl-cli.md)
+(`04/05/09/51/83`). From the code it answers:
+
+`01`/`02` (the full app auth handshake), `04` (model), `05` (version, 11 chars),
+`06` (BT address), `07` (`device_id`), `09` (battery 3 bytes), `10` (side `11`/`22`),
+`11`, `12` (link state), `13`, `50`/`51`/`53`/`54`, `60`/`61`, `63`/`64`, and `83`
+(flash read, 200-byte cap, same as FIRM).
+
+So recovery tooling talking to a bud stuck in the updater can authenticate, read the flash
+(`C0 83`), read battery and ids - everything except the settings writes and the AAP layer.
+`hl` already does most of this; the command list above is the complete OTAP-mode surface.
 
 ## Function-recovery note
 
