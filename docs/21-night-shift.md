@@ -175,6 +175,41 @@ callgraph + ROM surface), `oh_fixfuncs.py` (function recovery), `oh_mkfunc.py` (
 decompile at explicit addresses), `romscan.py` (capstone BL sweep), `catalog_sweep.py`
 (per-image reports).
 
+## Event IDs, module map, and AAP entry points (new specifics)
+
+The main dispatcher `FUN_00c4fbc0` compares event ids held in literal pools; resolving them
+gives the concrete id list it handles (beyond the families in [18](18-firm-walkthrough.md)):
+`0x80000019/0x80000020/0x80000016/0x80000017` (BT link), `0x80010016/0x80010017`,
+`0x8100003a`, `0xb0000010/0xb0000013`, `0xb2000001/2/3`, `0xc0300021`, `0xc1000001/4`,
+`0xd000000b/1b/2b/2e`, `0xd1000001`, `0xd2000001/2/7/8/9/e`, `0xf2000011/17`,
+`0xf600000e/0f/46`, `0xf7000003`. Notable new ones: `0xF600000E` (a second enter-OTA-ish
+app event) and the `0xD20000xx` TWS-link family.
+
+Module registrations (via `FUN_00c9e66c(handler, module)`, raw-BL scan - the decompiler only
+shows 3 of the 8): module 1 (BT host, registered twice), 2 (NV/PSM), 3, 4 (air/AAP,
+handler `FUN_00c54da8`), 5, 6 (audio), 7 (SPP/UART transport, handler `FUN_00c53260`).
+`FUN_00827564` and `FUN_00c2ab6c` are two dispatch APIs over the same 9-entry table at
+RAM `0x831E7C`.
+
+Module 4's handler `FUN_00c54da8` is the air layer's internal service dispatch (~40 types:
+state getters, NV get/set for `air_link`/`air_adv_key`/`air_pair`/`air_reset`/`air_clean`/
+`air_phone_addr`/`air_en`/serials, battery, peer relays). The AAP **wire** opcode switch is
+still unlocated - the L2CAP event dispatcher for PSMs `0x1001`/`0x1007`/`0x1F` is
+`FUN_00ca8c04` (cases 0-0xB: connect ind/conf, disconnect, data paths), which is where a
+dedicated AAP pass should start.
+
+SENC (not EQ2P) is what `FUN_00c65a10` applies: a second partition reader (magic check
+against `SENC`) walks pages and feeds 8-byte records into it; its switch on the record's
+first byte covers kinds `0x15`-`0x1C+` (the call-mic ENC pages 21-28 from [08](08-eq2p-senc.md)),
+with a `piVar5[3] == 1` mode check selecting between two destination layouts (single- vs
+dual-mic parameter sets). Records with kind >= 0xFF are skipped.
+
+## Verified patch offsets
+
+The shipped head-tracking patch (`patches/2607061716/head-tracking.json`) re-checked against
+the raw image: `tx_ms` @ FIRM+0xA7550 = 40, `decimate` @ +0x64A1A = 3, `alpha` @ +0x64C74 =
+0.1 - all three literals confirmed byte-exact.
+
 ## What this changes for CFW
 
 * The AES finding means the Apple Continuity layer is *cryptographically* alive: spoofing the
