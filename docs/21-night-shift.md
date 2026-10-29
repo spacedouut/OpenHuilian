@@ -276,6 +276,20 @@ first byte covers kinds `0x15`-`0x1C+` (the call-mic ENC pages 21-28 from [08](0
 with a `piVar5[3] == 1` mode check selecting between two destination layouts (single- vs
 dual-mic parameter sets). Records with kind >= 0xFF are skipped.
 
+## Compiled-in DSP parameter tables (patchable audio constants)
+
+The audio-pipeline init (`FUN_00c521f0` → `FUN_00c604dc`) wires the `EQ2P`/`SENC` partition
+addresses into the audio context, alongside several **compiled-in parameter tables** in FIRM's
+rodata around `0xC33BE8`-`0xC33D9C`:
+
+- `0xC33BE8` / `0xC33C04` / `0xC33C8C` / `0xC33D14`: threshold ladders `100/90/85/80/75…`
+  (reads as DRC/compressor threshold sets, some with float mixes like -9.0),
+- `0xC33D9C`: a filter/DSP config block (`02 00 06 00 01` header, then floats
+  15.0, 0.98, 0.2, 0.1, 0.01, 0.3, 0.001, -15.0 - gains and smoothing factors).
+
+These are the same class of tunable as the head-tracking patch knobs ([19](19-cfw-patching.md)):
+byte-exact, version-pinned patch targets for sound tuning without touching EQ2P.
+
 ## Verified patch offsets
 
 The shipped head-tracking patch (`patches/2607061716/head-tracking.json`) re-checked against
