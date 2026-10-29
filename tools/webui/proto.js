@@ -100,6 +100,9 @@ const ctlSide = (cmd, side) => Uint8Array.from([0x55, 0xAA, cmd, side, 0x00]);
 export const otaEnter = side => ctlSide(0x80, side);
 export const otaPrepare = side => ctlSide(0x81, side);
 export const otaFinalize = side => ctlSide(0x84, side);
+// 55AA 04: clear the boot-to-OTAP flag and reboot into FIRM. Required after a
+// 00 finalize; without it both buds stay in the updater.
+export const otaLeave = side => ctlSide(0x04, side);
 
 export function otaDeclare(payload, side = 0x33) {
   const f = [0x55, 0xAA, 0x82, side, 0x08];

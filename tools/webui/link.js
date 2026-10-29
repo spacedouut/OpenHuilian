@@ -173,6 +173,16 @@ export class Link {
     return r && r[2] === want ? r : null;
   }
 
+  // Same, parsed: OTAP answers `55 AA cmd <answering side> len payload crc8`,
+  // payload[0] is the status (0 = ok). Null on timeout.
+  async ota(frame, timeout = 3000) {
+    const r = await this.otaFrame(frame, timeout);
+    if (!r) return null;
+    const payload = r.slice(5, r.length - 1);
+    return { raw: r, cmd: r[2], side: r[3], payload, status: payload.length ? payload[0] : null,
+             ok: payload.length > 0 && payload[0] === 0 };
+  }
+
   async close() {
     try { await this.reader.cancel(); } catch {}
     try { this.reader.releaseLock(); } catch {}

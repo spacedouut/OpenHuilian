@@ -119,6 +119,12 @@ def ota_finalize(side=0x33):
     return bytes([0x55, 0xAA, 0x84, side, 0x00])
 
 
+def ota_leave(side=0x33):
+    """55AA 04: clear the boot-to-OTAP flag and reboot into FIRM. Required
+    after a `00` finalize; without it both buds stay in the updater."""
+    return bytes([0x55, 0xAA, 0x04, side, 0x00])
+
+
 def ota_declare(payload, side=0x33):
     """55AA 82: declares the CRC16 (CCITT-FALSE, padded to 4B) and length of the
     whole payload region about to be written."""
