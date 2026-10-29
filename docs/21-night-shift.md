@@ -70,15 +70,13 @@ constants anywhere; the CRC32 table at `0xC451F4` is the standard reflected one 
 
 The EQ2P reader is `FUN_00c690e8(profile, kind)` at FIRM `0xC690E8`: it reads the `EQ2P`
 partition, walks the per-profile record-count table, and copies records whose 8-byte record
-`kind` byte matches into a RAM buffer. It has **exactly one call site** (boot init
-`FUN_00c51578`) and it asks for **profile 0, kind 0 only**. Nothing in this build ever
-requests kinds 51-57 - the ANC/talk-through pages the app's `Eq2ItemType` reserves are dead
-weight for the H3Pro. The filters really are compiled in ([11](11-anc-transparency.md)), and
-adding ANC data pages to EQ2P would do nothing on this build.
-
-The other six profiles exist for the `C0 90` EQ-block command and the preset switch
-(`eq_preset_cur_num`), which serve from RAM structures filled elsewhere - the boot path only
-pre-loads profile 0.
+`kind` byte matches into a RAM buffer. It has **three direct call sites** (raw-BL verified):
+boot init `FUN_00c51578` (profile 0), the audio init `FUN_00c521f0` region (profile from a
+config pointer), and the preset-switch handler `FUN_00c5c6b0` (profile = runtime value).
+**All three pass kind 0** - nothing in this build ever requests kinds 51-57 - the ANC/talk-through
+pages the app's `Eq2ItemType` reserves are dead weight for the H3Pro. The filters really are
+compiled in ([11](11-anc-transparency.md)), and adding ANC data pages to EQ2P would do nothing
+on this build.
 
 ## StarFun native lib: `encryptData` confirmed (open item closed)
 

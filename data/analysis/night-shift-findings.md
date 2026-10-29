@@ -63,10 +63,11 @@ ROM services from patched code the same way FIRM does.
 
 The EQ2P reader is `FUN_00c690e8(profile, kind)` (FIRM 0xC690E8): reads the EQ2P partition,
 walks the profile record-count table, and copies records whose 8-byte record kind byte
-matches `kind` into a RAM buffer. Exactly ONE call site exists (boot init `FUN_00c51578`):
-`FUN_00c690e8(0, 0)` - **profile 0, kind 0 only**. Nothing in this build requests kinds
-51-57 (the ANC/talk-through pages the app reserves). So: shipping ANC filter data in EQ2P
-pages 51-57 would be dead weight for this build - the filters really are compiled in.
+matches `kind` into a RAM buffer. THREE direct call sites (raw-BL verified): boot init
+`FUN_00c51578` (profile 0), audio init `FUN_00c521f0` region, preset-switch handler
+`FUN_00c5c6b0` (profile = runtime value). ALL pass kind 0 - nothing in this build requests
+kinds 51-57 (the ANC/talk-through pages the app reserves). So: shipping ANC filter data in
+EQ2P pages 51-57 would be dead weight for this build - the filters really are compiled in.
 
 ## 5. Command surface
 
