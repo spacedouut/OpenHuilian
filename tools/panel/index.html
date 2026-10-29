@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>panel · huilian buds</title>
+<style>
+  :root { --bg:#0a0a0b; --fg:#e8e8ea; --dim:#8b8b90; --acc:#ff4d2e; --card:#141416; --line:#26262a; --ok:#4dc46a; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--fg); font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:18px; font-weight:600; } h1 span { color:var(--acc); }
+  h2 { font-size:12px; color:var(--dim); text-transform:uppercase; letter-spacing:.12em; margin:26px 0 10px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:10px; }
+  button { background:var(--acc); border:0; color:#fff; font:inherit; padding:8px 14px; border-radius:8px; cursor:pointer; }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--fg); }
+  button:disabled { opacity:.4; cursor:default; }
+  select,input { background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:inherit; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  .kv { display:grid; grid-template-columns:170px 1fr; gap:2px 12px; }
+  .kv b { color:var(--dim); font-weight:400; }
+  .s { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:6px 0; border-bottom:1px solid var(--line); }
+  .s:last-child { border-bottom:0; }
+  .s small { color:var(--dim); display:block; }
+  #log { white-space:pre-wrap; font-size:12px; color:var(--dim); max-height:240px; overflow:auto; margin-top:10px; }
+  .ok { color:var(--ok); } .warn { color:var(--acc); }
+  .pill { display:inline-block; padding:2px 8px; border:1px solid var(--line); border-radius:99px; font-size:11px; color:var(--dim); }
+</style>
+</head>
+<body>
+<main>
+  <h1>panel <span>·</span> huilian buds</h1>
+  <p style="color:var(--dim);font-size:12px;margin-top:4px">C0 protocol over the server's RFCOMM link. Phone Bluetooth must be off.</p>
+
+  <h2>link</h2>
+  <div class="card">
+    <div class="row">
+      <input id="port" placeholder="AA:BB:CC:DD:EE:FF or /dev/rfcomm0" style="flex:1;min-width:260px">
+      <button id="connect">connect</button>
+      <span id="status" class="pill">disconnected</span>
+    </div>
+  </div>
+
+  <h2>status</h2>
+  <div class="card"><div id="reads" class="kv"><b>—</b></div>
+    <div class="row"><button class="ghost" id="refresh">refresh</button>
+    <label style="color:var(--dim);font-size:12px"><input type="checkbox" id="auto"> auto every 5s</label></div>
+  </div>
+
+  <h2>settings</h2>
+  <div class="card" id="settings"></div>
+
+  <h2>raw console</h2>
+  <div class="card">
+    <div class="row">
+      <input id="rawcmd" placeholder="cmd hex (59)" style="width:110px">
+      <input id="rawpay" placeholder="payload hex (01)" style="width:180px">
+      <button id="rawsend" class="ghost">send</button>
+    </div>
+    <div id="log"></div>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const log = (m, cls) => { const d=document.createElement('div'); if(cls)d.className=cls; d.textContent=m; $('log').appendChild(d); $('log').scrollTop=1e9; };
+const hex = b => b == null ? '<no reply>' : b;
+
+const SETTING_DEFS = [
+  ['anc_mode','select',{0:'off',1:'ANC',2:'transparency',5:'adaptive'}],
+  ['ear_detect','bool'],['game_mode','bool'],['voice_wake','bool'],
+  ['dialog_op','select',{1:'on',2:'off'}],
+  ['game_check','bool'],['custom_volume','bool'],['talk_sensitive','bool'],['low_high_vol','bool'],
+  ['long_press_left','int'],['long_press_right','int'],['double_tap_left','int'],['double_tap_right','int'],
+  ['bt_name','str'],
+];
+
+async function api(p, body) {
+  const r = await fetch(p, body ? {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)} : undefined);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+
+function buildSettings() {
+  const el = $('settings'); el.innerHTML='';
+  for (const [name, kind, choices] of SETTING_DEFS) {
+    const row = document.createElement('div'); row.className='s';
+    const left = document.createElement('div'); left.innerHTML = `<b>${name}</b><small>read/write via C0</small>`;
+    const right = document.createElement('div'); right.className='row';
+    let ctl;
+    if (kind==='select') { ctl=document.createElement('select'); for (const [v,l] of Object.entries(choices)) { const o=document.createElement('option'); o.value=v; o.textContent=l; ctl.appendChild(o);} }
+    else if (kind==='bool') { ctl=document.createElement('select'); ctl.innerHTML='<option value="1">on</option><option value="0">off</option>'; }
+    else if (kind==='int') { ctl=document.createElement('input'); ctl.type='number'; ctl.style.width='90px'; }
+    else { ctl=document.createElement('input'); ctl.type='text'; ctl.style.width='200px'; }
+    ctl.dataset.name=name; ctl.dataset.kind=kind;
+    const get=document.createElement('button'); get.className='ghost'; get.textContent='get';
+    const set=document.createElement('button'); set.textContent='set';
+    get.onclick = async () => { try { const j=await api('/get/'+name); left.querySelector('small').textContent='reply: '+(j.reply??'<no reply>'); } catch(e){ log(name+': '+e.message,'warn'); } };
+    set.onclick = async () => { try { const j=await api('/set',{name,value:ctl.value}); log(`${name} <- ${ctl.value} => ${j.reply??'<no reply>'}`,'ok'); } catch(e){ log(name+': '+e.message,'warn'); } };
+    right.append(ctl,get,set); row.append(left,right); el.appendChild(row);
+  }
+}
+
+async function refresh() {
+  try {
+    const j = await api('/state');
+    const el = $('reads'); el.innerHTML='';
+    for (const [k,v] of Object.entries(j.reads)) {
+      const b=document.createElement('b'); b.textContent=k;
+      const s=document.createElement('span'); s.textContent=hex(v); s.style.textAlign='right';
+      el.append(b,s);
+    }
+    $('status').textContent='connected'; $('status').className='pill ok';
+  } catch(e) { $('status').textContent='error: '+e.message; $('status').className='pill warn'; }
+}
+
+$('connect').onclick = async () => {
+  try { await api('/connect',{port:$('port').value.trim()}); log('connected','ok'); refresh(); }
+  catch(e){ log('connect: '+e.message,'warn'); $('status').textContent='disconnected'; }
+};
+$('refresh').onclick = refresh;
+$('rawsend').onclick = async () => {
+  try { const j=await api('/raw',{cmd:$('rawcmd').value.trim(),payload:$('rawpay').value.trim()}); log(`C0 ${$('rawcmd').value} => ${j.reply??'<no reply>'}`); }
+  catch(e){ log('raw: '+e.message,'warn'); }
+};
+let timer=null;
+$('auto').onchange = e => { clearInterval(timer); if (e.target.checked) timer=setInterval(refresh,5000); };
+buildSettings();
+</script>
+</body>
+</html>
