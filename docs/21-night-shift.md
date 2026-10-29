@@ -241,7 +241,36 @@ AAP region map (H3Pro build) from this pass, for whoever does that dedicated pas
 | `FUN_00c54cc0` | AAP connection-state change broadcaster |
 
 The phone-facing AAP opcode table (what iOS sends on PSM 0x1001 after the SDP exchange)
-was not located in this pass - it is the top item for the next session.
+**is found**: the L2CAP data indication is `FUN_00ca8bc0` (dispatcher case 9), which hands
+AAP frames to `FUN_00ca87d4` (966 B). Opcode = frame byte 4:
+
+| Opcode | What it does (handler) |
+|---|---|
+| `0x00` | sub on byte0: `02` → set conn state 3 + battery gate + `FUN_00c8b1c4`; `03` → set a flag |
+| `0x01` | frame must be `00 00 04 00` → conn transition 0 + `FUN_00ca503c` (AAP session open/negotiate) |
+| `0x09` | sub on byte6: `0x16`→`FUN_00ca953c(1,nib)`, `0x0C`→`FUN_00ca953c(2,nib)`, `0x0D`→module4 `0x1A`+`FUN_00ca7e74`, `0x12`→`FUN_00ca9370`, `0x10`→`FUN_00ca953c(0,b)`+`FUN_00ca80a8`; default → module4 `0x12` post, then a 0x5dd-tick freshness window and `FUN_00ca4d54(...,0x906)` on battery >1 |
+| `0x10` | `FUN_00ca80d0(...,0x10,…)` |
+| `0x12` | 6-byte payload → `FUN_00c6a60c` |
+| `0x14` | conn transition `0x40` |
+| `0x17` | `FUN_00ca78b4` + `FUN_00ca5138` |
+| `0x1A` | NUL-terminated string, length u16 at byte7 → module4 post `0x17` (name/notification text) |
+| `0x1E` | sub on byte6: `01`→`0xB5`, `06`→`0xB6`, `0x23`→`0xB7` conn transitions |
+| `0x1F` | sub on byte6/7 (`02`/`01`…) |
+| `0x21` | remember conn (`DAT_00ca8bb8`) + `FUN_00ca5090` |
+| `0x22` | checks `FUN_00ca910c`/`FUN_00ca90a4`; state in `3..5` or `0xA1` → `FUN_00ca761c(0xC0)` |
+| `0x24` | `FUN_00ca953c(3, byte8 & 0xDF)` |
+| `0x25` | `FUN_00ca953c(4, byte7)` + `FUN_00ca65b8` (battery-gated) |
+| `0x26` | `FUN_00ca9610(byte7)` + `FUN_00ca65e8` (battery-gated) |
+| `0x28` | `FUN_00ca9624(byte7)` + `FUN_00ca6618` (battery-gated) |
+| `0x31` | `FUN_00ca9f08(frame+0xB)` - **the AES path** - + `FUN_00ca6680` |
+| `0x39` | `FUN_00ca9688(byte7)` |
+| `0x4B` | strict frame check (`03 00 03` + `00 00` or `01 02` at bytes 9/10) → module4 post `0x3A` - reads as the **noise-control / listen-mode command** |
+| `0x4D` | `FUN_00ca928c(conn, 0x81)` + `FUN_00ca879c` |
+| `0x4F` | `FUN_00ca53f8` |
+
+`FUN_00ca953c(slot, value)` (4 slots, 0-4) is the shared "AAP state setter" the opcodes
+funnel into. Confidence: the dispatch structure is read directly from the decompile; the
+semantic labels are informed guesses except where the docs already anchored them.
 
 SENC (not EQ2P) is what `FUN_00c65a10` applies: a second partition reader (magic check
 against `SENC`) walks pages and feeds 8-byte records into it; its switch on the record's
