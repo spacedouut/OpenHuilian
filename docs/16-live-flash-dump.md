@@ -69,7 +69,9 @@ Flash map: a **1 MiB class** part. `0x0000` carries an `HLKJ` header, `0x3000` t
 after FIRM is `00`-filled, the gap after OTAP is erased `FF`, PSMP occupies the last 16 KiB.
 Unlike the 2 MiB H2S Turbo there is essentially **no free flash** — TONE has ~1 KiB of slack before
 EQ2P, and only ~4.7 KiB sit between OTAP's end and PSMP. Growing prompts on this device means
-shrinking something else.
+shrinking something else. (Correction, [21](21-night-shift.md): the ~53 KB of `00` padding
+between EQ2P and OTAP is also claimable if you repartition within `0x4000..0xD2000` - OTAP and
+PSMP stay pinned, everything else just moves in the index.)
 
 ## The reconstructed `.up`
 
