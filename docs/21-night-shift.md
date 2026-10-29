@@ -227,6 +227,22 @@ still unlocated - the L2CAP event dispatcher for PSMs `0x1001`/`0x1007`/`0x1F` i
 `FUN_00ca8c04` (cases 0-0xB: connect ind/conf, disconnect, data paths), which is where a
 dedicated AAP pass should start.
 
+AAP region map (H3Pro build) from this pass, for whoever does that dedicated pass:
+
+| Address | Role |
+|---|---|
+| `FUN_00ca8c04` | L2CAP event dispatcher, PSMs `0x1001` (AAP) / `0x1007` / `0x1F` |
+| `FUN_00ca832c` / `FUN_00ca696e` / `FUN_00ca6900` / `FUN_00ca73d2` / `FUN_00ca738c` | connect ind / conf / disc conf / disc ind / cleanup |
+| `FUN_00ca4be0` / `FUN_00ca4c6c` / `FUN_00ca4c48` | connection-object lookup/create |
+| `FUN_00cabe28` | AAP connection state machine (cases 1-5), drives adv + peer sync |
+| `FUN_00cab92c` | the Continuity adv builder (template at `0xC4BF58`) |
+| `FUN_00c87724` / `FUN_00c87760` / `FUN_00c87798` | AAP frame senders, first header byte `0x20` / `0x40` / `0x10` |
+| `FUN_00c87834` | ear-to-ear AAP sync parser (frame types `0x10`/`0x20`/`0x30`/`0x40`/`0x50`) |
+| `FUN_00c54cc0` | AAP connection-state change broadcaster |
+
+The phone-facing AAP opcode table (what iOS sends on PSM 0x1001 after the SDP exchange)
+was not located in this pass - it is the top item for the next session.
+
 SENC (not EQ2P) is what `FUN_00c65a10` applies: a second partition reader (magic check
 against `SENC`) walks pages and feeds 8-byte records into it; its switch on the record's
 first byte covers kinds `0x15`-`0x1C+` (the call-mic ENC pages 21-28 from [08](08-eq2p-senc.md)),
