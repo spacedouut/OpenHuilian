@@ -58,8 +58,11 @@ What's done, what's open, and what's needed before writing anything to an H3Pro 
 
 - [x] 4-byte PSMP record check algorithm: reflected CRC32 over key, value, masked header; `psmp_tool.py verify/set` ([09](09-psmp-nvds.md))
 - [ ] Disassemble `COM.dll` + `cal_frequent_drift_gyro_ur.bin` for the UART boot-ROM protocol
-- [ ] Extract `encryptData` / challenge-response from StarFun's native lib into Python
-- [ ] Does FIRM honour EQ2P pages 51–57 if present? (needs a live device or code read)
+- [x] Extract `encryptData` / challenge-response from StarFun's native lib into Python: the
+      native `SmartLinkCore::CLFSR::Encrypt_OneByte` is byte-for-byte the LFSR
+      `tools/huilian/proto.py` already implements ([21](21-night-shift.md))
+- [x] Does FIRM honour EQ2P pages 51–57 if present? **No** - the only EQ2P consumer in the
+      H3Pro build loads profile 0 / kind 0 at boot; nothing requests kinds 51–57 ([21](21-night-shift.md))
 - [ ] Which EQ2P profile binds to transparency vs. ANC-on
 - [x] Is H3Pro's TONE/EQ2P/PSMP layout identical to SL6801's — TONE and PSMP yes; EQ2P is a new
       7-profile `SLEQ 02 07` layout ([16](16-live-flash-dump.md))
