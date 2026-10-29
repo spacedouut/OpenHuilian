@@ -110,4 +110,50 @@ is 0x1720/0x1724. Both may be true (direct vs literal-pool indirect calls).
   factory/zero-OTA test image the app can push. Analysis pending.
 - `assets/demo.eq2` (608 B) is a SLEQ v2 1-profile EQ table (the app's demo EQ).
 
-(sections 9+ appended as analysis continues)
+## 9. OTAP-mode C0 command set (new)
+
+OTAP's own C0 dispatcher `FUN_00810914` (1,196 B) answers: 01/02 (full app auth), 04 (model),
+05 (version), 06 (BT addr), 07 (device_id), 09 (battery), 10 (side), 11, 12 (link state), 13,
+50/51/53/54, 60/61, 63/64, 83 (flash read, 200 B cap). Bigger than the empirically observed
+subset in docs/20 - recovery tooling can authenticate and read everything in OTAP mode.
+
+## 10. Bootloader: one binary, 3 config bytes
+
+First 0x3000 bytes byte-identical across all 25 images EXCEPT 0x1D/0x5C/0x5D, which split
+1 MB-class (00 8C 0F) from 2 MB-class (04 7C 40). fit30 (2022) == H3Pro (2026) bootloader.
+Flash class is data, not code.
+
+## 11. Module map + AAP region (new)
+
+- Module registrations via FUN_00c9e66c(handler, module): modules 1 (BT host, x2), 2 (NV/PSM),
+  3, 4 (air/AAP -> FUN_00c54da8), 5, 6 (audio), 7 (SPP/UART -> FUN_00c53260). Two dispatch
+  APIs (FUN_00827564, FUN_00c2ab6c) over one 9-entry table at RAM 0x831E7C.
+- Module 7 handler FUN_00c53260 cases: 0 = C0 part-2 dispatcher (FUN_00c52e4c), 2 = OTA path,
+  3 = reply send, 4 = name/string access.
+- AAP region: L2CAP event dispatcher FUN_00ca8c04 (PSMs 0x1001/0x1007/0x1F), connection
+  state machine FUN_00cabe28, adv builder FUN_00cab92c, senders FUN_00c87724/760/798
+  (header bytes 0x20/0x40/0x10), ear-to-ear sync parser FUN_00c87834 (types 0x10-0x50).
+  Phone-facing AAP opcode table: NOT located this pass - top follow-up.
+- SENC applier = FUN_00c65a10 (switch on record kind 0x15-0x1C+, two destination layouts
+  selected by a mode flag); SENC reader shares the EQ2P staging buffer. Records with
+  kind >= 0xFF (e.g. 0xFC) are skipped by the reader.
+- Dispatcher event ids resolved from literal pools: 0x80000016/17/19/20, 0x80010016/17,
+  0x8100003a, 0xb0000010/13, 0xb2000001/2/3, 0xc0300021, 0xc1000001/4, 0xd000000b/1b/2b/2e,
+  0xd1000001, 0xd2000001/2/7/8/9/e, 0xf2000011/17, 0xf600000e/0f/46, 0xf7000003.
+- Head-tracking patch offsets re-verified byte-exact against the raw image
+  (tx_ms@0xA7550=40, decimate@0x64A1A=3, alpha@0x64C74=0.1).
+- +test= command set is complete at 8 commands: recover, version, shutdown, encen, encdis,
+  getaddr, pair_, vbusp:.
+- Model-name table in the C0 03 handler: H2S Ultra, H2S Turbo, H3sProMax, H3Pro2, H3Pro3,
+  377Super PRO3, Super2026+ (docs/18's table missed H3Pro2/H3Pro3).
+
+## Still open (for the next pass)
+
+- Phone-facing AAP opcode table (start at FUN_00ca8c04).
+- EQ2P params 0x3C-0x41 (page-0 compressor block) and 0xFC - consumer not traced.
+- Which EQ2P profile binds to transparency vs ANC-on (H3Pro has 7 profiles; binding logic
+  not traced).
+- Loader internals (cal_frequent_drift_gyro_ur.bin @0x850000, 197 fns) - the loader-side
+  command dispatch after connect_startup.
+- COM.dll response parsing + baud-rate negotiation details.
+- Whether OTA frames are accepted without the C0 01/02 auth handshake (needs hardware).
