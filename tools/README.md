@@ -29,5 +29,5 @@ python3 tools/psmp_tool.py firmware/openpod-sl6801/GN438_sl6801_fulldump.bin
 python3 tools/tone_tool.py list  firmware/h3promax3/h3promax3_2607061716_live.up
 ```
 
-Missing / to write: a generic `.up` partition lister and `EQ2P` float-table editor (the analysis in
+Missing / to write: an `EQ2P` float-table editor (the analysis in
 [08](../docs/08-eq2p-senc.md) was done with one-off snippets), and a periodic `h3promax3` OTA watcher.
