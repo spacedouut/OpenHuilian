@@ -150,11 +150,12 @@ Flash class is data, not code.
 
 ## Still open (for the next pass)
 
-- Phone-facing AAP opcode table (start at FUN_00ca8c04).
-- EQ2P params 0x3C-0x41 (page-0 compressor block) and 0xFC - consumer not traced.
-- Which EQ2P profile binds to transparency vs ANC-on (H3Pro has 7 profiles; binding logic
-  not traced).
 - Loader internals (cal_frequent_drift_gyro_ur.bin @0x850000, 197 fns) - the loader-side
   command dispatch after connect_startup.
 - COM.dll response parsing + baud-rate negotiation details.
 - Whether OTA frames are accepted without the C0 01/02 auth handshake (needs hardware).
+- EQ2P params 0x3C-0x41 (page-0 compressor block) and 0xFC - consumer not traced.
+- Which EQ2P profile binds to transparency vs ANC-on (H3Pro has 7 profiles; binding logic
+  not traced).
+- Semantic confirmation of the AAP opcode table labels (needs live iOS traffic or deeper
+  sub-handler reads; the dispatch structure itself is solid).
