@@ -185,8 +185,31 @@ def _state(ser):
     return (side[0] if side else None, lk[0] if lk else None, _in_firm(ser))
 
 
+def _enter_updater(ser, a):
+    """From FIRM, 80 is acked and then the bud (and its peer, which the master
+    relays it to) reboots into OTAP and the link drops. Reconnect until the
+    updater answers. Returns the new link."""
+    for _ in range(4):
+        if not _in_firm(ser):
+            return ser
+        print("FIRM answered: sending 80, both buds reboot into the updater")
+        try:
+            r = link.ota_frame(ser, proto.ota_enter(0x33))
+            print("enter(80) from FIRM:", r.hex() if r else "<no reply>")
+            if r and not r.ok:
+                sys.exit(f"enter refused, status {r.status} (3 = battery too low)")
+        except OSError as e:
+            print("  link dropped:", e)
+        ser.close()
+        time.sleep(8)
+        ser = link.reopen(a.port, a.baud)
+    sys.exit("buds did not enter the updater")
+
+
 def _ota_one_bud(ser, a, payload, fw_addr, index, io, declared):
-    """Run 80..84 + 04 against whichever bud holds the link. Returns its side."""
+    """Run 80..84 + 04 against whichever bud holds the link (entering the
+    updater first if needed). Returns (link, answering side)."""
+    ser = _enter_updater(ser, a)
     side = None
     for _ in range(6):
         r = link.ota_frame(ser, proto.ota_enter(0x33))
@@ -238,9 +261,37 @@ def _ota_one_bud(ser, a, payload, fw_addr, index, io, declared):
     if not r.ok:
         sys.exit(f"finalize status {r.status}: CRC mismatch, old index restored. "
                  "NOT sending 04 (that would boot a half-written FIRM). Flash again.")
-    r = link.ota_frame(ser, proto.ota_leave(0x33), timeout=5)
-    print("leave(04):", r.hex() if r else "<link dropped>")
-    return side
+    try:
+        r = link.ota_frame(ser, proto.ota_leave(0x33), timeout=5)
+        print("leave(04):", r.hex() if r else "<link dropped>")
+    except OSError as e:
+        print("leave(04): link dropped:", e)
+    return ser, side
+
+
+def _find_updater(a, flashed, wait=240):
+    """After the first bud's 04, find the bud still in OTAP. If the flashed bud
+    comes back in FIRM and holds the link, the other one can't be reached
+    until the flashed one is out of the way (in the case, lid closed)."""
+    end = time.time() + wait
+    told = False
+    while time.time() < end:
+        ser = link.reopen(a.port, a.baud)
+        side, lk, firm = _state(ser)
+        print(f"  answering side {_hx(side)} link {lk} mode {'FIRM' if firm else 'OTAP'}")
+        if not firm:
+            return ser, side
+        if lk == 0:
+            ser.close()
+            return None, side
+        if not told:
+            print(f"  bud {_hx(side)} is back in FIRM and holds the link, the other bud is "
+                  "still in the updater. Put the flashed bud in the case and close the "
+                  "lid, keep the other one out.")
+            told = True
+        ser.close()
+        time.sleep(5)
+    sys.exit("the other bud never showed up in the updater; run `hl leave-ota`")
 
 
 def cmd_ota(ser, a):
@@ -250,34 +301,35 @@ def cmd_ota(ser, a):
     relays it to the peer), then whichever bud grabs the SPP link is the one
     the frames land on: OTAP ignores the side byte in requests. So: flash the
     bud that answers, send 04 (clear the boot-to-OTAP flag + reboot), wait for
-    the link to come back, and if the other bud is still in the updater it is
-    the one answering now; flash it the same way. Without the 04 both buds
-    stay in OTAP and look like a generic Bluetooth device.
+    the link to come back, and flash the bud that is still in the updater the
+    same way (if the flashed bud grabs the link first, it has to go in the
+    case). Without the 04 both buds stay in OTAP and look like a generic
+    Bluetooth device.
     """
     payload, fw_addr, index, io, declared, last_end = _up_payloads(a.file)
     print(f"payload region 0x{fw_addr:x}..0x{last_end:x} ({len(payload)} bytes), "
           f"index @{io:#x} ({len(index)} bytes), declared {len(declared)} bytes")
     done = []
-    for pass_no in range(2):
-        if pass_no:
-            print("waiting for the link to come back ...")
-            ser.close()
-            time.sleep(3)
-            ser = link.reopen(a.port, a.baud)
-            side, lk, firm = _state(ser)
-            if firm:
-                print(f"bud {_hx(side)} answered from FIRM (link {lk}); "
-                      "sending 80 again so the remaining bud enters the updater")
-        side = _ota_one_bud(ser, a, payload, fw_addr, index, io, declared)
-        done.append(side)
-        print(f"--- flashed side {_hx(side)} ---")
-        if a.side == "one":
-            break
-        if len(done) == 2 and done[0] != done[1]:
-            break
+    ser, side = _ota_one_bud(ser, a, payload, fw_addr, index, io, declared)
+    done.append(side)
+    print(f"--- flashed side {_hx(side)} ---")
+    if a.side == "both":
+        print("waiting for the other bud ...")
+        ser.close()
+        time.sleep(6)
+        ser2, side2 = _find_updater(a, side)
+        if ser2 is None:
+            print(f"both buds answer from FIRM and are linked; only {_hx(side)} was in the updater")
+        elif side2 == side:
+            sys.exit(f"bud {_hx(side)} is in the updater again after 04; run `hl leave-ota`")
+        else:
+            ser2, side2 = _ota_one_bud(ser2, a, payload, fw_addr, index, io, declared)
+            done.append(side2)
+            print(f"--- flashed side {_hx(side2)} ---")
+            ser = ser2
     print("waiting for the buds to reboot ...")
     ser.close()
-    time.sleep(3)
+    time.sleep(8)
     ser = link.reopen(a.port, a.baud)
     side, lk, firm = _state(ser)
     print(f"answering side {_hx(side)} link {lk} mode {'FIRM' if firm else 'OTAP'}; "
