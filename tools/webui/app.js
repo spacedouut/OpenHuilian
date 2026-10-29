@@ -204,7 +204,21 @@ async function repick(why) {
 
 // 80..84 + 04 against whichever bud holds the link (OTAP ignores the side
 // byte in requests and answers with its own). Returns the answering side.
+// From FIRM, 80 is acked and then both buds reboot into OTAP and the link
+// drops. Reconnect until the updater answers.
+async function enterUpdater() {
+  for (let i = 0; i < 4; i++) {
+    if (!(await budState()).firm) return;
+    log("FIRM answered: sending 80, both buds reboot into the updater");
+    try { const r = await L.ota(proto.otaEnter(0x33)); log(`enter(80) from FIRM: ${r ? hex(r.raw) : "<no reply>"}`); } catch (e) { log(`link dropped: ${e.message}`); }
+    await sleep(8000);
+    await repick("buds rebooting into the updater;");
+  }
+  throw new Error("buds did not enter the updater");
+}
+
 async function otaOneBud(payload, fwAddr, index, io, declared) {
+  await enterUpdater();
   let r = null;
   for (let i = 0; i < 6 && !r; i++) {
     r = await L.ota(proto.otaEnter(0x33));
@@ -261,18 +275,24 @@ $("btnOta").onclick = async () => {
     log(`payload 0x${fwAddr.toString(16)}..0x${lastEnd.toString(16)} (${payload.length}B), index @0x${io.toString(16)} (${index.length}B)`);
     const one = $("side").value === "one";
     const done = [];
-    for (let pass = 0; pass < 2; pass++) {
-      if (pass) {
-        await repick("waiting for the link to come back;");
+    done.push(await otaOneBud(payload, fwAddr, index, io, declared));
+    log(`--- flashed side 0x${done[0].toString(16)} ---`);
+    if (!one) {
+      // after 04 the other bud normally takes the link in OTAP
+      for (let i = 0; i < 20; i++) {
+        await repick("waiting for the other bud;");
         const st = await budState();
-        if (st.firm) {
-          log(`bud 0x${(st.side || 0).toString(16)} answered from FIRM (link ${st.link}); sending 80 again so the remaining bud enters the updater`);
+        log(`answering side 0x${(st.side || 0).toString(16)} link ${st.link} mode ${st.firm ? "FIRM" : "OTAP"}`);
+        if (!st.firm && st.side !== done[0]) {
+          done.push(await otaOneBud(payload, fwAddr, index, io, declared));
+          log(`--- flashed side 0x${done[1].toString(16)} ---`);
+          break;
         }
+        if (!st.firm) throw new Error("the flashed bud is in the updater again after 04: use Leave updater");
+        if (st.link === 0) { log("both buds answer from FIRM and are linked"); break; }
+        log("the flashed bud is back in FIRM and holds the link: put it in the case, lid closed, keep the other one out");
+        await sleep(5000);
       }
-      const side = await otaOneBud(payload, fwAddr, index, io, declared);
-      done.push(side);
-      log(`--- flashed side 0x${side.toString(16)} ---`);
-      if (one || (done.length === 2 && done[0] !== done[1])) break;
     }
     await repick("waiting for the buds to reboot;");
     const st = await budState();
