@@ -66,11 +66,11 @@ regions = [
     (0x0AF000, 0x0C3BA7, "TONE", "84,903 B - 18 voice prompts, packed full (no room to grow)", "#c8b0e0"),
     (0x0C3BA7, 0x0C4000, None, "~1 KiB slack", "#e6e4dc"),
     (0x0C4000, 0x0C504C, "EQ2P", "4,172 B - SLEQ v2, 7 profiles; kinds 51-57 (ANC) never read", "#a8d8d8"),
-    (0x0C504C, 0x0D2000, None, "erased (FF)", "#f0eee7"),
-    (0x0D2000, 0x0FAD50, "OTAP", "167,248 B updater - linked to run from RAM 0x804800; accepts any CRC-valid image", "#e8a8a0"),
+    (0x0C504C, 0x0D2000, None, "zero padding", "#f0eee7"),
+    (0x0D2000, 0x0FAD50, "OTAP", "167,248 B updater - linked to run from RAM 0x804800; .up EOF is here (0xFAD50)", "#e8a8a0"),
     (0x0FAD50, 0x0FB000, None, "688 B gap", "#e6e4dc"),
     (0x0FB000, 0x0FC000, "55AA flag", "AA 55 00 00 = reboot into OTAP; set by FIRM, cleared by OTAP", "#f0c8a0"),
-    (0x0FC000, 0x100000, "PSMP", "16 KiB NV store (log-structured): bt_addr, device_id, authorization_code, air_adv_key... per-unit, never shipped in OTA", "#b0e0b0"),
+    (0x0FC000, 0x100000, "PSMP", "16 KiB NV store (log-structured): bt_addr, device_id, authorization_code, air_adv_key... per-unit - ON DEVICE ONLY, never in the .up", "#b0e0b0"),
 ]
 
 layout = []
@@ -121,6 +121,11 @@ for a0, a1, name, note, col, h, exp in layout:
         text(LX, y0 + (h - 14) / 2, label, f_ms, "#888")
     if name and h >= 44:
         wrap(LX, y0 + 26, note, f_ms, 360, "#555")
+
+# free-space note under the flash bar
+text(FX, ytop + total_h + 14, "All in-image gaps are 00 padding (build tool). The ~53 KB between EQ2P and", f_ms, "#555")
+text(FX, ytop + total_h + 30, "OTAP is claimable by CFW: repartition FIRM/SENC/TONE/EQ2P within 0x4000..0xD2000,", f_ms, "#555")
+text(FX, ytop + total_h + 46, "rewrite index + CRCs; OTAP/PSMP records are pinned by the updater.", f_ms, "#555")
 
 # ============ COLUMN 2: CPU address spaces ============
 CX = LX + 390
