@@ -83,6 +83,23 @@ count reaches the `82` total. On `04` it clears the boot-to-OTAP flag and reboot
 ([17](17-firmware-internals.md)). Sending `04` after a failed `84` would boot a half-written FIRM,
 so don't.
 
+`04` has one more branch (`FUN_0080e770`, via the role byte `FUN_00819fd4` returns): a bud with a
+linked peer (role 1) does not clear its own flag right away. It sends peer opcode `0x0e` with
+payload `02` to the other bud and arms a 2 s `otaStateTimer`, then clears and reboots. A bud with
+no peer clears and reboots immediately. Two consequences seen on hardware:
+
+* Stop after `84` and both buds stay in OTAP: `80` was relayed to the peer by FIRM, so both entered
+  the updater, and nothing clears the flag. They still pair and answer `C0 04/05/09/51/83`, but not
+  `C0 0A` or the serial reads, publish no A2DP/AirPods records, and show up as a generic Bluetooth
+  device.
+* Sending `04` to an OTAP bud whose peer is already back in FIRM makes FIRM treat the relayed
+  `0x0e` as "enter OTA" again, and that peer reboots into the updater. Get both out together
+  (both in OTAP and linked, one `04`), or reach the remaining one alone with the other bud powered
+  off. `hl leave-ota` ([20](20-hl-cli.md)) does this.
+
+The flag page is `OTAP.addr + ((OTAP.len >> 12) + 1) * 0x1000` (`0xFB000` here): `AA 55 00 00`
+set, `00 00 00 00` cleared.
+
 ## Validation the device can perform (from what it is sent)
 
 * CRC8 per frame.
@@ -102,4 +119,5 @@ first passing the command-channel challenge/response (`verificationCmd`) hasn't 
   bud's current EQ2P/TONE into your file, though.
 * [`tools/flashota.py`](../tools/flashota.py) sends the same frames through StarFun's socket via
   Frida, without the splice, one bud per run, with the safety checks listed in its docstring. It
-  hasn't been run against a bud yet.
+  hasn't been run against a bud yet. [`tools/hl ota`](20-hl-cli.md) has: both buds, stock and
+  patched images, over a plain RFCOMM socket.
