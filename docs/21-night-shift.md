@@ -123,10 +123,22 @@ show what it is: a **POSIX-style service/dev firmware** - a CLI shell (`CLI_HALT
 reporting, PMU/VBUS events, the PSM/NV store (`no enough memory for psm write`,
 `authorization_code`), and `update set pc and restart` / `update set sd and restart` paths.
 
-That makes it the vendor's recovery/maintenance image, and the app distributes it. If it can
-be pushed over the `55AA` OTA transport (same as any CRC-valid image), it is a candidate
-safety net: a bud running zero_ota has a CLI and USB/SD update paths instead of a dead
-FIRM. Unverified on hardware - treat as a lead, not a plan.
+That makes it the vendor's recovery/maintenance image, and the app distributes it. Three
+reality checks before anyone treats it as a safety net (one of them learned the hard way
+on hardware the morning after this analysis):
+
+1. **The `55AA` transport is the full dance, not a file push.** `80` enter → `81` prepare
+   (erase) → `82` declare (CRC + length) → `83` data ×N (512 B writes, index last) →
+   `84` finalize → **`04` leave**. Every step is required ([06](06-bt-ota-protocol.md)).
+2. **`04` is mandatory.** Skipping it after `84` leaves both buds in the updater - that
+   exact mistake cost ~20 minutes of `hl leave-ota` recovery on the live buds. The buds
+   keep answering `C0` reads in OTAP, which is the only reason it was a detour and not a
+   brick.
+3. **`zero_ota.bin` is a bare program, not a `.up`.** Same RAM-entry convention as OTAP
+   (entry `0x804C41`), but no `CONFIG`/`HLKJ` container, no partition index, no CRCs. To
+   push it at all, someone first has to decide what it replaces (it is OTAP-class, so
+   plausibly the `OTAP` partition) and build a valid container around that - unsolved.
+   Until then: a lead, not a plan.
 
 ## Catalog sweep (24 images + OpenPod dump)
 
@@ -179,16 +191,21 @@ no hidden updater commands. Matches [17](17-firmware-internals.md).
 
 While a bud is sitting in OTAP it also runs its own `C0` dispatcher, `FUN_00810914`
 (1,196 bytes) - bigger than the empirically observed subset in [20](20-hl-cli.md)
-(`04/05/09/51/83`). From the code it answers:
+(`04/05/09/51/83`). From the code it CONTAINS handlers for:
 
 `01`/`02` (the full app auth handshake), `04` (model), `05` (version, 11 chars),
 `06` (BT address), `07` (`device_id`), `09` (battery 3 bytes), `10` (side `11`/`22`),
 `11`, `12` (link state), `13`, `50`/`51`/`53`/`54`, `60`/`61`, `63`/`64`, and `83`
 (flash read, 200-byte cap, same as FIRM).
 
-So recovery tooling talking to a bud stuck in the updater can authenticate, read the flash
-(`C0 83`), read battery and ids - everything except the settings writes and the AAP layer.
-`hl` already does most of this; the command list above is the complete OTAP-mode surface.
+**Code presence is not the same as replies.** In the hardware run the morning after this
+analysis, buds stuck in OTAP answered only four of those. The gates are visible in the
+dispatcher: `01` requires the auth-enabled flag (`*PTR_DAT_00810ce0`) AND a `0x40`
+channel/type argument on the frame, `02` requires the same `0x40` argument plus its own
+checks, and several read handlers have role/peer-state branches. So treat the list above
+as "handlers present, gated", and the working OTAP-mode surface as the four that answered
+(record the exact four from the run log) plus `83` flash reads. `hl` already does the
+reads; recovery tooling should not assume more than that.
 
 ## Function-recovery note
 
