@@ -158,6 +158,22 @@ and the `20230713_70aa57dc` build stamp.
 The OpenPod `GN438_sl6801_fulldump.bin` is an MP3-player firmware (music/ebook/picture UI,
 7,540 strings) - same silicon, different product; useful for PSMP/bootloader comparison only.
 
+## The bootloader is one binary; 3 config bytes pick the flash class
+
+Diffing the first 0x3000 bytes (HLKJ header + bootloader) across all 25 images: the
+bootloader **code is byte-identical everywhere**, and exactly three bytes separate the
+1 MB-class images from the 2 MB-class ones:
+
+| Offset | 1 MB class (H3Pro, fit30, a10, h2slim…) | 2 MB class (h2sturbo, h2sultra, h2spro…) |
+|---|---|---|
+| `0x1D` | `00` | `04` |
+| `0x5C` | `8C` | `7C` |
+| `0x5D` | `0F` | `40` |
+
+The 2022 fit30 image and the 2026 H3Pro image carry the **same bootloader bytes** - the
+vendor has not touched it in four years, and the flash-size class is data, not code. For
+CFW: keep those three bytes consistent with your flash class when moving images around.
+
 ## OTAP audit (confirmation)
 
 The OTAP state machine `FUN_0080e770` handles exactly `80`, `81`, `82`, `83`, `84`, `04` -
