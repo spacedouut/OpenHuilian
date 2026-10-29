@@ -1,0 +1,792 @@
+{
+ "meta": {
+  "source_firm": "FUN_00ca32bc dispatcher, firm.elf",
+  "sources": [
+   "firm decompile c0_cases.json",
+   "CMDConfig.java 2.0.7.016",
+   "tools/huilian/cli.py verified on hardware"
+  ]
+ },
+ "commands": [
+  {
+   "cmd": "03",
+   "in_firm_dispatcher": false,
+   "app_name": "chip_model",
+   "hl_name": "product"
+  },
+  {
+   "cmd": "04",
+   "in_firm_dispatcher": false,
+   "app_name": "product_model",
+   "hl_name": "model"
+  },
+  {
+   "cmd": "05",
+   "in_firm_dispatcher": false,
+   "app_name": "sw_version",
+   "hl_name": "version"
+  },
+  {
+   "cmd": "06",
+   "in_firm_dispatcher": false,
+   "app_name": "bt_address",
+   "hl_name": "bt_addr"
+  },
+  {
+   "cmd": "07",
+   "in_firm_dispatcher": false,
+   "app_name": "device_id",
+   "hl_name": "device_id"
+  },
+  {
+   "cmd": "08",
+   "in_firm_dispatcher": false,
+   "app_name": "product_type",
+   "hl_name": null
+  },
+  {
+   "cmd": "09",
+   "in_firm_dispatcher": false,
+   "app_name": "power_status",
+   "hl_name": "battery"
+  },
+  {
+   "cmd": "0a",
+   "in_firm_dispatcher": false,
+   "app_name": "bt_status",
+   "hl_name": "in_ear"
+  },
+  {
+   "cmd": "0b",
+   "in_firm_dispatcher": false,
+   "app_name": "bt_check",
+   "hl_name": null
+  },
+  {
+   "cmd": "0c",
+   "in_firm_dispatcher": false,
+   "app_name": "bt_anc",
+   "hl_name": null
+  },
+  {
+   "cmd": "0d",
+   "in_firm_dispatcher": false,
+   "app_name": "bt_space",
+   "hl_name": null
+  },
+  {
+   "cmd": "0e",
+   "in_firm_dispatcher": false,
+   "app_name": "low_delay",
+   "hl_name": null
+  },
+  {
+   "cmd": "0f",
+   "in_firm_dispatcher": false,
+   "app_name": "game_space",
+   "hl_name": null
+  },
+  {
+   "cmd": "10",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": "side"
+  },
+  {
+   "cmd": "11",
+   "in_firm_dispatcher": true,
+   "app_name": "work_status",
+   "hl_name": null
+  },
+  {
+   "cmd": "12",
+   "in_firm_dispatcher": true,
+   "app_name": "lr_version",
+   "hl_name": "link"
+  },
+  {
+   "cmd": "13",
+   "in_firm_dispatcher": true,
+   "app_name": "support_ota",
+   "hl_name": null
+  },
+  {
+   "cmd": "14",
+   "in_firm_dispatcher": false,
+   "app_name": "product",
+   "hl_name": "product_id"
+  },
+  {
+   "cmd": "15",
+   "in_firm_dispatcher": false,
+   "app_name": "product_date",
+   "hl_name": "dom"
+  },
+  {
+   "cmd": "16",
+   "in_firm_dispatcher": false,
+   "app_name": "hear_help",
+   "hl_name": null
+  },
+  {
+   "cmd": "19",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "1d",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "1e",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "1f",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "20",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "22",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "29",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "2a",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "2b",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "2d",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "2e",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "2f",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "30",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "31",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "32",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "33",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "34",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "35",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "36",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "37",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "38",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "39",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "3a",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "3d",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "3e",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "3f",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "40",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "41",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "42",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "43",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "44",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "45",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "46",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "47",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "48",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "49",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "4a",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "4b",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "4c",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "4d",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "4e",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "4f",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "50",
+   "in_firm_dispatcher": true,
+   "app_name": "dialog_op",
+   "hl_name": "air_en(?)"
+  },
+  {
+   "cmd": "51",
+   "in_firm_dispatcher": true,
+   "app_name": "sn_code",
+   "hl_name": "serial"
+  },
+  {
+   "cmd": "52",
+   "in_firm_dispatcher": true,
+   "app_name": "voice_wake",
+   "hl_name": "eq_mode(?)"
+  },
+  {
+   "cmd": "53",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": "bt_addr2"
+  },
+  {
+   "cmd": "54",
+   "in_firm_dispatcher": true,
+   "app_name": "bt_name",
+   "hl_name": "bt_name"
+  },
+  {
+   "cmd": "55",
+   "in_firm_dispatcher": true,
+   "app_name": "check_in_ear",
+   "hl_name": "ear_detect"
+  },
+  {
+   "cmd": "56",
+   "in_firm_dispatcher": true,
+   "app_name": "auto_type",
+   "hl_name": null
+  },
+  {
+   "cmd": "57",
+   "in_firm_dispatcher": true,
+   "app_name": "game_model",
+   "hl_name": null
+  },
+  {
+   "cmd": "58",
+   "in_firm_dispatcher": true,
+   "app_name": "audio_space",
+   "hl_name": null
+  },
+  {
+   "cmd": "59",
+   "in_firm_dispatcher": true,
+   "app_name": "noise_control(anc_mode)",
+   "hl_name": "anc_mode"
+  },
+  {
+   "cmd": "5a",
+   "in_firm_dispatcher": true,
+   "app_name": "long_press_left",
+   "hl_name": "long_press_left"
+  },
+  {
+   "cmd": "5b",
+   "in_firm_dispatcher": true,
+   "app_name": "long_press_right",
+   "hl_name": "long_press_right"
+  },
+  {
+   "cmd": "5c",
+   "in_firm_dispatcher": true,
+   "app_name": "double_click_left",
+   "hl_name": "double_tap_left"
+  },
+  {
+   "cmd": "5d",
+   "in_firm_dispatcher": true,
+   "app_name": "double_click_right",
+   "hl_name": "double_tap_right"
+  },
+  {
+   "cmd": "5e",
+   "in_firm_dispatcher": true,
+   "app_name": "game_space_mode",
+   "hl_name": "game_mode"
+  },
+  {
+   "cmd": "60",
+   "in_firm_dispatcher": true,
+   "app_name": "dialog_op_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "61",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "62",
+   "in_firm_dispatcher": true,
+   "app_name": "voice_wake_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "64",
+   "in_firm_dispatcher": false,
+   "app_name": "bt_name_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "65",
+   "in_firm_dispatcher": true,
+   "app_name": "auto_check_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "66",
+   "in_firm_dispatcher": true,
+   "app_name": "audio_type_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "67",
+   "in_firm_dispatcher": true,
+   "app_name": "game_check_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "68",
+   "in_firm_dispatcher": true,
+   "app_name": "space_audio_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "69",
+   "in_firm_dispatcher": true,
+   "app_name": "noise_control_w(anc)",
+   "hl_name": null
+  },
+  {
+   "cmd": "6a",
+   "in_firm_dispatcher": true,
+   "app_name": "long_press_left_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "6b",
+   "in_firm_dispatcher": true,
+   "app_name": "long_press_right_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "6c",
+   "in_firm_dispatcher": true,
+   "app_name": "double_click_left_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "6d",
+   "in_firm_dispatcher": true,
+   "app_name": "double_click_right_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "6e",
+   "in_firm_dispatcher": true,
+   "app_name": "game_space_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "6f",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "70",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": "serial_l"
+  },
+  {
+   "cmd": "71",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": "serial_r"
+  },
+  {
+   "cmd": "72",
+   "in_firm_dispatcher": true,
+   "app_name": "read?",
+   "hl_name": null
+  },
+  {
+   "cmd": "73",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "74",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "75",
+   "in_firm_dispatcher": true,
+   "app_name": "read?",
+   "hl_name": null
+  },
+  {
+   "cmd": "76",
+   "in_firm_dispatcher": true,
+   "app_name": "read?",
+   "hl_name": null
+  },
+  {
+   "cmd": "77",
+   "in_firm_dispatcher": true,
+   "app_name": "read?",
+   "hl_name": null
+  },
+  {
+   "cmd": "78",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "79",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "7a",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "7b",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "7c",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "7d",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "7e",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "7f",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "80",
+   "in_firm_dispatcher": true,
+   "app_name": "ota_prepare",
+   "hl_name": null
+  },
+  {
+   "cmd": "81",
+   "in_firm_dispatcher": true,
+   "app_name": "ota",
+   "hl_name": null
+  },
+  {
+   "cmd": "82",
+   "in_firm_dispatcher": true,
+   "app_name": "ota",
+   "hl_name": null
+  },
+  {
+   "cmd": "83",
+   "in_firm_dispatcher": true,
+   "app_name": "flash_read",
+   "hl_name": "flash_read"
+  },
+  {
+   "cmd": "84",
+   "in_firm_dispatcher": true,
+   "app_name": "ota_end",
+   "hl_name": null
+  },
+  {
+   "cmd": "85",
+   "in_firm_dispatcher": true,
+   "app_name": "custom_volume_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "86",
+   "in_firm_dispatcher": true,
+   "app_name": "talk_sensitive_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "87",
+   "in_firm_dispatcher": true,
+   "app_name": "low_high_vol_w",
+   "hl_name": null
+  },
+  {
+   "cmd": "8a",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "8b",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "8c",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "8d",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "8e",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "8f",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "90",
+   "in_firm_dispatcher": true,
+   "app_name": "?",
+   "hl_name": null
+  },
+  {
+   "cmd": "91",
+   "in_firm_dispatcher": true,
+   "app_name": null,
+   "hl_name": null
+  },
+  {
+   "cmd": "92",
+   "in_firm_dispatcher": true,
+   "app_name": "?",
+   "hl_name": null
+  },
+  {
+   "cmd": "93",
+   "in_firm_dispatcher": false,
+   "app_name": "?",
+   "hl_name": null
+  },
+  {
+   "cmd": "94",
+   "in_firm_dispatcher": false,
+   "app_name": "?",
+   "hl_name": null
+  },
+  {
+   "cmd": "a0",
+   "in_firm_dispatcher": false,
+   "app_name": "?",
+   "hl_name": null
+  },
+  {
+   "cmd": "a3",
+   "in_firm_dispatcher": false,
+   "app_name": "?",
+   "hl_name": null
+  },
+  {
+   "cmd": "a4",
+   "in_firm_dispatcher": false,
+   "app_name": "?",
+   "hl_name": null
+  }
+ ]
+}
