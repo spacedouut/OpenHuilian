@@ -45,7 +45,7 @@ const READS = {
   serial_l: 0x70, serial_r: 0x71, bt_addr: 0x06,
 };
 
-const en = on => ["btnInfo", "btnAuth", "btnReadAll", "btnRead", "btnOta"].forEach(i => { $(i).disabled = !on; });
+const en = on => ["btnInfo", "btnAuth", "btnReadAll", "btnRead", "btnOta", "btnLeave"].forEach(i => { $(i).disabled = !on; });
 
 $("btnConnect").onclick = async () => {
   try {
@@ -181,50 +181,149 @@ $("upFile").onchange = e => {
   });
 };
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// FIRM answers C0 0A (in-ear); the updater (OTAP) does not.
+async function budState() {
+  const side = link.payload(await L.c0(0x10, new Uint8Array(0), 2000));
+  const lk = link.payload(await L.c0(0x12, new Uint8Array(0), 2000));
+  const firm = (await L.c0(0x0A, new Uint8Array(0), 2000)) !== null;
+  return { side: side && side.length ? side[0] : null, link: lk && lk.length ? lk[0] : null, firm };
+}
+
+async function repick(why) {
+  log(why + " pick the port again when it is back.");
+  try { await L.close(); } catch {}
+  L = null;
+  const port = await link.requestPort();
+  for (let i = 0; i < 30; i++) {
+    try { L = await link.openLink(port); return; } catch (e) { await sleep(2000); }
+  }
+  throw new Error("link did not come back");
+}
+
+// 80..84 + 04 against whichever bud holds the link (OTAP ignores the side
+// byte in requests and answers with its own). Returns the answering side.
+// From FIRM, 80 is acked and then both buds reboot into OTAP and the link
+// drops. Reconnect until the updater answers.
+async function enterUpdater() {
+  for (let i = 0; i < 4; i++) {
+    if (!(await budState()).firm) return;
+    log("FIRM answered: sending 80, both buds reboot into the updater");
+    try { const r = await L.ota(proto.otaEnter(0x33)); log(`enter(80) from FIRM: ${r ? hex(r.raw) : "<no reply>"}`); } catch (e) { log(`link dropped: ${e.message}`); }
+    await sleep(8000);
+    await repick("buds rebooting into the updater;");
+  }
+  throw new Error("buds did not enter the updater");
+}
+
+async function otaOneBud(payload, fwAddr, index, io, declared) {
+  await enterUpdater();
+  let r = null;
+  for (let i = 0; i < 6 && !r; i++) {
+    r = await L.ota(proto.otaEnter(0x33));
+    log(`enter(80): ${r ? hex(r.raw) : "<no reply>"}`);
+    if (!r) await sleep(500);
+  }
+  if (!r) throw new Error("no answer to 55AA80");
+  if (!r.ok) throw new Error(`enter refused, status ${r.status} (3 = battery too low)`);
+  const side = r.side;
+  r = null;
+  for (let i = 0; i < 3 && !r; i++) {
+    r = await L.ota(proto.otaPrepare(0x33), 30000);
+    log(`prepare(81): ${r ? hex(r.raw) : "<no reply>"}`);
+  }
+  if (!r) throw new Error("no reply to prepare (55AA81)");
+  if (!r.ok) throw new Error(`prepare refused, status ${r.status}`);
+  r = await L.ota(proto.otaDeclare(declared, 0x33));
+  if (!r || !r.ok) throw new Error(`declare (55AA82) failed: ${r ? hex(r.raw) : "<no reply>"}`);
+  log(`declare(82): ${hex(r.raw)}`);
+  const t0 = Date.now();
+  for (let pos = 0; pos < payload.length; pos += 512) {
+    const chunk = payload.slice(pos, pos + 512);
+    let okw = false;
+    for (let attempt = 0; attempt < 4 && !okw; attempt++) {
+      r = await L.ota(proto.otaWrite(fwAddr + pos, chunk), 3000);
+      okw = !!(r && r.ok);
+      if (!okw) log(`  write @0x${(fwAddr + pos).toString(16)}: ${r ? hex(r.raw) : "no reply"}, retry ${attempt + 1}`);
+    }
+    if (!okw) throw new Error(`write at 0x${(fwAddr + pos).toString(16)} failed`);
+    if ((pos + chunk.length) % 16384 < 512) log(`  0x${(pos + chunk.length).toString(16)}/0x${payload.length.toString(16)}  (${Math.round((Date.now() - t0) / 1000)}s)`);
+  }
+  r = await L.ota(proto.otaWrite(io, index), 3000);
+  if (!r || !r.ok) throw new Error("index write failed - stopping before finalize");
+  log(`index write: ${hex(r.raw)}`);
+  r = await L.ota(proto.otaFinalize(0x33), 10000);
+  log(`finalize(84): ${r ? hex(r.raw) : "<no reply>"}`);
+  if (!r) throw new Error("no reply to finalize; NOT sending 04. Flash again.");
+  if (!r.ok) throw new Error(`finalize status ${r.status}: CRC mismatch, old index restored. NOT sending 04 (that would boot a half-written FIRM). Flash again.`);
+  r = await L.ota(proto.otaLeave(0x33), 5000);
+  log(`leave(04): ${r ? hex(r.raw) : "<link dropped>"}`);
+  return side;
+}
+
+// The 55AA flow the way real buds accept it: a 55AA80 to FIRM makes BOTH buds
+// reboot into the updater (the master relays it to the peer). Flash whichever
+// bud answers, send 04 (clear the boot-to-OTAP flag + reboot), reconnect, and
+// if the other bud is still in the updater it is the one answering now. Without
+// the 04 both buds stay in OTAP and look like a generic Bluetooth device.
 $("btnOta").onclick = async () => {
   try {
     needLink();
     if (!upBytes) throw new Error("pick a .up first");
     const { payload, fwAddr, index, io, declared, lastEnd } = proto.upPayloads(upBytes);
     log(`payload 0x${fwAddr.toString(16)}..0x${lastEnd.toString(16)} (${payload.length}B), index @0x${io.toString(16)} (${index.length}B)`);
-    const sides = $("side").value === "both" ? [0x11, 0x22] : [$("side").value === "l" ? 0x11 : 0x22];
-    for (let n = 0; n < sides.length; n++) {
-      const side = sides[n];
-      if (n) {
-        log("waiting for the bud to come back ...");
-        try { await L.close(); } catch {}
-        L = null;
-        const port = await link.requestPort();
-        L = await link.openLink(port);
+    const one = $("side").value === "one";
+    const done = [];
+    done.push(await otaOneBud(payload, fwAddr, index, io, declared));
+    log(`--- flashed side 0x${done[0].toString(16)} ---`);
+    if (!one) {
+      // after 04 the other bud normally takes the link in OTAP
+      for (let i = 0; i < 20; i++) {
+        await repick("waiting for the other bud;");
+        const st = await budState();
+        log(`answering side 0x${(st.side || 0).toString(16)} link ${st.link} mode ${st.firm ? "FIRM" : "OTAP"}`);
+        if (!st.firm && st.side !== done[0]) {
+          done.push(await otaOneBud(payload, fwAddr, index, io, declared));
+          log(`--- flashed side 0x${done[1].toString(16)} ---`);
+          break;
+        }
+        if (!st.firm) throw new Error("the flashed bud is in the updater again after 04: use Leave updater");
+        if (st.link === 0) { log("both buds answer from FIRM and are linked"); break; }
+        log("the flashed bud is back in FIRM and holds the link: put it in the case, lid closed, keep the other one out");
+        await sleep(5000);
       }
-      log(`--- side 0x${side.toString(16)} ---`);
-      let r;
-      let ok = false;
-      for (let i = 0; i < 6; i++) {
-        r = await L.otaFrame(proto.otaEnter(side));
-        log(`enter(80): ${r ? hex(r) : "<no reply>"}`);
-        if (r) { ok = true; break; }
-      }
-      if (!ok) throw new Error("bud never answered 55AA80");
-      r = await L.otaFrame(proto.otaPrepare(side));
-      if (!r) throw new Error("no reply to prepare (55AA81)");
-      log(`prepare(81): ${hex(r)}`);
-      r = await L.otaFrame(proto.otaDeclare(declared, side));
-      if (!r) throw new Error("no reply to declare (55AA82)");
-      log(`declare(82): ${hex(r)}`);
-      for (let pos = 0; pos < payload.length; pos += 512) {
-        const chunk = payload.slice(pos, pos + 512);
-        r = await L.otaFrame(proto.otaWrite(fwAddr + pos, chunk), 3000);
-        if (!r) throw new Error(`write at 0x${(fwAddr + pos).toString(16)} got no reply`);
-        if ((pos + chunk.length) % 8192 < 512) log(`  0x${(pos + chunk.length).toString(16)}/0x${payload.length.toString(16)}`);
-      }
-      r = await L.otaFrame(proto.otaWrite(io, index), 3000);
-      if (!r) throw new Error("index write got no reply - aborting before finalize");
-      log(`index write: ${hex(r)}`);
-      r = await L.otaFrame(proto.otaFinalize(side), 3000);
-      log(`finalize(84): ${r ? hex(r) : "<link dropped / rebooting>"}`);
     }
-    log("done. Buds reboot on their own.");
+    await repick("waiting for the buds to reboot;");
+    const st = await budState();
+    log(`answering side 0x${(st.side || 0).toString(16)} link ${st.link} mode ${st.firm ? "FIRM" : "OTAP"}; flashed: ${done.map(s => "0x" + s.toString(16)).join(", ")}`);
+    if (!st.firm) log("a bud is still in the updater: use Leave updater");
+    else if (st.link !== 0) log("peer not linked yet (link != 0); give them a moment or case-cycle both buds");
+    else log("done: both buds in FIRM and linked");
+  } catch (e) { err(e); }
+};
+
+// Get buds out of the updater. OTAP's 04 handler clears the boot flag and
+// reboots when the bud has no linked peer; a linked master relays the request
+// to its peer and follows 2 s later. Sending 04 to an OTAP bud whose peer is
+// already back in FIRM drags that peer back into the updater, so only send 04
+// when the answering bud is in OTAP, then re-check.
+$("btnLeave").onclick = async () => {
+  try {
+    needLink();
+    for (let rnd = 0; rnd < 4; rnd++) {
+      if (rnd) { await sleep(5000); await repick("bud rebooting;"); }
+      const st = await budState();
+      log(`round ${rnd}: side 0x${(st.side || 0).toString(16)} link ${st.link} mode ${st.firm ? "FIRM" : "OTAP"}`);
+      if (st.firm) {
+        log(st.link === 0 ? "both buds in FIRM and linked"
+          : "this bud is in FIRM but has no peer. If the other bud is still in the updater: put THIS bud in the case with the lid closed, keep the other out, and run Leave updater again.");
+        return;
+      }
+      const r = await L.ota(proto.otaLeave(0x33), 5000);
+      log(`  04: ${r ? hex(r.raw) : "<link dropped>"}`);
+    }
+    err(new Error("still in the updater after 4 rounds; case-cycle both buds and retry"));
   } catch (e) { err(e); }
 };
 

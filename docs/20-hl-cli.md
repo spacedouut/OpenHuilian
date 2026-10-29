@@ -7,16 +7,19 @@ the `C0` command channel and the `55AA` OTA transport itself ([18](18-firm-walkt
 
 ## Getting a port
 
-Pair the buds to the computer, then give the tool the serial port the SPP
-service sits on:
+Pair the buds to the computer, then tell the tool where the SPP service is. The
+buds hold one SPP session at a time, so the phone's Bluetooth has to be off.
 
-| OS | How | Port example |
+| OS | How | `--port` |
 |---|---|---|
-| Linux | `rfcomm bind /dev/rfcomm0 <bt-addr>` (bluetoothctl `pair`/`trust` first) | `/dev/rfcomm0` |
+| Linux, raw socket | nothing to set up: `bluetoothctl pair` + `trust`, then give the address. Opens an RFCOMM socket on channel 3 (the buds' `SL_SPP` record), no `rfcomm bind`, no root, no pyserial | `AA:BB:CC:DD:EE:FF` (or `...:FF:3`) |
+| Linux, serial | `rfcomm bind /dev/rfcomm0 <bt-addr> 3`, and make the device readable | `/dev/rfcomm0` |
 | Windows | pairing creates an "Outgoing" COM port | `COM6` |
 | macOS | `/dev/cu.*` serial device appears on pair | `/dev/cu.H3Pro-SPP` |
 
-Only dependency is `pyserial`.
+The serial forms need `pyserial`; the address form has no dependencies. Channel
+3 matters: `rfcomm bind` without a channel picks 1, which is the buds' HFP
+channel and answers `AT+BRSF` instead of `C0` frames.
 
 ## Commands
 
@@ -26,7 +29,8 @@ hl --port PORT auth             run the C0 01/02 handshake and check the reply
 hl --port PORT get <name>       read a setting
 hl --port PORT set <name> <v>   write a setting (mirrored to the peer bud)
 hl --port PORT read 0x0 0x100000 out.bin   dump flash via C0 83 (200 B/reply cap)
-hl --port PORT ota file.up --side both     flash a .up through the 55AA path
+hl --port PORT ota file.up      flash a .up through the 55AA path, both buds
+hl --port PORT leave-ota        get buds stuck in the updater back into FIRM
 hl --port PORT cmd <hex>        send a raw frame, print the raw reply
 hl tone ...                     wraps tone_tool.py (file-side, no port needed)
 hl patch fw.up out.up ...       wraps cfw.py apply (file-side, no port needed)
@@ -51,19 +55,49 @@ bud's reply transform so the exchange can be verified the same way StarFun does.
 A unit whose PSMP `authorization_code` doesn't descramble to "APP" simply never
 answers `C0 01`, so any reply at all means the unit is authorized.
 
-## OTA, and what isn't tested
+## OTA
 
-`hl ota` mirrors the app's own flow: `80` enter, `81` prepare, `82` declare
-(CRC16 + length over the payload region), `83` 512-byte writes at absolute flash
-addresses, the partition index last, `84` finalize; left then right for
-`--side both`. The payload region is FIRM through the last partition actually
-stored in the image - a PSMP index entry with no bytes in the file is skipped,
-so per-unit data is never written.
+`hl ota` runs the app's flow against real buds (verified on an H3Pro Max3 pair,
+both directions, stock and patched images):
 
-Nothing in `hl` has been run against real buds yet: the framing and transforms
-come from the firmware and the app, not a captured session. First-time order of
-operations on hardware: `info`, then `auth`, then a small `read`, then anything
-that writes.
+1. `80` enter. FIRM relays it to the peer bud, so both buds reboot into the
+   updater (OTAP). Whichever bud grabs the SPP link next is the one every
+   following frame lands on. OTAP ignores the side byte in requests and
+   answers with its own (`11`/`22`).
+2. `81` prepare. The bud erases the target region first and answers when it is
+   done, which takes longer than the other steps (the tool waits 30 s).
+3. `82` declare (CRC16 + length over `0x3000`..OTAP), `83` 512-byte writes at
+   absolute flash addresses (about 4 KB/s over RFCOMM, 3 to 4 minutes per
+   bud), the partition index last, `84` finalize. A `00` status means the CRC
+   matched and the new index is committed; anything else means the old index
+   was put back, and the tool stops there.
+4. `04` leave: clears the boot-to-OTAP flag and reboots into FIRM. This step is
+   not optional. Without it both buds stay in the updater: they still pair and
+   answer `C0 04/05/09/51/83`, but not `C0 0A` (in-ear) or the serial reads,
+   have no A2DP/AirPods layer, and show up as a generic Bluetooth device.
+5. Reconnect. If the bud that answers is still in OTAP it is the other one;
+   flash it the same way. If FIRM answers (the first bud came back and holds
+   the link), the tool sends `80` again so the remaining bud enters the
+   updater, then flashes whoever answers. `--side one` stops after one bud.
+
+The payload region is FIRM through the last partition actually stored in the
+image; a PSMP index entry with no bytes in the file is skipped, so per-unit
+data is never written.
+
+### Stuck in the updater
+
+`hl leave-ota` is the recovery for buds left in OTAP (an interrupted flash, or
+an older tool that stopped after `84`). OTAP's `04` handler only clears the
+flag and reboots when the bud has no linked peer; a linked master instead
+relays the request to its peer and follows 2 s later. Sending `04` to an OTAP
+bud whose peer is already back in FIRM drags that peer back into the updater,
+so the command sends `04` only when the answering bud is in OTAP, rechecks
+after the reboot, and tells you when the remaining bud needs the other one
+powered off (in the case, lid closed) to be reached alone. Done means `C0 0A`
+answers and `C0 12` reads `00` (both buds linked; `02` is no peer). The flag
+page itself is at `OTAP.addr + ((OTAP.len >> 12) + 1) * 0x1000` (`0xFB000` on
+the H3Pro layout): `AA 55 00 00` set, `00 00 00 00` cleared, readable with
+`hl read 0xfb000 4 flag.bin`.
 
 ## The WebUI
 
