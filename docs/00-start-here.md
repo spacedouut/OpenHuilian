@@ -68,3 +68,4 @@ them appears to be **Shenju (珠海绅聚 / shenjugroup.com)**. The control app 
 | Physical write path into earbuds | probably UART boot-ROM via the case pins; untested |
 | H3Pro Max3 2607061716 image | in the repo, all CRCs valid ([16](16-live-flash-dump.md)) |
 | Read-only flash dump over Bluetooth | working, ~1.1 KB/s, 200 B/reply, `tools/flashdump.py` |
+| Mask-ROM surface / FIRM AES / EQ2P page use / UART boot-ROM frames | second-pass analysis done ([21](21-night-shift.md)) |
