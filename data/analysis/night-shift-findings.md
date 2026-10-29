@@ -74,12 +74,13 @@ pages 51-57 would be dead weight for this build - the filters really are compile
   missed) matches doc 18: C0/05/55 -> StarFun handler, E0 and A0..AF dropped, else `+test=`.
 - C0 part-2 dispatcher `FUN_00c52e4c` (also recovered) matches doc 18's table; additionally
   confirmed opcodes 0x67/0x68 write handlers post events, 0x85 calls FUN_00ca9610.
-- The `05`-frame path: FIRM accepts first-byte 0x05 frames and routes them to module 7
-  type 1 (same as 55AA -> type 2). The app side has a whole second protocol
-  (`constructCmd`: 16-byte header with cmdOrder/cmdId 0x8001/0x8002/divideType/offset/crc32,
-  JSON divide types) used by `getBiuShakeHandsCmd`/`getBiuVerifyCmd`. No Biu/JSON strings
-  exist in H3Pro FIRM, so this channel is almost certainly for OTHER Huilian products
-  (watches); on the buds it's accepted but likely inert. Worth one live probe someday.
+- The `05`-frame path: first-byte `05` frames are the **TWS peer (bud-to-bud) protocol**, not
+  a phone channel - OTAP's peer handler checks `05 <op> 00 …` frames and FIRM routes them to
+  module 7 type 1 (same transport family as the peer-sync opcodes in docs/18). The app side
+  has a separate second protocol (`constructCmd`: 16-byte header with cmdId 0x8001/0x8002,
+  divideType, offset, crc32 - getBiuShakeHandsCmd/getBiuVerifyCmd) for OTHER Huilian products
+  (watches); no Biu/JSON strings exist in H3Pro FIRM, so on the buds that channel is almost
+  certainly inert. Worth one live probe someday.
 - Module dispatch: two dispatcher tables (`FUN_00827564` table base 0x831e7c,
   `FUN_00c2ab6c` table base 0xc2ab94's target), 9 modules each, registered via
   `FUN_00c9e66c(module, handler)` - registrations found for modules 1, 2, 6; module 7
