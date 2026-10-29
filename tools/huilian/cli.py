@@ -3,9 +3,12 @@
 Talks the StarFun C0 protocol and the 55AA OTA protocol natively over a
 serial (RFCOMM/SPP) port, without StarFun or Frida.
 
-Pair the buds to the computer first, then pick the SPP port:
-  `hl --port /dev/rfcomm0 info`  (Linux, after `rfcomm bind`)
-  `hl --port COM6 info`          (Windows outgoing COM port)
+Pair the buds to the computer first, then point --port at them:
+  `hl --port AA:BB:CC:DD:EE:FF info`  (Linux: raw RFCOMM socket, channel 3,
+                                       no rfcomm bind, no root, no pyserial)
+  `hl --port /dev/rfcomm0 info`       (Linux serial device, needs pyserial)
+  `hl --port COM6 info`               (Windows outgoing COM port)
+The phone's Bluetooth must be off: the buds hold one SPP session.
 
 Subcommands:
   info   - model, version, battery, side, link state
@@ -13,7 +16,8 @@ Subcommands:
   get    - read a named setting (see `hl get`)
   set    - write a named setting (mirrored to the peer bud by firmware)
   read   - dump live flash via C0 83
-  ota    - flash a .up image via the 55AA OTA path
+  ota    - flash a .up image via the 55AA OTA path (both buds)
+  leave-ota - get buds that are stuck in the updater (OTAP) back into FIRM
   cmd    - send a raw frame, hex in / hex out
   tone   - list/extract/replace prompt sounds in a .up (wraps tone_tool.py)
   patch  - apply cfw patch files to a .up (wraps cfw.py)
@@ -45,7 +49,6 @@ READS = {
     "product_id": 0x14, "dom": 0x15, "serial": 0x51,
     "serial_l": 0x70, "serial_r": 0x71, "bt_addr": 0x06, "bt_addr2": 0x53,
 }
-SIDES = {"l": 0x11, "r": 0x22}
 
 
 def _fmt(b):
@@ -167,59 +170,150 @@ def _up_payloads(up_path):
     return payload, fw_addr, index, io, declared, last_end
 
 
+def _hx(v):
+    return "?" if v is None else f"{v:#x}"
+
+
+def _in_firm(ser):
+    """FIRM answers C0 0A (in-ear); the updater (OTAP) does not."""
+    return link.c0(ser, 0x0A, timeout=2.0) is not None
+
+
+def _state(ser):
+    side = _payload(link.c0(ser, 0x10, timeout=2.0))
+    lk = _payload(link.c0(ser, 0x12, timeout=2.0))
+    return (side[0] if side else None, lk[0] if lk else None, _in_firm(ser))
+
+
+def _ota_one_bud(ser, a, payload, fw_addr, index, io, declared):
+    """Run 80..84 + 04 against whichever bud holds the link. Returns its side."""
+    side = None
+    for _ in range(6):
+        r = link.ota_frame(ser, proto.ota_enter(0x33))
+        print("enter(80):", r.hex() if r else "<no reply>")
+        if r:
+            side = r.side
+            break
+        time.sleep(0.5)
+    else:
+        sys.exit("no answer to 55AA80")
+    if not r.ok:
+        sys.exit(f"enter refused, status {r.status} (3 = battery too low)")
+    # prepare erases the target region; the bud answers only when done
+    for _ in range(3):
+        r = link.ota_frame(ser, proto.ota_prepare(0x33), timeout=30)
+        print("prepare(81):", r.hex() if r else "<no reply>")
+        if r:
+            break
+    else:
+        sys.exit("no reply to prepare (55AA81)")
+    if not r.ok:
+        sys.exit(f"prepare refused, status {r.status}")
+    r = link.ota_frame(ser, proto.ota_declare(declared, 0x33))
+    if not r or not r.ok:
+        sys.exit(f"declare (55AA82) failed: {r.hex() if r else '<no reply>'}")
+    print("declare(82):", r.hex())
+    pos = 0
+    t0 = time.time()
+    while pos < len(payload):
+        chunk = payload[pos:pos + 512]
+        for attempt in range(4):
+            r = link.ota_frame(ser, proto.ota_write(fw_addr + pos, chunk), timeout=a.timeout)
+            if r and r.ok:
+                break
+            print(f"  write @0x{fw_addr + pos:x}: {r.hex() if r else 'no reply'}, retry {attempt + 1}")
+        else:
+            sys.exit(f"write at 0x{fw_addr + pos:x} failed")
+        pos += len(chunk)
+        if pos % 16384 < 512:
+            print(f"  0x{pos:x}/{len(payload):x}  ({time.time() - t0:.0f}s)")
+    r = link.ota_frame(ser, proto.ota_write(io, index), timeout=a.timeout)
+    if not r or not r.ok:
+        sys.exit("index write failed - stopping before finalize")
+    print("index write:", r.hex())
+    r = link.ota_frame(ser, proto.ota_finalize(0x33), timeout=10)
+    print("finalize(84):", r.hex() if r else "<no reply>")
+    if not r:
+        sys.exit("no reply to finalize; NOT sending 04. Run `hl ota` again.")
+    if not r.ok:
+        sys.exit(f"finalize status {r.status}: CRC mismatch, old index restored. "
+                 "NOT sending 04 (that would boot a half-written FIRM). Flash again.")
+    r = link.ota_frame(ser, proto.ota_leave(0x33), timeout=5)
+    print("leave(04):", r.hex() if r else "<link dropped>")
+    return side
+
+
 def cmd_ota(ser, a):
+    """The 55AA flow, the way the app runs it and the way real buds accept it.
+
+    A 55AA80 to FIRM makes BOTH buds reboot into the updater (the master
+    relays it to the peer), then whichever bud grabs the SPP link is the one
+    the frames land on: OTAP ignores the side byte in requests. So: flash the
+    bud that answers, send 04 (clear the boot-to-OTAP flag + reboot), wait for
+    the link to come back, and if the other bud is still in the updater it is
+    the one answering now; flash it the same way. Without the 04 both buds
+    stay in OTAP and look like a generic Bluetooth device.
+    """
     payload, fw_addr, index, io, declared, last_end = _up_payloads(a.file)
     print(f"payload region 0x{fw_addr:x}..0x{last_end:x} ({len(payload)} bytes), "
           f"index @{io:#x} ({len(index)} bytes), declared {len(declared)} bytes")
-    sides = [SIDES["l"], SIDES["r"]] if a.side == "both" else [SIDES[a.side]]
-    for n, side in enumerate(sides):
-        if n:
-            print("waiting for the bud to come back ...")
+    done = []
+    for pass_no in range(2):
+        if pass_no:
+            print("waiting for the link to come back ...")
             ser.close()
-            ser = _reopen(a)
-        print(f"--- side {side:#x} ---")
-        for attempt in range(6):
-            r = link.ota_frame(ser, proto.ota_enter(side))
-            print("enter(80):", r.hex() if r else "<no reply>")
-            if r:
-                break
-        else:
-            sys.exit("bud never answered 55AA80")
-        r = link.ota_frame(ser, proto.ota_prepare(side))
-        if not r:
-            sys.exit("no reply to prepare (55AA81)")
-        print("prepare(81):", r.hex())
-        r = link.ota_frame(ser, proto.ota_declare(declared, side))
-        if not r:
-            sys.exit("no reply to declare (55AA82)")
-        print("declare(82):", r.hex())
-        pos = 0
-        while pos < len(payload):
-            chunk = payload[pos:pos + 512]
-            r = link.ota_frame(ser, proto.ota_write(fw_addr + pos, chunk), timeout=a.timeout)
-            if not r:
-                sys.exit(f"write at 0x{fw_addr + pos:#x} got no reply")
-            pos += len(chunk)
-            if pos % 8192 < 512:
-                print(f"  0x{pos:x}/{len(payload):x}")
-        r = link.ota_frame(ser, proto.ota_write(io, index), timeout=a.timeout)
-        if not r:
-            sys.exit("index write got no reply - aborting before finalize")
-        print("index write:", r.hex())
-        r = link.ota_frame(ser, proto.ota_finalize(side), timeout=a.timeout)
-        print("finalize(84):", r.hex() if r else "<link dropped / rebooting>")
-    print("done. Buds reboot on their own.")
+            time.sleep(3)
+            ser = link.reopen(a.port, a.baud)
+            side, lk, firm = _state(ser)
+            if firm:
+                print(f"bud {_hx(side)} answered from FIRM (link {lk}); "
+                      "sending 80 again so the remaining bud enters the updater")
+        side = _ota_one_bud(ser, a, payload, fw_addr, index, io, declared)
+        done.append(side)
+        print(f"--- flashed side {_hx(side)} ---")
+        if a.side == "one":
+            break
+        if len(done) == 2 and done[0] != done[1]:
+            break
+    print("waiting for the buds to reboot ...")
+    ser.close()
+    time.sleep(3)
+    ser = link.reopen(a.port, a.baud)
+    side, lk, firm = _state(ser)
+    print(f"answering side {_hx(side)} link {lk} mode {'FIRM' if firm else 'OTAP'}; "
+          f"flashed: {[_hx(s) for s in done]}")
+    if not firm:
+        print("a bud is still in the updater: run `hl leave-ota`")
+    elif lk != 0:
+        print("peer not linked yet (link != 0); give them a moment or case-cycle both buds")
+    else:
+        print("done: both buds in FIRM and linked")
 
 
-def _reopen(a, tries=20, delay=1.0):
-    """The bud reboots on 55AA84 and drops SPP; poll the port until it is back."""
-    for _ in range(tries):
-        try:
-            return link.open_link(a.port, a.baud)
-        except Exception:
-            time.sleep(delay)
-    sys.exit("bud did not come back after OTA reboot - re-pair it and rerun "
-             "the remaining side")
+def cmd_leave_ota(ser, a):
+    """Get buds out of the updater. OTAP's 04 handler clears the boot flag and
+    reboots when the bud has no linked peer; a linked master instead relays
+    the request to its peer and follows 2 s later. Sending 04 to an OTAP bud
+    whose peer is already back in FIRM drags that peer back into the updater,
+    so this only sends 04 when the answering bud is in OTAP, then re-checks."""
+    for rnd in range(4):
+        if rnd:
+            ser.close()
+            time.sleep(5)
+            ser = link.reopen(a.port, a.baud)
+        side, lk, firm = _state(ser)
+        print(f"round {rnd}: side {_hx(side)} link {lk} mode {'FIRM' if firm else 'OTAP'}")
+        if firm:
+            if lk == 0:
+                print("both buds in FIRM and linked")
+            else:
+                print("this bud is in FIRM but has no peer. If the other bud is still in "
+                      "the updater: put THIS bud in the case with the lid closed, keep "
+                      "the other out, and rerun `hl leave-ota`.")
+            return
+        r = link.ota_frame(ser, proto.ota_leave(0x33), timeout=5)
+        print("  04:", r.hex() if r else "<link dropped>")
+    sys.exit("still in the updater after 4 rounds; case-cycle both buds and rerun")
 
 
 def cmd_cmd(ser, a):
@@ -266,9 +360,12 @@ def main():
 
     o = sub.add_parser("ota")
     o.add_argument("file")
-    o.add_argument("--side", choices=["l", "r", "both"], default="both")
+    o.add_argument("--side", choices=["both", "one"], default="both",
+                   help="both: flash whichever bud answers, 04, then the other; "
+                        "one: stop after the first bud")
     o.add_argument("--timeout", type=float, default=3.0)
     o.set_defaults(f=cmd_ota)
+    sub.add_parser("leave-ota").set_defaults(f=cmd_leave_ota)
 
     c = sub.add_parser("cmd"); c.add_argument("hex"); c.set_defaults(f=cmd_cmd)
 
