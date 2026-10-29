@@ -70,7 +70,15 @@ def open_link(port, baud=BAUD, timeout=1.5):
         parts = port.split(":")
         addr = ":".join(parts[:6])
         ch = int(parts[6]) if len(parts) > 6 else SPP_CHANNEL
-        return RfcommLink(addr, ch, timeout)
+        # a link that was just closed can take a few seconds to tear down
+        # (EBUSY / EINPROGRESS / EHOSTDOWN); retry before giving up
+        for attempt in range(8):
+            try:
+                return RfcommLink(addr, ch, timeout)
+            except OSError:
+                if attempt == 7:
+                    raise
+                time.sleep(2)
     if serial is None:
         sys.exit("pyserial is required for serial ports: pip install pyserial "
                  "(or pass a Bluetooth address for a raw RFCOMM socket)")
