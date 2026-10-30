@@ -74,7 +74,7 @@ outer: body length 2,075,984, container CRC 0x7B79, chip "SL6801"
 
 | Tag | What it is | Size | Notes |
 |---|---|---|---|
-| `FIRM` | Main application + DSP image, ARM **Thumb-2** | 0.7–0.75 MB | 0x30-byte wrapper then a load descriptor; entry `0x00804C41` (Thumb bit set); image base ≈ `0x7FFE14` for h2sturbo. 24/24 unique. Contains the Bluetooth stack, AAP server, ANC code, NV key names. |
+| `FIRM` | Main application + DSP image, ARM **Thumb-2** | 0.7–0.75 MB | 0x30-byte wrapper then a load descriptor; entry `0x00804C41` (Thumb bit set); image base ≈ `0x7FFE14` for h2sturbo. 24/24 unique. Contains the Bluetooth stack, AAP server, ANC code, NV key names, and a software AES used for Continuity adverts, not for image checks ([05](05-crc-and-integrity.md), [21](21-night-shift.md)). |
 | `SENC` | Sensor / call-mic parameter table | 2,056 B constant | `[u16 group][u16 idx][f32]` records; pages 21–32 ([08](08-eq2p-senc.md)) |
 | `SEN2` | Second sensor table | — | only h2slim, h2spro |
 | `TONE` | Voice prompts + UI clicks archive | 83–94 KB | `[u32 size][name\0]…` directory, then raw MP3/WAV ([07](07-tone-sfx.md)) |
