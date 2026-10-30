@@ -19,8 +19,10 @@ Thumb-2, image base `0x7FFE14`). Present in both h2sturbo builds.
 | `+ANCAG=` | `0xF4000004` | signed (parses leading `-`) | overall ANC gain |
 | `+ANCDG=` | `0xF4000005` | digits | denoise / depth gain |
 
-Neighbouring strings: `+MICTEST=`, `+MVS=`, `+NTC=`. Whether these are accepted over the BT
-command channel without the keyed challenge/response, and their valid ranges, are untested.
+Neighbouring strings: `+MICTEST=`, `+MVS=`, `+NTC=`. On the H3Pro the SPP receive demux hands
+anything that isn't a `C0`/`05`/`55` frame to a hidden `+test=` console ([18](18-firm-walkthrough.md)),
+which is the likely way in. Whether these commands answer over SPP, and their valid ranges, are
+untested.
 
 ## The data pages that *could* hold filters are never shipped
 
@@ -70,4 +72,4 @@ layout: its EQ2P has 7 profiles (`SLEQ 02 07`, see [16](16-live-flash-dump.md)).
 | Music EQ, ANC-mode EQ | data (EQ2P) — proven repack |
 | Call-mic noise reduction params | data (SENC) — structure known, meaning partly |
 | ANC / transparency gains | runtime AT commands — exist, untested |
-| ANC / transparency **filters** | **code** in FIRM, or populate pages 51–57 *if* FIRM honours them (unknown) |
+| ANC / transparency **filters** | **code** in FIRM. The H3Pro FIRM never reads pages 51–57 ([21](21-night-shift.md)) |

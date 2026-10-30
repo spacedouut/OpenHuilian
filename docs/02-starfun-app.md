@@ -53,9 +53,12 @@ that exposes `chooseFile()`, with no server involved. That's read from the code;
 
 ## Command channel security
 
-`CMDConfig.java` has `encryptData` / `verificationCmd`: a keyed challenge/response, implemented in
-a native `.so`, that unlocks the `C0` command channel. It is **not** a check on the firmware image.
-Whether OTA frames are accepted without passing this handshake hasn't been tested.
+`CMDConfig.java` has `encryptData` / `verificationCmd`: a challenge/response, implemented in a
+native `.so`, that unlocks the `C0` command channel. It is **not** a check on the firmware image.
+The native code is the same 16-bit LFSR scrambler FIRM uses, so it's obfuscation, not a keyed
+cipher, and `tools/huilian/proto.py` reproduces it ([18](18-firm-walkthrough.md),
+[21](21-night-shift.md)). OTA frames skip it. `tools/hl ota` flashes the buds without running the
+handshake at all.
 
 ## Interesting command IDs seen
 
@@ -72,7 +75,8 @@ The firmware side of the whole `C0` set, about sixty commands, is tabled in
 ## Data model hints
 
 * `Eq2ItemType` reserves page IDs **51–57** for ANC / talk-through filter pages (never populated
-  in any public image — [11](11-anc-transparency.md)).
+  in any public image — [11](11-anc-transparency.md)). The H3Pro FIRM never asks for them either
+  ([21](21-night-shift.md)).
 * Local EQ store has scheme families `TYPE_EQ=1, TYPE_ANC=2, TYPE_ENC=3, TYPE_ANC_2=4`, and
   `EqScheme.isAnc` — explains the duplicated profile in EQ2P ([08](08-eq2p-senc.md)).
 * `AncCalRespParam`, `CurveAncAssist`, `CurveAncReference` and `EqCoeffAnc` model classes exist,

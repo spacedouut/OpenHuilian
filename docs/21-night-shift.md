@@ -210,7 +210,7 @@ dispatcher: `01` requires the auth-enabled flag (`*PTR_DAT_00810ce0`) AND a `0x4
 channel/type argument on the frame, `02` requires the same `0x40` argument plus its own
 checks, and several read handlers have role/peer-state branches. So treat the list above
 as "handlers present, gated", and the working OTAP-mode surface as the four that answered
-(record the exact four from the run log) plus `83` flash reads. `hl` already does the
+(`04`, `05`, `09`, `51`, per [20](20-hl-cli.md)) plus `83` flash reads. `hl` already does the
 reads; recovery tooling should not assume more than that.
 
 ## Function-recovery note

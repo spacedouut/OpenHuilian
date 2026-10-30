@@ -54,12 +54,14 @@ Extra loaders: `reset_6801.bin` (reboot), `cal_frequent_drift*.bin` (crystal cal
 the `freq_drift` NV key), `base_board.bin` / `6801_intel_flash*.bin` (RF check / flash helpers).
 
 UART is the realistic factory path for earbuds (charging-case contacts routinely double as
-UART/boot pins on TWS designs). The byte-level serial protocol is inside `COM.dll`
-and the loader binaries and has **not** been disassembled yet.
+UART/boot pins on TWS designs). The PC side of the byte-level protocol (`42 52` frames in
+`COM.dll`) is decoded in [21](21-night-shift.md). The loader binaries are only partly mapped, and
+none of it has been tried on H3Pro buds. Which pins carry UART is still unknown.
 
 ## Relevance to H3Pro
 
-* This tool knows SL6801 and SL6806 only. "377H3"/"H3Pro" is a newer Huilian generation; whether
-  it shares the boot ROM, loader addresses, or even the `HLKJ` layout is unknown.
+* This tool knows SL6801 and SL6806 only. "377H3"/"H3Pro" is a newer Huilian generation. It
+  keeps the `HLKJ` layout, and its bootloader code is byte-identical to every catalog image's
+  ([21](21-night-shift.md)). Whether it shares the boot ROM and loader addresses is unknown.
 * The `.up` container, CRC and PSMP conventions are vendor-wide and very likely carried forward.
 * **Do not** point this tool (or any SL6801 loader binary) at an H3Pro device.

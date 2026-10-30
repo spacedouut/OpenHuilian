@@ -1,7 +1,9 @@
 # 06 · The Bluetooth OTA protocol
 
 Read from the `com.shenju.ota` SDK bundled in StarFun (archived in
-[`reference/starfun-app/2.0.7.016/ota/`](../reference/starfun-app/2.0.7.016/ota/)). Not exercised against hardware.
+[`reference/starfun-app/2.0.7.016/ota/`](../reference/starfun-app/2.0.7.016/ota/)), then checked
+against the OTAP code ([17](17-firmware-internals.md)) and on real buds with `tools/hl ota`
+([20](20-hl-cli.md)).
 
 ## Transport
 
@@ -36,14 +38,18 @@ The app parses the `.up` into `UpInfoData`:
 So the device is treated as a dumb flash writer: `(absolute address, 512 bytes, CRC8)` frames land
 wherever the `.up` index says. Writing the index last keeps the old index in place until the very
 end, but by then the partitions it points at may already be erased (`81`) or half overwritten
-(`83`). On its own that doesn't leave the buds bootable if the update is interrupted. Recovery presumably relies on the separate `OTAP` updater stub / bootloader.
+(`83`). On its own that doesn't leave the buds bootable if the update is interrupted. What keeps
+them reachable is the boot-to-OTAP flag. FIRM sets it on `80`, the bootloader keeps booting OTAP
+while it's set, and only `04` clears it ([17](17-firmware-internals.md)). Buds left with the flag
+set came back up in OTAP after power cycles and still answered.
 
 Sequence (`ota_step` 1 → 2 → 3):
 
 ```
 app → buds  C004 / C009 (model, battery; battery polled every 2 s during OTA)
 app → buds  55AA80 <side>           enter OTA           (retry ≤ 6)
-app → buds  55AA81 <side>           prepare / erase
+        both buds reboot into OTAP, link drops, reconnect
+app → buds  55AA81 <side>           prepare / erase     (slow, allow ~30 s)
 app → buds  55AA82 <side> crc len   declare payload
 app → buds  55AA83 … × N            512-byte writes, absolute addresses
 app → buds  55AA83 index            partition index
@@ -74,9 +80,12 @@ holds the link.
 
 | Request | Reply payload |
 |---|---|
-| `80`, `81`, `82`, `04` | `00` |
+| `81`, `82`, `04` | `00` |
 | `83` | `00 <addr LE 4> <data_len LE 4>`, echoing the frame. A repeat of the last address is acked again without a second write, so resending after a timeout is safe |
 | `84` | `00` if the CRC matched and the new index was committed, nonzero if it put the old index back |
+
+`80` is answered by FIRM, not OTAP, because the bud is still running FIRM when it arrives. Status
+`00`, or `03` if the battery is too low ([18](18-firm-walkthrough.md)).
 
 OTAP counts written bytes (the index frame counts as `0x1000`) and runs the CRC check once the
 count reaches the `82` total. On `04` it clears the boot-to-OTAP flag and reboots
@@ -106,14 +115,17 @@ set, `00 00 00 00` cleared.
 * Whole-payload CRC + length from `82`.
 * That's it. OTAP doesn't check partition CRCs, chip name or version; details in [17](17-firmware-internals.md).
 
-Nothing in the protocol carries a signature or key. Whether the `55AA` frames are accepted without
-first passing the command-channel challenge/response (`verificationCmd`) hasn't been tested.
+Nothing in the protocol carries a signature or key. The `55AA` frames don't need the
+command-channel challenge/response (`verificationCmd`) first. FIRM routes them separately
+([18](18-firm-walkthrough.md)), and `tools/hl ota` flashes the buds without it.
 
 ## Practical notes for a future CFW push
 
 * Chunk size 512, `len16 = 520` — keep it; the device may only accept that size.
 * Send FIRM and friends first, index last, exactly as the app does.
-* The app expects a reboot/disconnect after `84` and then reconnects for the other side.
+* Expect the link to drop twice per bud. Once after `80`, when both buds reboot into OTAP, and
+  again after `04`. After the last `04` the buds may not reconnect on their own. Putting both in
+  the case and closing the lid for about 10 s brought them back in FIRM.
 * A one-line patch exposing `SettingMoreActivity.chooseFile()` gives a local-file flasher using
   this exact transport, on the app that already knows how to talk to the buds. It still splices the
   bud's current EQ2P/TONE into your file, though.

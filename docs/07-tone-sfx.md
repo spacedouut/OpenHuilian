@@ -58,7 +58,8 @@ untouched prompts byte-identical; only 4 bytes changed outside the TONE payload 
 
 1. **Match the original encoding**: MP3 mono at 16 kHz/24 kbps (or 48 kHz/56 kbps) or WAV PCM16
    mono 48 kHz. The on-device decoder's exact capabilities are untested, so stick to formats
-   that already ship.
+   that already ship. What has worked on H3Pro buds is matching each slot's stock sample rate and
+   bitrate, mono, with leading and trailing silence trimmed and no ID3 or Xing header.
 2. **Fit the partition**: stock TONE is exactly full; there is ~2.8 KB of slack before EQ2P
    (`0xBC000 + 0x144C7` vs EQ2P at `0xD1000`… check per image). To grow it, move TONE into the
    ~1 MB of zero padding after EQ2P by rewriting its index `flash_addr`/`length` — the transport
@@ -70,4 +71,8 @@ untouched prompts byte-identical; only 4 bytes changed outside the TONE payload 
 
 The round-trip above was on an SL6801 H2S Turbo image. The live H3Pro image
 ([16](16-live-flash-dump.md)) uses the same TONE format: `tools/tone_tool.py` lists its 18 prompts
-and its CRC verifies. A replaced prompt hasn't been played on the buds yet.
+and its CRC verifies. An image with six replaced prompts (connected, disconnected and the ANC /
+transparency / adaptive ones), built with `tone_tool.py replace`, has been flashed to real buds
+with `tools/hl ota` ([20](20-hl-cli.md)). The H3Pro TONE is packed to its declared 84,903 B and
+`tone_tool.py replace` won't go past that, so the new set has to fit in the same total. `low_power`
+is 8 kHz PCM in an `.mp3`-named slot.

@@ -80,7 +80,7 @@ outer: body length 2,075,984, container CRC 0x7B79, chip "SL6801"
 | `TONE` | Voice prompts + UI clicks archive | 83–94 KB | `[u32 size][name\0]…` directory, then raw MP3/WAV ([07](07-tone-sfx.md)) |
 | `EQ2P` | EQ profiles, magic `SLEQ` | ~1.5 KB | plain float table ([08](08-eq2p-senc.md)) |
 | `OTAP` | OTA updater stub | **exactly 167,248 B in all 24 images** | 23 distinct blobs despite fixed size; in h2sturbo only the first 4 KB changed between builds. No crypto strings found. |
-| `PSMP` | Persistent settings (NV key/value store) | 16 KB at end of flash | declared with crc 0 and address beyond EOF — **not shipped in OTAs** so user settings survive. Present in raw dumps. Editable with the vendor's `psm-nvds.dll` ([09](09-psmp-nvds.md)). |
+| `PSMP` | Persistent settings (NV key/value store) | 16 KB at end of flash | declared with crc 0 and address beyond EOF — **not shipped in OTAs** so user settings survive. Present in raw dumps. Editable with the vendor's `psm-nvds.dll` or offline with `tools/psmp_tool.py` ([09](09-psmp-nvds.md)). |
 
 ## Flash classes
 

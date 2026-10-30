@@ -10,14 +10,16 @@ match.
 
 ## The flow
 
-1. Dump your own firmware with the app's hidden local-file path or
-   [`tools/flashdump.py`](../tools/flashdump.py) ([16](16-live-flash-dump.md)). You get a `.up`.
+1. Dump your own firmware with `tools/hl read` ([20](20-hl-cli.md)) or
+   [`tools/flashdump.py`](../tools/flashdump.py) ([16](16-live-flash-dump.md)), then wrap it with
+   `tools/build_up.py`. You get a `.up`.
 2. `python3 tools/cfw.py info my.up` shows the build and checks the CRCs.
 3. `python3 tools/cfw.py apply my.up my-cfw.up patches/2607061716/head-tracking.json`
    applies the patch with its defaults. Add `--set name=value` to turn a knob, for example
    `--set tx_ms=25 --set alpha=0.4`.
-4. Flash `my-cfw.up` the same way a stock update goes in: the app's local-file path, or the
-   `55AA` OTA transport from [6](06-bt-ota-protocol.md) (`tools/flashota.py` in PR #10 drives it).
+4. Flash `my-cfw.up` the same way a stock update goes in, over the `55AA` OTA transport from
+   [6](06-bt-ota-protocol.md). `tools/hl ota my-cfw.up` does both buds ([20](20-hl-cli.md)) and
+   is how the head-tracking patch went onto real buds.
 
 `cfw.py` refuses an image whose container CRC or partition CRCs do not verify, refuses a patch
 written for another build, refuses anything that reaches outside its partition, and refuses an op
@@ -63,7 +65,8 @@ Patches live under `patches/<firmware version>/`. Anything that exposes a knob s
 ## Rules
 
 * Never flash a patched image without reading the recovery notes in
-  [17](17-firmware-internals.md). A failed update does not roll FIRM back.
+  [17](17-firmware-internals.md) and [20](20-hl-cli.md). A failed update does not roll FIRM back,
+  and a flash that skips the final `04` leaves both buds in the updater.
 * Keep patches version-pinned. Do not loosen the byte checks to make a patch "fit".
 * A patch that touches the first 4 KiB of `FIRM` (the block copied to RAM) changes the header
   CRC too. `cfw.py` handles that, other tools may not.

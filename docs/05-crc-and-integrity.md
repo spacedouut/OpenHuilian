@@ -45,10 +45,10 @@ def crc16(init, bytes_to_calc):
 * Partition CRCs: **match in 24/24 images** (5 or 6 partitions each).
 * Container CRC: **match in 23/24**. The exception, `a10_2311090955_RYEQ.up`, has correct
   partition CRCs and a stale outer CRC — looks like a reseller EQ re-tune that fixed the inner
-  checksum but not the outer one, and StarFun still serves it as `types: all`. Whether devices
-  accept it (i.e. whether the container CRC is even checked by the app/device) is untested;
-  the app's own OTA path recomputes its whole-payload CRC from the bytes it sends, so the outer
-  header CRC may only matter for the vendor flasher.
+  checksum but not the outer one, and StarFun still serves it as `types: all`. The buds never
+  see the container header. The app strips it and the `82` CRC is computed from the bytes it
+  sends ([17](17-firmware-internals.md)), so the outer CRC only matters for the vendor flasher
+  and the tools here.
 * `smartlink_flash/fwhelper scan` independently reproduced both mismatches on that file.
 * The OpenPod `B27_251112.up` also reports a FIRM CRC mismatch under `fwhelper` — a modified/test
   artifact or table-version quirk; not generalised.
@@ -73,8 +73,9 @@ Apple Continuity advert builders, most likely encrypting post-pairing adverts wi
 `air_adv_key` ([21](21-night-shift.md)). Image acceptance happens in OTAP, which has no AES, so
 this doesn't change the CRC16-only model. No SHA/MD5/TEA/XTEA/RC4 constants show up anywhere.
 
-The app's `encryptData`/`verificationCmd` is a keyed challenge/response to unlock the
-**command channel**, not an image signature ([02](02-starfun-app.md)).
+The app's `encryptData`/`verificationCmd` is an LFSR-scrambled challenge/response that unlocks
+the **command channel**, not an image signature, and OTA frames don't go through it
+([02](02-starfun-app.md), [18](18-firm-walkthrough.md)).
 The SL6806 bootloader RE ([13](13-open-source-tooling.md)) shows the update validator checks
 `CONFIG` magic + chip-name string + timestamp compare + write-verify CRC — nothing cryptographic.
 
