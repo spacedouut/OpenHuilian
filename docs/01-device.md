@@ -46,5 +46,5 @@ Authorization: <tenant JWT>
 |---|---|
 | StarFun OTA server | Nothing for `h3promax3`. `tools/pull_ota.py h3promax3 2607061716` checks again. |
 | Shenju OTA host `ota.shenjugroup.com` | Needs a per-product `firmware_id` and has no list endpoint; the only IDs in the app are for a smartwatch. |
-| Read flash off the buds over Bluetooth | **Works.** `C0 83` reads 200 bytes at a time; the full 1 MiB takes about 16 minutes (`tools/flashdump.py`, [16](16-live-flash-dump.md)). The result is in `firmware/h3promax3/`. |
+| Read flash off the buds over Bluetooth | **Works.** `C0 83` reads 200 bytes at a time; the full 1 MiB takes about 16 minutes through the app (`tools/flashdump.py`, [16](16-live-flash-dump.md)). `tools/hl read` does the same without the app ([20](20-hl-cli.md)). The result is in `firmware/h3promax3/`. |
 | UART boot ROM via the case pins | Untested, see [12](12-shenju-flasher.md). |

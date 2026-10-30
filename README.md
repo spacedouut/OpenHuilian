@@ -4,7 +4,8 @@ Docs and tools for the firmware on **H3Pro Max3** earbuds. They use a Huilian **
 AirPods-Pro-style replica, and are controlled by the **StarFun** app. The older SL6801 images in the
 public catalog use the same container, so they're covered too.
 
-Nothing here has been flashed to a bud yet. Read [Safety](docs/00-start-here.md#safety) first.
+Stock and patched images have been flashed to real H3Pro Max3 buds over Bluetooth with `tools/hl`
+([20](docs/20-hl-cli.md)). Read [Safety](docs/00-start-here.md#safety) first.
 
 ## Wiki index
 
@@ -58,5 +59,6 @@ The container format, CRCs, Bluetooth OTA protocol, voice prompts, EQ tables and
 are decoded, and TONE/EQ edits round-trip offline. StarFun's server has no H3Pro Max3 firmware, so
 the 2607061716 image in `firmware/h3promax3/` was read off the buds with the app's own flash-read
 command ([16](docs/16-live-flash-dump.md)). It's CRC-valid and every tool here works on it. The bud's
-updater accepts any image whose CRC matches ([17](docs/17-firmware-internals.md)). No modified image
-has been tried on hardware.
+updater accepts any image whose CRC matches ([17](docs/17-firmware-internals.md)), and that held on
+real buds. `tools/hl ota` has flashed both stock and patched images (faster head tracking, custom
+prompts) to a pair ([20](docs/20-hl-cli.md)).

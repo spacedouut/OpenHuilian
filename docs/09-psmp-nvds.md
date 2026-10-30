@@ -104,8 +104,9 @@ Names only: `authorization_code`, `authorization_code_length`, `bt_addr`, `ble_a
 
 * Gesture mapping, ear-detection, EQ preset and the Apple `authorization_code` live here → many
   "feature" changes may be **settings writes**, not firmware patches.
-* The app's `C0` command set and the factory tool both write PSM; a Bluetooth path to set arbitrary
-  keys hasn't been tested.
+* The app's `C0` command set and the factory tool both write PSM. `tools/hl set` writes the
+  user-facing keys over `C0` ([20](20-hl-cli.md)). A Bluetooth path to set arbitrary keys hasn't
+  been found.
 * Offline PSMP writes work now that the record check is reproduced (`psmp_tool.py set`). It has
   only been round-tripped against dumps, never written to a bud; PSMP also holds `paired_flag`,
   `ear_type` and `authorization_code`, so a bad write costs you the pairing.

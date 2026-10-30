@@ -122,6 +122,6 @@ patching and `tone_tool.py` replacement) running client-side on a `.up` you
 pick. `node tools/webui/selftest.mjs` replays fixed vectors to confirm the JS
 produces byte-identical frames to `huilian/proto.py`.
 
-Same caveat: hardware-unverified. The OTA section refuses to write the index
+Unlike the CLI, the WebUI hasn't been run against buds. The OTA section refuses to write the index
 until every payload chunk is acknowledged, and `side=both` re-picks the port
 between ears because the bud reboots after finalize.

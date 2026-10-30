@@ -1,6 +1,7 @@
 # tools/
 
-All Python 3, standard library only unless noted. Two scripts talk to an earbud: `flashdump.py`,
+All Python 3, standard library only unless noted. These talk to an earbud: `hl` (and the `webui/`
+and `panel/` built on the same protocol), which reads, changes settings and flashes, `flashdump.py`,
 which is strictly read-only, and `flashota.py`, which writes firmware and only when you ask it to.
 The rest operate on files (or, for `pull_ota.py`, on the StarFun server).
 

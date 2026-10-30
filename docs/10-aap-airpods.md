@@ -1,7 +1,8 @@
 # 10 · AAP / AirPods emulation surface
 
 Read statically from `h2s_turbo_2506281656.up` FIRM (377-generation SL6801 build), compared with
-the 2409191721 build. Nothing here was observed on the H3Pro Max3 itself. Full narrative report:
+the 2409191721 build. The H3Pro build has the same layer, with differences listed at the end of
+this page. Full narrative report:
 [`data/reports/aap_anc_body.html`](../data/reports/aap_anc_body.html); decoder:
 [`tools/sdp_hid.py`](../tools/sdp_hid.py).
 
@@ -82,7 +83,22 @@ Both builds already had the AAP server, SDP records, XAPL, Siri, and the adverti
 * XAPL features = 2 (battery only); no case-battery or other feature bits.
 * Shared serial number for every unit.
 * No string/descriptor evidence of conversation awareness, adaptive audio, loud-sound reduction.
-* Noise-control from Control Center: no AAP listen-mode handler found statically (opcodes are
-  built in code).
+* Noise-control from Control Center: no AAP listen-mode handler found statically in this build
+  (opcodes are built in code). In the H3Pro build opcode `0x4B` reads as one ([21](21-night-shift.md)).
 
 Related: the `authorization_code` / `authorization_code_length` NV keys in FIRM ([09](09-psmp-nvds.md)).
+
+## On the H3Pro
+
+From [18](18-firm-walkthrough.md) and [21](21-night-shift.md), static only:
+
+* The Continuity template is at FIRM `0xC4BF58` and `FUN_00cab92c` fills it at runtime. The
+  "16 zero bytes" are most likely AES ciphertext under the PSMP `air_adv_key`. FIRM carries a
+  software AES for this, so changing the model bytes is still a 2-byte edit, but anything past
+  them goes through the AES path.
+* The phone-facing AAP opcode switch is `FUN_00ca87d4` (opcode at frame byte 4), with `0x31` on
+  the AES path and `0x4B` looking like the listen-mode command.
+* The identity plist carries a different hardcoded serial and `CFG#` than the h2sturbo build, so
+  every H3Pro still reports the same serial.
+* New Apple heart-rate HID service (`com.apple.hid.heartrate-access`) backed by a VC30Fx sensor.
+* The AirPods model/identity table is XOR-`0x59` data at FIRM `0xC4A9E0`.

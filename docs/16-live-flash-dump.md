@@ -19,9 +19,11 @@ reply: C0 83 <address> <length> <data…>
 `0x3000` (200 bytes, `INDEX_START_ADDRESS = 12288`) and then TONE/EQ2P in 100-byte blocks. Nothing
 stops the same call from being pointed at address 0 with the whole flash as the range.
 
-The `C0` channel sits behind a keyed challenge/response in a native library. Instead of
-reimplementing it, [`tools/flashdump.js`](../tools/flashdump.js) runs inside StarFun with Frida after
-the app has connected. It calls `CMDConfig.getReadFlashCmdArray(addr,len)` and
+The `C0` channel sits behind the app's challenge/response, which turned out to be a 16-bit LFSR.
+`tools/hl read` reimplements it and reads flash over a plain RFCOMM socket with no app
+([20](20-hl-cli.md)). The older route below reuses the app instead.
+[`tools/flashdump.js`](../tools/flashdump.js) runs inside StarFun with Frida after the app has
+connected. It calls `CMDConfig.getReadFlashCmdArray(addr,len)` and
 `BtClient.sendBytes(cmd, 1)` in a loop and hooks `BtBase.notifyUI` to catch the `C083…` replies.
 [`tools/flashdump.py`](../tools/flashdump.py) drives it.
 
@@ -125,8 +127,8 @@ are **still absent** — consistent with [11](11-anc-transparency.md): filters l
 **AAP / AirPods layer.** Still `AT+XAPL=0042-0887-0100,2`, still the 2007 Apple copyright string, the
 `devmotion6` AccessoryService plist and its HID report descriptor are present. New string vs. the
 catalog build: **`AirPods Pro2`** alongside `AirPods` / `AirPods Pro`. The BLE model literal `0E 20`
-still appears (50 hits, most are code); which one is the pop-up template needs the same locate-by-
-context pass as [10](10-aap-airpods.md). ANC AT commands are unchanged (`+ANCFFG/+ANCFBG/+ANCAG/
+still appears (50 hits, most are code). The pop-up template is the one at FIRM `0xC4BF58`
+([21](21-night-shift.md)). ANC AT commands are unchanged (`+ANCFFG/+ANCFBG/+ANCAG/
 +ANCDG/+ANCTEST`), plus NV keys `anc_mode_sel`, `anc_mode_phone_sel`. Head-tracking markers
 (`task motion`, `taskB motion`, `air motion timer`) are present; no `spatial`/`conversation`/`adaptive`
 strings.

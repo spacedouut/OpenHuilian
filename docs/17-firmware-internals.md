@@ -6,7 +6,8 @@ the bootloader picks what to run, and what the OTA updater checks before it take
 Method: the partitions from [16](16-live-flash-dump.md) were wrapped into ARM ELFs with
 [`tools/h3pro_elf.py`](../tools/h3pro_elf.py), then read with Capstone and Ghidra (through REA).
 There are no symbols, so functions are named by address (`FUN_0080e770` and so on). All of it is
-static analysis. **Nothing was run on, or written to, the buds.**
+static analysis. The CRC-only result has since held on real buds, which took stock and patched
+images through `tools/hl ota` ([20](20-hl-cli.md)).
 
 Short version: **the H3Pro takes any image whose CRC16 matches the CRC the phone announces.** No
 signature, no chip-name check, no version or timestamp check, in either the bootloader or the
@@ -18,7 +19,8 @@ ARM Cortex-M (ARMv7-M, Thumb-2). The giveaways: normal Cortex-M vector tables, a
 handler that does `mrs msp` / `mrs psp` and pokes the System Control Block at `0xE000ED00`.
 
 
-There's a mask ROM at address 0 that all three programs call into. The handful we've identified:
+There's a mask ROM at address 0 that all three programs call into. A sweep found 467 distinct
+ROM call targets ([21](21-night-shift.md)). The ones named here:
 
 | ROM address | What it does |
 |---|---|
@@ -56,10 +58,12 @@ FIRM and OTAP both start with the same little header, which is what the bootload
 | `+0x10` | RAM load address (`0x804C40`) |
 | `+0x14` | entry point (`0x804C41`, Thumb bit set) |
 | `+0x18` | bytes to copy (`0x1000`) |
-| `+0x1C` | CRC16 of the copied block |
+| `+0x1C` | CRC16 over `partition[0x30 : 0x30 + copy length]`, from the vector table on |
 | `+0x30` | the program's vector table (initial SP, reset, ...) |
 
-The copy source is partition `+0x470` (header size + `0x440`).
+The copy source is partition `+0x470` (header size + `0x440`), so the header CRC and the copied
+block don't cover the same bytes. `cfw.py` recomputes the CRC over the range above, which
+matches the stored value in FIRM and OTAP.
 
 The `HLKJ` header at flash 0 does the same job for the bootloader: `+0x04` load address
 `0x860000`, `+0x0C` header size `0x60`, `+0x10` length `0x1CF0`, `+0x14` CRC16 (`0xA8CB`, checks
@@ -92,12 +96,14 @@ So that `0x55AA` word is the "reboot into the updater" flag, and both sides of i
   `otaStateTimer` and the bud reboots into OTAP.
 * **OTAP clears it** in `FUN_0080FE80`, the same routine with a zero word. The OTA state machine
   calls it on the `04` command that follows `84` finalize, then reboots. If `FUN_00819FD4` says
-  to stay in the updater, it arms a 2 s `otaStateTimer` instead and leaves the flag alone.
+  the bud is a linked master, it first relays the exit to its peer (opcode `0x0e`) and arms a
+  2 s `otaStateTimer`, then clears and reboots ([06](06-bt-ota-protocol.md)).
 * The bootloader only reads it.
 
 So the flag is one flash page, set by FIRM on request and cleared by the updater when it's done.
 If OTAP never gets that far, the flag stays set and the bud comes back up in the updater. That's
-the retry path a half-written FIRM depends on.
+the retry path a half-written FIRM depends on. On real buds a missing `04` left both buds in
+OTAP across power cycles, exactly like this.
 
 ## How OTAP takes an update (`FUN_0080e770`)
 
@@ -125,7 +131,8 @@ When the byte count reaches the declared total, it:
 3. **mismatch:** puts the old index back and flags failure;
 4. re-checks the guard CRC over `flash[0 : 0x3000]` and flags failure if the bootloader area changed.
 
-**`84` finalize** replies with the result byte (0 = good, 1 = failed), then the bud reboots.
+**`84` finalize** replies with the result byte (0 = good, 1 = failed). The bud stays in OTAP
+until `04` clears the flag and reboots it.
 
 That's the complete acceptance test. The `CONFIG` header, its chip name, the build version and
 timestamps never reach the device: the app strips the container and only streams flash contents.
@@ -140,7 +147,8 @@ timestamps never reach the device: the app strips the container and only streams
   [00](00-start-here.md#safety--ground-rules) matters even more.
 * **A failed update doesn't roll back FIRM.** The old index comes back, but the FIRM area was
   already erased and partly rewritten. Recovery depends on the `0x55AA` flag keeping the bud in
-  OTAP so you can retry. Very likely, not yet proven.
+  OTAP so you can retry. The flag does hold buds in OTAP on hardware. A retry after a real CRC
+  failure hasn't been tried.
 * **Writes below `0x3000` are possible** (no address check), and the guard CRC only notices after
   the fact. Never send anything that targets the bootloader area.
 * OTAP and PSMP are pinned by the updater, so CFW layouts can only rearrange FIRM / SENC / TONE /

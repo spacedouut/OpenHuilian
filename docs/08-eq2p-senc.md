@@ -52,7 +52,8 @@ The duplicated five pages are two **profiles**. The app's EQ store has scheme fa
 Edit floats in place → recompute EQ2P CRC16 + container CRC ([05](05-crc-and-integrity.md)).
 Done successfully as a round-trip (`repack_test.up`). The 377 build also exposes a runtime
 user EQ (`eq_ud_gain`, `eq_preset_cur_num` NV keys, `UDEQ` string) — the app's .017 "EQ adjust"
-feature — so on 377-generation devices EQ may also be changeable live without touching flash.
+feature. On the H3Pro it has its own `C0` commands (`90` preset block, `92`–`94` / `A4` user EQ
+read and write, [18](18-firm-walkthrough.md)), so EQ can change live without touching flash.
 
 ## SENC / SEN2 (magic `SENC`)
 
