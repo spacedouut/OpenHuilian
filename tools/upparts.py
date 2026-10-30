@@ -20,7 +20,7 @@ from upfmt import BODY, MAGIC, crc16, index_offset, parse_index
 
 
 def hlkj_fields(flash):
-    """Best-effort decode of the HLKJ header at flash 0 (layout: docs/17)."""
+    """Best-effort decode of the HLKJ header at flash 0 (layout: docs/research/memory-map-and-boot.md)."""
     f = {}
     if flash[:4] != b"HLKJ":
         return f

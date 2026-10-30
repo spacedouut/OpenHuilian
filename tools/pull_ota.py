@@ -22,7 +22,7 @@ TIMEOUT  = float(os.environ.get("STARFUN_TIMEOUT", "60"))
 CREDS    = {"username": os.environ.get("STARFUN_USER", ""),
             "password": os.environ.get("STARFUN_PASS", "")}
 if not CREDS["username"] or not CREDS["password"]:
-    sys.exit("set STARFUN_USER and STARFUN_PASS (see docs/02-starfun-app.md)")
+    sys.exit("set STARFUN_USER and STARFUN_PASS (see docs/explanation/the-app-and-servers.md)")
 
 
 def post(url, obj):

@@ -23,7 +23,7 @@ so the bootloader, OTAP and PSMP stay as they are. Before 80, `send` reads the b
 (C0 83) and refuses unless its FIRM/OTAP/PSMP entries match the image. A bud already sitting in OTAP
 after an interrupted run can't answer that read; `--resume` skips it for that case only.
 If 84 reports a CRC failure, 04 is not sent and the bud stays in OTAP (old index restored) so you
-can retry. See docs/06 and docs/17.
+can retry. See docs/reference/ota-protocol.md and docs/research/updater-otap.md.
 """
 import argparse
 import os

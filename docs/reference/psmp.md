@@ -1,4 +1,4 @@
-# 09 · PSMP — the persistent settings store (NVDS)
+# PSMP: the settings store
 
 `PSMP` is the 16 KB partition at the end of flash (`0x1FC000` on 2 MB parts, `0x0FC000` on 1 MB)
 that holds device identity and user settings. OTA images **declare** it but never ship it, which is
@@ -9,7 +9,7 @@ keys), so don't publish yours. The example dump below is the SL6801 OpenPod play
 
 ## What the vendor calls it
 
-The flasher handles PSMP through `psm-nvds.dll` (`pc_psm_init` / `pc_psm_uninit`) — NVDS = the
+The flasher handles PSMP through `psm-nvds.dll` (`pc_psm_init` / `pc_psm_uninit`), NVDS = the
 "non-volatile data storage" naming used by the Bluetooth stack. The Python side only sees a
 flattened list of `(name[256], u32 len, value)` (`up_parser.py: psm_dll.get_vars / set_vars`); the
 DLL converts between that and the on-flash log. The tool merges PSM from the device with PSM in the
@@ -70,7 +70,7 @@ Because the store is a log, `--all` shows the history (e.g. `audio_volume` writt
 | key | default / options | label (translated) |
 |---|---|---|
 | `customer_name` | | customer name |
-| `chip_serial_id` | `P262`, `247`, `TWS206`, `TWS208`, `MP3_01` | chip/board series — `247` = the 247Youth line, same vendor family as 377Youth |
+| `chip_serial_id` | `P262`, `247`, `TWS206`, `TWS208`, `MP3_01` | chip/board series, `247` = the 247Youth line, same vendor family as 377Youth |
 | `board_name` | | solution name |
 | `bt_name` | | Bluetooth name |
 | `bt_addr` | `AA:BB:CC:DD:EE:FF` | Bluetooth address |
@@ -88,7 +88,7 @@ Because the store is a log, `--all` shows the history (e.g. `audio_volume` writt
 55 NV key names appear in the 377 FIRM, including `key_tap2_*` / `key_long_*` (gesture → action
 map), `ear_detection_en`, `authorization_code`, `air_*`, `eq_ud_gain`, `eq_preset_cur_num`, `bt_name`,
 `bt_addr`, `paired_flag`, `ear_type`. The full list is in
-[`data/analysis/firmware_internals.txt`](../data/analysis/firmware_internals.txt).
+[`data/analysis/firmware_internals.txt`](../../data/analysis/firmware_internals.txt).
 
 ## Keys on the H3Pro
 
@@ -105,7 +105,7 @@ Names only: `authorization_code`, `authorization_code_length`, `bt_addr`, `ble_a
 * Gesture mapping, ear-detection, EQ preset and the Apple `authorization_code` live here → many
   "feature" changes may be **settings writes**, not firmware patches.
 * The app's `C0` command set and the factory tool both write PSM. `tools/hl set` writes the
-  user-facing keys over `C0` ([20](20-hl-cli.md)). A Bluetooth path to set arbitrary keys hasn't
+  user-facing keys over `C0` ([command channel](command-channel.md)). A Bluetooth path to set arbitrary keys hasn't
   been found.
 * Offline PSMP writes work now that the record check is reproduced (`psmp_tool.py set`). It has
   only been round-tripped against dumps, never written to a bud; PSMP also holds `paired_flag`,

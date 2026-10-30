@@ -222,7 +222,7 @@ def _ota_one_bud(ser, a, payload, fw_addr, index, io, declared):
         sys.exit("no answer to 55AA80")
     if not r.ok:
         sys.exit(f"enter refused, status {r.status} (3 = battery too low)")
-    # prepare erases the target region; the bud answers only when done
+    # prepare can take a while to answer, give it 30 s
     for _ in range(3):
         r = link.ota_frame(ser, proto.ota_prepare(0x33), timeout=30)
         print("prepare(81):", r.hex() if r else "<no reply>")
