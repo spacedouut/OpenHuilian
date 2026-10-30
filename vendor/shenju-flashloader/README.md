@@ -20,4 +20,4 @@ They are third-party vendor artifacts archived for research/interoperability ref
 
 The same applies to `../../reference/starfun-app/` (decompiled excerpts of the StarFun Android app,
 © its publisher) and `../../firmware/` (vendor firmware images from the public StarFun catalog and
-the OpenPod GN-438 flash dump) — see `docs/12-shenju-flasher.md` and `docs/13-open-source-tooling.md`.
+the OpenPod GN-438 flash dump) — see `docs/explanation/vendor-tools-and-prior-art.md` and `docs/explanation/vendor-tools-and-prior-art.md`.
