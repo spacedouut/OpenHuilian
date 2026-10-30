@@ -63,9 +63,18 @@ def crc16(init, bytes_to_calc):
 
 ## What is *not* there
 
-Searched all FIRM and OTAP blobs for RSA/ECDSA/SHA/AES markers, key-looking constants, and
-signature-related strings: none. The app's `encryptData`/`verificationCmd` is a keyed
-challenge/response to unlock the **command channel**, not an image signature ([02](02-starfun-app.md)).
+The `.up` image carries no signature, MAC or hash beyond the CRCs above, and none of its bytes
+are encrypted. OTAP, the code that accepts an image, has no RSA/ECDSA/SHA/AES constants and no
+signature-related strings.
+
+FIRM does contain crypto code, it just isn't used on images. Every FIRM blob in the catalog
+carries a software AES (the H3Pro live image has its S-box at `0xC4BFC6`). Its callers are the
+Apple Continuity advert builders, most likely encrypting post-pairing adverts with the PSMP
+`air_adv_key` ([21](21-night-shift.md)). Image acceptance happens in OTAP, which has no AES, so
+this doesn't change the CRC16-only model. No SHA/MD5/TEA/XTEA/RC4 constants show up anywhere.
+
+The app's `encryptData`/`verificationCmd` is a keyed challenge/response to unlock the
+**command channel**, not an image signature ([02](02-starfun-app.md)).
 The SL6806 bootloader RE ([13](13-open-source-tooling.md)) shows the update validator checks
 `CONFIG` magic + chip-name string + timestamp compare + write-verify CRC — nothing cryptographic.
 
@@ -74,4 +83,5 @@ The SL6806 bootloader RE ([13](13-open-source-tooling.md)) shows the update vali
 This used to be the big unknown. It's now answered from the H3Pro's own code
 ([17](17-firmware-internals.md)): the OTAP updater checks one CRC16 over everything from the index
 onwards against the CRC the phone declares in `82`, and the bootloader checks nothing at all.
-It still hasn't been tried on a real bud.
+Real buds have since taken modified images over this path with only the CRCs fixed up
+([20](20-hl-cli.md)).

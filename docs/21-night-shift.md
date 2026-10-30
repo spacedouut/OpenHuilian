@@ -16,7 +16,7 @@ in `data/analysis/night-shift-findings.md`.
 ## What's new here vs. 17/18
 
 1. The mask ROM is a **library**, not 4 functions.
-2. FIRM ships a **software AES** (docs 05/15 said no crypto markers - there is one).
+2. FIRM ships a **software AES** (adverts only, the image integrity model in 05 still holds).
 3. The EQ2P "pages 51-57" open question is answered for this build.
 4. The StarFun native `encryptData` is confirmed to be the same LFSR the repo already
    implements - open item closed.
@@ -53,9 +53,8 @@ companion `rom_surface.txt` (kept out of git; regenerate with the sweep scripts)
 
 ## FIRM contains a software AES
 
-`docs/05` searched for AES/SHA/RSA markers and found none - but the AES S-box is sitting at
-**FIRM `0xC4BFC6`** (byte-verified), with a second table at `0xC4C0E7`, and the AES core is at
-the tail of FIRM:
+The AES S-box is sitting at **FIRM `0xC4BFC6`** (byte-verified), with a second table at
+`0xC4C0E7`, and the AES core is at the tail of FIRM:
 
 | Address | Role |
 |---|---|
