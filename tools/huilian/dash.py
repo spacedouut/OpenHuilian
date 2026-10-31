@@ -1,0 +1,347 @@
+"""hl dash: a local tuning dashboard for live buds.
+
+Runs a small HTTP server (stdlib only) next to the buds and serves one page.
+It holds two Bluetooth links:
+  - the C0 command channel (SPP, channel 3): settings, gestures, status
+  - the headset channel (HFP, channel 1): the factory ANC gain lines
+    `+ANCFFG=NN` feedforward, `+ANCFBG=NN` feedback, `+ANCAG=NN` ambient,
+    `+ANCDG=[-]NN` denoise, `+ANCTEST=N`. FIRM's HFP line parser
+    (FUN_00c8d364) turns them into events 0xF4000001..5. They have no
+    read-back, so the page shows the last value sent.
+
+On the HFP channel the buds are the headset and expect a phone (audio
+gateway) on the other end, so this answers their AT commands with minimal
+AG replies to bring the service level connection up. If a desktop audio
+stack already holds HFP, the channel is busy; the page can release just the
+Handsfree profile through BlueZ (A2DP stays up).
+"""
+import json
+import os
+import re
+import socket
+import subprocess
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+from . import link
+
+HFP_CHANNEL = 1
+ANC_MODES = [0, 1, 2, 5]  # C0 69 takes an index into this table
+
+# name -> (read cmd or None, write cmd, kind, extra)
+SETTINGS = {
+    "anc_mode": (0x59, 0x69, "anc", None),
+    "ear_detect": (0x55, 0x65, "bool", None),
+    "game_mode": (0x5E, 0x6E, "bool", None),
+    "spatial_audio": (0x58, 0x68, "bool", None),
+    "audio_type": (0x56, 0x66, "bool", None),
+    "game_check": (0x57, 0x67, "bool", None),
+    "air_en": (0x50, 0x60, "bool", None),
+    "custom_volume": (None, 0x85, "bool", None),
+    "talk_sensitive": (None, 0x86, "bool", None),
+    "low_high_vol": (None, 0x87, "bool", None),
+    "eq_mode": (0x52, 0x62, "int", (0, 9)),
+    "long_press_left": (0x5A, 0x6A, "int", (1, 3)),
+    "long_press_right": (0x5B, 0x6B, "int", (1, 3)),
+    "double_tap_left": (0x5C, 0x6C, "int", (2, 5)),
+    "double_tap_right": (0x5D, 0x6D, "int", (2, 5)),
+}
+
+# key -> (line prefix, min, max, signed)
+GAINS = {
+    "ffg": ("+ANCFFG=", 0, 99, False),
+    "fbg": ("+ANCFBG=", 0, 99, False),
+    "ag": ("+ANCAG=", 0, 99, False),
+    "dg": ("+ANCDG=", -99, 99, True),
+    "test": ("+ANCTEST=", 0, 9, False),
+}
+
+_BTADDR = re.compile(r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
+
+CIND_TEST = (b'+CIND: ("service",(0,1)),("call",(0,1)),("callsetup",(0-3)),'
+             b'("callheld",(0-2)),("signal",(0-5)),("roam",(0,1)),("battchg",(0-5))')
+
+
+def gain_line(key, value):
+    prefix, lo, hi, signed = GAINS[key]
+    v = int(value)
+    if not lo <= v <= hi:
+        raise ValueError(f"{key} must be {lo}..{hi}")
+    if key == "test":
+        return f"{prefix}{v}"
+    return f"{prefix}-{abs(v):02d}" if v < 0 else f"{prefix}{v:02d}"
+
+
+def ag_reply(at_line):
+    """Minimal audio-gateway answer to one AT command from the headset."""
+    cmd = at_line.strip().upper()
+    if cmd.startswith("AT+BRSF"):
+        body = b"+BRSF: 0"
+    elif cmd == "AT+CIND=?":
+        body = CIND_TEST
+    elif cmd == "AT+CIND?":
+        body = b"+CIND: 1,0,0,0,5,0,5"
+    elif cmd == "AT+CHLD=?":
+        body = b"+CHLD: (0,1,2,3)"
+    elif cmd.startswith("AT+XAPL"):
+        body = b"+XAPL=iPhone,7"
+    else:
+        body = None
+    out = b""
+    if body:
+        out += b"\r\n" + body + b"\r\n"
+    return out + b"\r\nOK\r\n"
+
+
+class HfpLink:
+    """RFCOMM link to the headset channel, with a thread answering AT commands."""
+
+    def __init__(self, addr, channel=HFP_CHANNEL, log=print):
+        self.addr, self.channel, self.log = addr, channel, log
+        self.sock = None
+        self.lock = threading.Lock()
+        self.error = None
+
+    @property
+    def up(self):
+        return self.sock is not None
+
+    def connect(self):
+        self.close()
+        s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+        s.settimeout(8)
+        try:
+            s.connect((self.addr, self.channel))
+        except OSError as e:
+            s.close()
+            self.error = str(e)
+            busy = getattr(e, "errno", None) == 16
+            raise OSError(f"HFP channel {self.channel}: {e}"
+                          + (" (another program holds HFP; release it)" if busy else ""))
+        s.settimeout(None)
+        self.sock, self.error = s, None
+        threading.Thread(target=self._reader, args=(s,), daemon=True).start()
+        self.log("HFP channel connected")
+
+    def _reader(self, s):
+        buf = b""
+        try:
+            while True:
+                d = s.recv(512)
+                if not d:
+                    break
+                buf += d
+                while b"\r" in buf:
+                    line, _, buf = buf.partition(b"\r")
+                    line = line.strip(b"\n").decode(errors="replace")
+                    if not line:
+                        continue
+                    self.log(f"bud> {line}")
+                    if line.upper().startswith("AT"):
+                        with self.lock:
+                            s.sendall(ag_reply(line))
+        except OSError:
+            pass
+        if self.sock is s:
+            self.sock = None
+            self.error = "link dropped"
+            self.log("HFP channel dropped")
+
+    def send_line(self, line):
+        if not self.up:
+            self.connect()
+        with self.lock:
+            self.sock.sendall(b"\r\n" + line.encode() + b"\r\n")
+        self.log(f"ag> {line}")
+
+    def close(self):
+        s, self.sock = self.sock, None
+        if s:
+            try:
+                s.close()
+            except OSError:
+                pass
+
+
+class C0Link:
+    def __init__(self, port, opener=link.open_link, log=print):
+        self.port, self.opener, self.log = port, opener, log
+        self.ser = None
+        self.lock = threading.Lock()
+
+    def _c0(self, cmd, payload=b""):
+        for attempt in range(2):
+            try:
+                if self.ser is None:
+                    self.ser = self.opener(self.port)
+                return link.c0(self.ser, cmd, payload, timeout=2.5)
+            except OSError as e:
+                self.log(f"C0 link: {e}")
+                try:
+                    self.ser.close()
+                except Exception:
+                    pass
+                self.ser = None
+                if attempt:
+                    raise
+
+    def read(self, cmd):
+        with self.lock:
+            r = self._c0(cmd)
+        if r is None or len(r) < 3:
+            return None
+        return bytes(r[3:3 + r[2]])
+
+    def write(self, cmd, data):
+        with self.lock:
+            return self._c0(cmd, bytes([len(data)]) + data)
+
+
+class Dash:
+    def __init__(self, c0, hfp, addr=None):
+        self.c0, self.hfp, self.addr = c0, hfp, addr
+        self.logbuf = []
+        self.sent = {k: None for k in GAINS}
+        self.version = None
+
+    def log(self, msg):
+        self.logbuf.append(time.strftime("%H:%M:%S ") + msg)
+        del self.logbuf[:-200]
+
+    def status(self):
+        st = {"c0": False, "hfp": self.hfp.up if self.hfp else False,
+              "hfp_error": self.hfp.error if self.hfp else "no Bluetooth address",
+              "gains": self.sent, "settings": {}, "log": self.logbuf[-60:]}
+        try:
+            if self.version is None:
+                v = self.c0.read(0x05)
+                self.version = v.rstrip(b"\0").decode(errors="replace") if v else None
+            b = self.c0.read(0x09)
+            st["c0"] = b is not None
+            if b and len(b) >= 3:
+                st["battery"] = {"l": b[0], "r": b[1], "case": b[2]}
+            for name, cmd in (("in_ear", 0x0A), ("link", 0x12), ("side", 0x10)):
+                v = self.c0.read(cmd)
+                st[name] = v[0] if v else None
+            for name, (rd, _, kind, _) in SETTINGS.items():
+                if rd is None:
+                    continue
+                v = self.c0.read(rd)
+                st["settings"][name] = v[0] if v else None
+        except OSError as e:
+            st["c0_error"] = str(e)
+        st["version"] = self.version
+        return st
+
+    def set(self, name, value):
+        rd, wr, kind, extra = SETTINGS[name]
+        v = int(value)
+        if kind == "anc":
+            if v not in ANC_MODES:
+                raise ValueError("anc_mode must be 0, 1, 2 or 5")
+            v = ANC_MODES.index(v)
+        elif kind == "bool":
+            v = 1 if v else 0
+        else:
+            lo, hi = extra
+            if not lo <= v <= hi:
+                raise ValueError(f"{name} must be {lo}..{hi}")
+        r = self.c0.write(wr, bytes([v]))
+        self.log(f"set {name}={value} -> {r.hex() if r else 'no reply'}")
+        return r is not None
+
+    def gain(self, key, value):
+        line = gain_line(key, value)
+        self.hfp.send_line(line)
+        self.sent[key] = int(value)
+
+    def hfp_connect(self):
+        self.hfp.connect()
+
+    def release_hfp(self):
+        dev = "/org/bluez/hci0/dev_" + self.addr.replace(":", "_").upper()
+        r = subprocess.run(["busctl", "--system", "call", "org.bluez", dev, "org.bluez.Device1",
+                            "DisconnectProfile", "s", "0000111e-0000-1000-8000-00805f9b34fb"],
+                           capture_output=True, text=True, timeout=15)
+        self.log(f"release HFP profile: rc={r.returncode} {r.stderr.strip()}")
+        if r.returncode != 0:
+            raise OSError(r.stderr.strip() or "DisconnectProfile failed")
+        time.sleep(2)
+
+
+def make_handler(dash, page):
+    class H(BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+        def _send(self, code, obj=None, body=None, ctype="application/json"):
+            data = body if body is not None else json.dumps(obj).encode()
+            self.send_response(code)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(data)
+
+        def do_GET(self):
+            if self.path in ("/", "/index.html"):
+                return self._send(200, body=page, ctype="text/html; charset=utf-8")
+            if self.path == "/api/status":
+                return self._send(200, dash.status())
+            if self.path == "/api/meta":
+                return self._send(200, {"settings": {k: {"kind": v[2], "range": v[3], "readable": v[0] is not None}
+                                                     for k, v in SETTINGS.items()},
+                                        "gains": {k: {"min": v[1], "max": v[2]} for k, v in GAINS.items()}})
+            self._send(404, {"error": "not found"})
+
+        def do_POST(self):
+            # same-origin only: the page is served from here
+            origin = self.headers.get("Origin")
+            if origin and origin != f"http://{self.headers.get('Host')}":
+                return self._send(403, {"error": "cross-origin request refused"})
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                req = json.loads(self.rfile.read(n) or b"{}")
+                if self.path == "/api/set":
+                    ok = dash.set(req["name"], req["value"])
+                    return self._send(200, {"ok": ok})
+                if self.path == "/api/gain":
+                    dash.gain(req["key"], req["value"])
+                    return self._send(200, {"ok": True})
+                if self.path == "/api/hfp/connect":
+                    dash.hfp_connect()
+                    return self._send(200, {"ok": True})
+                if self.path == "/api/hfp/release":
+                    dash.release_hfp()
+                    dash.hfp_connect()
+                    return self._send(200, {"ok": True})
+            except (KeyError, ValueError, OSError) as e:
+                dash.log(f"error: {e}")
+                return self._send(400, {"error": str(e)})
+            self._send(404, {"error": "not found"})
+    return H
+
+
+def serve(port, listen="127.0.0.1:8765", c0=None, hfp=None):
+    host, _, p = listen.rpartition(":")
+    addr = port.split(":")[:6] if _BTADDR.match(port or "") else None
+    addr = ":".join(addr) if addr else None
+    dash = Dash(None, None, addr)
+    dash.c0 = c0 or C0Link(port, log=dash.log)
+    dash.hfp = hfp or (HfpLink(addr, log=dash.log) if addr else None)
+    if dash.hfp is not None:
+        try:
+            dash.hfp_connect()
+        except OSError as e:
+            dash.log(str(e))
+    page = open(os.path.join(os.path.dirname(__file__), "dash.html"), "rb").read()
+    srv = ThreadingHTTPServer((host or "127.0.0.1", int(p)), make_handler(dash, page))
+    print(f"dashboard on http://{host or '127.0.0.1'}:{p}  (Ctrl-C to stop)")
+    try:
+        srv.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if dash.hfp:
+            dash.hfp.close()

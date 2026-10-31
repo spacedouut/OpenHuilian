@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>hl dash</title>
+<style>
+  :root { --bg:#0a0a0b; --fg:#e8e8ea; --dim:#8b8b90; --acc:#ff4d2e; --card:#141416; --line:#26262a; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--fg); font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  main { max-width:820px; margin:0 auto; padding:24px 16px 64px; }
+  header { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  h1 { font-size:18px; font-weight:600; letter-spacing:.02em; }
+  h1 span { color:var(--acc); }
+  h2 { font-size:12px; color:var(--dim); text-transform:uppercase; letter-spacing:.12em; margin:26px 0 10px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; }
+  .stat b { display:block; color:var(--dim); font-weight:400; font-size:12px; }
+  .stat span { font-size:16px; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--line); margin-right:6px; }
+  .dot.on { background:var(--acc); }
+  button { background:transparent; border:1px solid var(--line); color:var(--fg); font:inherit; padding:7px 12px; border-radius:8px; cursor:pointer; }
+  button.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+  button:disabled { opacity:.4; cursor:default; }
+  .seg { display:flex; gap:6px; flex-wrap:wrap; }
+  .gain { display:grid; grid-template-columns:110px 1fr 60px; gap:12px; align-items:center; padding:8px 0; border-top:1px solid var(--line); }
+  .gain:first-child { border-top:0; }
+  .gain small { color:var(--dim); display:block; font-size:11px; }
+  .gain output { text-align:right; }
+  .gain output.unsent { color:var(--dim); }
+  input[type=range] { width:100%; accent-color:var(--acc); }
+  .tog { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-top:1px solid var(--line); }
+  .tog:first-child { border-top:0; }
+  .tog small { color:var(--dim); }
+  select { background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:5px 8px; font:inherit; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:640px) { .two { grid-template-columns:1fr; } }
+  .warn { color:var(--acc); font-size:12px; margin-top:8px; }
+  #log { white-space:pre-wrap; font-size:12px; color:var(--dim); max-height:240px; overflow:auto; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>hl <span>dash</span></h1>
+    <div><span class="dot" id="dC0"></span>C0 &nbsp; <span class="dot" id="dHfp"></span>HFP</div>
+  </header>
+
+  <h2>Status</h2>
+  <div class="grid">
+    <div class="card stat"><b>battery L / R / case</b><span id="sBat">-</span></div>
+    <div class="card stat"><b>in ear</b><span id="sEar">-</span></div>
+    <div class="card stat"><b>peer link</b><span id="sLink">-</span></div>
+    <div class="card stat"><b>firmware</b><span id="sVer">-</span></div>
+  </div>
+
+  <h2>Noise control</h2>
+  <div class="card">
+    <div class="seg" id="anc"></div>
+  </div>
+
+  <h2>ANC gains</h2>
+  <div class="card">
+    <div id="gains"></div>
+    <div class="row">
+      <button id="hfpConnect">Reconnect HFP</button>
+      <button id="hfpRelease">Release HFP from desktop audio</button>
+      <span id="hfpErr" class="warn"></span>
+    </div>
+    <div class="warn">No read-back: values show what was last sent. Big jumps can squeal, so move in small steps.</div>
+  </div>
+
+  <div class="two">
+    <div>
+      <h2>Toggles</h2>
+      <div class="card" id="toggles"></div>
+    </div>
+    <div>
+      <h2>Gestures</h2>
+      <div class="card" id="gestures"></div>
+    </div>
+  </div>
+
+  <h2>Log</h2>
+  <div class="card"><div id="log"></div></div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const api = (path, body) => fetch(path, body === undefined ? {} : {
+  method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+}).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); return j; });
+
+const GAIN_INFO = {
+  ffg: ["feedforward", "outer mic"], fbg: ["feedback", "inner mic"],
+  ag: ["ambient", "transparency"], dg: ["denoise", "signed"], test: ["anc test", "mode 0..9"],
+};
+const ANC = [[0, "Off"], [1, "ANC"], [2, "Transparency"], [5, "Adaptive"]];
+const TOGGLES = {
+  ear_detect: "ear detection", game_mode: "game mode", spatial_audio: "spatial audio",
+  air_en: "AirPods mode", audio_type: "audio type (66)", game_check: "game check (67)",
+  custom_volume: "custom volume (85)", talk_sensitive: "talk sensitive (86)", low_high_vol: "low/high vol (87)",
+};
+const GESTURES = {
+  long_press_left: ["long press L", [1, 2, 3]], long_press_right: ["long press R", [1, 2, 3]],
+  double_tap_left: ["double tap L", [2, 3, 4, 5]], double_tap_right: ["double tap R", [2, 3, 4, 5]],
+  eq_mode: ["eq mode", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]],
+};
+let state = { settings: {} }, busy = false, unsentTog = {};
+
+function el(tag, attrs = {}, text) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+async function setting(name, value) {
+  try { await api("/api/set", { name, value }); unsentTog[name] = value; } catch (e) { alert(e.message); }
+  poll();
+}
+
+function build(meta) {
+  for (const [v, label] of ANC) {
+    const b = el("button", { "data-v": v }, label);
+    b.onclick = () => setting("anc_mode", v);
+    $("anc").append(b);
+  }
+  for (const [key, g] of Object.entries(meta.gains)) {
+    const [name, hint] = GAIN_INFO[key];
+    const row = el("div", { class: "gain" });
+    const lab = el("div", {}, name); lab.append(el("small", {}, hint));
+    const r = el("input", { type: "range", min: g.min, max: g.max, step: 1, value: key === "dg" ? 0 : g.min, id: "g_" + key });
+    const out = el("output", { class: "unsent", id: "o_" + key }, "-");
+    r.oninput = () => { out.textContent = r.value; out.className = "unsent"; };
+    r.onchange = async () => {
+      try { await api("/api/gain", { key, value: Number(r.value) }); out.className = ""; }
+      catch (e) { out.textContent = "!"; $("hfpErr").textContent = e.message; }
+      poll();
+    };
+    row.append(lab, r, out);
+    $("gains").append(row);
+  }
+  for (const [name, label] of Object.entries(TOGGLES)) {
+    const row = el("div", { class: "tog" });
+    const b = el("button", { id: "t_" + name }, "off");
+    b.onclick = () => setting(name, b.classList.contains("on") ? 0 : 1);
+    const l = el("span", {}, label);
+    if (!meta.settings[name].readable) l.append(el("small", {}, "  write only"));
+    row.append(l, b);
+    $("toggles").append(row);
+  }
+  for (const [name, [label, opts]] of Object.entries(GESTURES)) {
+    const row = el("div", { class: "tog" });
+    const s = el("select", { id: "s_" + name });
+    for (const o of opts) s.append(el("option", { value: o }, String(o)));
+    s.onchange = () => setting(name, Number(s.value));
+    row.append(el("span", {}, label), s);
+    $("gestures").append(row);
+  }
+}
+
+function render(st) {
+  $("dC0").className = "dot" + (st.c0 ? " on" : "");
+  $("dHfp").className = "dot" + (st.hfp ? " on" : "");
+  $("hfpErr").textContent = st.hfp ? "" : (st.hfp_error || "");
+  $("sBat").textContent = st.battery ? `${st.battery.l} / ${st.battery.r} / ${st.battery.case === 255 ? "-" : st.battery.case}` : "-";
+  $("sEar").textContent = st.in_ear === undefined || st.in_ear === null ? "-" : (st.in_ear ? "yes" : "no");
+  $("sLink").textContent = st.link === 0 ? "both buds" : st.link === 1 ? "one bud" : st.link === 2 ? "no peer" : "-";
+  $("sVer").textContent = st.version || "-";
+  for (const b of $("anc").children) b.classList.toggle("on", Number(b.dataset.v) === st.settings.anc_mode);
+  for (const name of Object.keys(TOGGLES)) {
+    const v = name in st.settings ? st.settings[name] : unsentTog[name];
+    const b = $("t_" + name);
+    b.classList.toggle("on", !!v); b.textContent = v === undefined || v === null ? "?" : (v ? "on" : "off");
+  }
+  for (const name of Object.keys(GESTURES)) {
+    const v = st.settings[name], s = $("s_" + name);
+    if (v !== null && v !== undefined && document.activeElement !== s) s.value = v;
+  }
+  for (const [k, v] of Object.entries(st.gains || {})) {
+    const out = $("o_" + k), r = $("g_" + k);
+    if (v !== null && document.activeElement !== r && out.className !== "unsent") { r.value = v; out.textContent = v; }
+    else if (v !== null && out.textContent === "-") { r.value = v; out.textContent = v; out.className = ""; }
+  }
+  const log = $("log"), atEnd = log.scrollTop + log.clientHeight >= log.scrollHeight - 4;
+  log.textContent = (st.log || []).join("\n");
+  if (atEnd) log.scrollTop = log.scrollHeight;
+}
+
+async function poll() {
+  if (busy) return;
+  busy = true;
+  try { state = await api("/api/status"); render(state); } catch (e) { $("dC0").className = "dot"; }
+  busy = false;
+}
+
+$("hfpConnect").onclick = () => api("/api/hfp/connect", {}).catch(e => $("hfpErr").textContent = e.message).then(poll);
+$("hfpRelease").onclick = () => api("/api/hfp/release", {}).catch(e => $("hfpErr").textContent = e.message).then(poll);
+
+api("/api/meta").then(m => { build(m); poll(); setInterval(poll, 2500); });
+</script>
+</body>
+</html>
