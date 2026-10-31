@@ -101,28 +101,39 @@ class HfpLink:
         self.addr, self.channel, self.log = addr, channel, log
         self.sock = None
         self.lock = threading.Lock()
+        self.connect_lock = threading.Lock()
         self.error = None
+        self.wanted = False
 
     @property
     def up(self):
         return self.sock is not None
 
-    def connect(self):
-        self.close()
-        s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-        s.settimeout(8)
-        try:
-            s.connect((self.addr, self.channel))
-        except OSError as e:
-            s.close()
-            self.error = str(e)
-            busy = getattr(e, "errno", None) == 16
-            raise OSError(f"HFP channel {self.channel}: {e}"
-                          + (" (another program holds HFP; release it)" if busy else ""))
-        s.settimeout(None)
-        self.sock, self.error = s, None
-        threading.Thread(target=self._reader, args=(s,), daemon=True).start()
-        self.log("HFP channel connected")
+    def connect(self, tries=4):
+        """Open the channel. A link that just dropped can stay busy (EBUSY)
+        for a few seconds while the kernel tears it down, so retry."""
+        with self.connect_lock:
+            self.close()
+            for attempt in range(tries):
+                s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+                s.settimeout(8)
+                try:
+                    s.connect((self.addr, self.channel))
+                    break
+                except OSError as e:
+                    s.close()
+                    self.error = str(e)
+                    busy = getattr(e, "errno", None) in (16, 114)
+                    if busy and attempt < tries - 1:
+                        time.sleep(2)
+                        continue
+                    raise OSError(f"HFP channel {self.channel}: {e}"
+                                  + (" (busy: another program holds HFP, or the last link "
+                                     "is still closing)" if busy else ""))
+            s.settimeout(None)
+            self.sock, self.error = s, None
+            threading.Thread(target=self._reader, args=(s,), daemon=True).start()
+            self.log("HFP channel connected")
 
     def _reader(self, s):
         buf = b""
@@ -141,6 +152,12 @@ class HfpLink:
                     if line.upper().startswith("AT"):
                         with self.lock:
                             s.sendall(ag_reply(line))
+        except OSError as e:
+            self.log(f"HFP read: {e}")
+        # close it here: a socket left open after the peer drops keeps the
+        # channel busy and every reconnect fails with EBUSY
+        try:
+            s.close()
         except OSError:
             pass
         if self.sock is s:
@@ -151,8 +168,13 @@ class HfpLink:
     def send_line(self, line):
         if not self.up:
             self.connect()
-        with self.lock:
-            self.sock.sendall(b"\r\n" + line.encode() + b"\r\n")
+        try:
+            with self.lock:
+                self.sock.sendall(b"\r\n" + line.encode() + b"\r\n")
+        except (OSError, AttributeError):
+            self.connect()
+            with self.lock:
+                self.sock.sendall(b"\r\n" + line.encode() + b"\r\n")
         self.log(f"ag> {line}")
 
     def close(self):
@@ -259,6 +281,11 @@ class Dash:
             last_slow = time.time()
             while not self.stop.wait(fast):
                 self.refresh_fast()
+                if self.hfp is not None and not self.hfp.up:
+                    try:
+                        self.hfp.connect(tries=1)
+                    except OSError:
+                        pass
                 if time.time() - last_slow > slow:
                     self.refresh_settings()
                     last_slow = time.time()
