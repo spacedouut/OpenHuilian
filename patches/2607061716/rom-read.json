@@ -1,0 +1,10 @@
+{
+  "name": "C0 0x83 raw memory read",
+  "firmware": 2607061716,
+  "partition": "FIRM",
+  "about": "Extends the C0 0x83 read so setting bit 31 of the address makes it a raw memory memcpy instead of a SPI-flash read. `hl read 0x80000000 <len> out.bin` dumps mask ROM (ROM calls live around 0x8000-0x12000); any mapped address works the same way. Stock behavior is unchanged for addresses with bit 31 clear. The stub is a leaf using only scratch regs r0-r3. CAUTION: reading an unmapped or peripheral address can fault the bud (worst case a reboot); stick to 0x0-0x20000 for ROM first.",
+  "ops": [
+    {"offset": "0x2c032", "old": "000000000000000000000000000000000000000000000000000000000000000000000000", "new": "4b000ad349004908002a05d00b78037001300131013af7e77047014b184700bf6c578000", "what": "mem-read stub in dead space (XIP 0xC30032): if bit31 of the read addr is set, memcpy(addr&0x7fffffff, len) into the reply buffer, else tail-call the stock flash read FUN_0080576c"},
+    {"offset": "0x65d26", "old": "9bf721f5", "new": "c6f784f9", "what": "0x83 read handler (FUN_00c69b3c, XIP 0xc69d26): reroute bl FUN_0080576c -> bl stub@0xC30032"}
+  ]
+}
