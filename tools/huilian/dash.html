@@ -169,6 +169,7 @@ function render(st) {
   $("dC0").className = "dot" + (st.c0 ? " on" : "");
   $("dHfp").className = "dot" + (st.hfp ? " on" : "");
   $("hfpErr").textContent = st.hfp ? "" : (st.hfp_error || "");
+  $("hfpConnect").disabled = $("hfpRelease").disabled = !!st.hfp;
   $("sBat").textContent = st.battery ? `${st.battery.l} / ${st.battery.r} / ${st.battery.case === 255 ? "-" : st.battery.case}` : "-";
   $("sEar").textContent = st.in_ear === undefined || st.in_ear === null ? "-" : (st.in_ear ? "yes" : "no");
   $("sLink").textContent = st.link === 0 ? "both buds" : st.link === 1 ? "one bud" : st.link === 2 ? "no peer" : "-";
