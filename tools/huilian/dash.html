@@ -116,7 +116,12 @@ function el(tag, attrs = {}, text) {
 }
 
 async function setting(name, value) {
-  try { await api("/api/set", { name, value }); unsentTog[name] = value; } catch (e) { alert(e.message); }
+  try {
+    const r = await api("/api/set", { name, value });
+    unsentTog[name] = value;
+    state.settings[name] = r.value === null || r.value === undefined ? value : r.value;
+    render(state);
+  } catch (e) { alert(e.message); }
   poll();
 }
 
@@ -198,7 +203,7 @@ async function poll() {
 $("hfpConnect").onclick = () => api("/api/hfp/connect", {}).catch(e => $("hfpErr").textContent = e.message).then(poll);
 $("hfpRelease").onclick = () => api("/api/hfp/release", {}).catch(e => $("hfpErr").textContent = e.message).then(poll);
 
-api("/api/meta").then(m => { build(m); poll(); setInterval(poll, 2500); });
+api("/api/meta").then(m => { build(m); poll(); setInterval(poll, 1000); });
 </script>
 </body>
 </html>
