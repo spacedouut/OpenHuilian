@@ -198,58 +198,101 @@ class C0Link:
             return self._c0(cmd, bytes([len(data)]) + data)
 
 
+STATUS_REGS = (("in_ear", 0x0A), ("link", 0x12), ("side", 0x10))
+
+
 class Dash:
+    """Keeps a cached view of the buds so the page never waits on Bluetooth.
+
+    A background thread refreshes battery / in-ear / link every couple of
+    seconds and all settings now and then; a write updates its own entry right
+    away and re-reads just that register."""
+
     def __init__(self, c0, hfp, addr=None):
         self.c0, self.hfp, self.addr = c0, hfp, addr
         self.logbuf = []
         self.sent = {k: None for k in GAINS}
-        self.version = None
+        self.cache = {"c0": False, "settings": {}, "version": None}
+        self.stop = threading.Event()
 
     def log(self, msg):
         self.logbuf.append(time.strftime("%H:%M:%S ") + msg)
         del self.logbuf[:-200]
 
-    def status(self):
-        st = {"c0": False, "hfp": self.hfp.up if self.hfp else False,
-              "hfp_error": self.hfp.error if self.hfp else "no Bluetooth address",
-              "gains": self.sent, "settings": {}, "log": self.logbuf[-60:]}
+    def _read_setting(self, name):
+        rd = SETTINGS[name][0]
+        if rd is None:
+            return
+        v = self.c0.read(rd)
+        if v:
+            self.cache["settings"][name] = v[0]
+
+    def refresh_fast(self):
         try:
-            if self.version is None:
+            if self.cache["version"] is None:
                 v = self.c0.read(0x05)
-                self.version = v.rstrip(b"\0").decode(errors="replace") if v else None
+                self.cache["version"] = v.rstrip(b"\0").decode(errors="replace") if v else None
             b = self.c0.read(0x09)
-            st["c0"] = b is not None
+            self.cache["c0"] = b is not None
             if b and len(b) >= 3:
-                st["battery"] = {"l": b[0], "r": b[1], "case": b[2]}
-            for name, cmd in (("in_ear", 0x0A), ("link", 0x12), ("side", 0x10)):
+                self.cache["battery"] = {"l": b[0], "r": b[1], "case": b[2]}
+            for name, cmd in STATUS_REGS:
                 v = self.c0.read(cmd)
-                st[name] = v[0] if v else None
-            for name, (rd, _, kind, _) in SETTINGS.items():
-                if rd is None:
-                    continue
-                v = self.c0.read(rd)
-                st["settings"][name] = v[0] if v else None
+                self.cache[name] = v[0] if v else None
+            self.cache.pop("c0_error", None)
         except OSError as e:
-            st["c0_error"] = str(e)
-        st["version"] = self.version
+            self.cache["c0"] = False
+            self.cache["c0_error"] = str(e)
+
+    def refresh_settings(self):
+        for name in SETTINGS:
+            try:
+                self._read_setting(name)
+            except OSError as e:
+                self.cache["c0_error"] = str(e)
+                return
+
+    def run_poller(self, fast=2.0, slow=30.0):
+        def loop():
+            self.refresh_fast()
+            self.refresh_settings()
+            last_slow = time.time()
+            while not self.stop.wait(fast):
+                self.refresh_fast()
+                if time.time() - last_slow > slow:
+                    self.refresh_settings()
+                    last_slow = time.time()
+        threading.Thread(target=loop, daemon=True).start()
+
+    def status(self):
+        st = dict(self.cache)
+        st["settings"] = dict(self.cache["settings"])
+        st["hfp"] = self.hfp.up if self.hfp else False
+        st["hfp_error"] = self.hfp.error if self.hfp else "no Bluetooth address"
+        st["gains"] = dict(self.sent)
+        st["log"] = self.logbuf[-60:]
         return st
 
     def set(self, name, value):
         rd, wr, kind, extra = SETTINGS[name]
-        v = int(value)
+        v = shown = int(value)
         if kind == "anc":
             if v not in ANC_MODES:
                 raise ValueError("anc_mode must be 0, 1, 2 or 5")
             v = ANC_MODES.index(v)
         elif kind == "bool":
-            v = 1 if v else 0
+            v = shown = 1 if v else 0
         else:
             lo, hi = extra
             if not lo <= v <= hi:
                 raise ValueError(f"{name} must be {lo}..{hi}")
         r = self.c0.write(wr, bytes([v]))
         self.log(f"set {name}={value} -> {r.hex() if r else 'no reply'}")
-        return r is not None
+        if r is not None:
+            self.cache["settings"][name] = shown
+            if rd is not None:
+                self._read_setting(name)
+        return r is not None, self.cache["settings"].get(name)
 
     def gain(self, key, value):
         line = gain_line(key, value)
@@ -304,8 +347,8 @@ def make_handler(dash, page):
                 n = int(self.headers.get("Content-Length") or 0)
                 req = json.loads(self.rfile.read(n) or b"{}")
                 if self.path == "/api/set":
-                    ok = dash.set(req["name"], req["value"])
-                    return self._send(200, {"ok": ok})
+                    ok, value = dash.set(req["name"], req["value"])
+                    return self._send(200, {"ok": ok, "value": value})
                 if self.path == "/api/gain":
                     dash.gain(req["key"], req["value"])
                     return self._send(200, {"ok": True})
@@ -335,6 +378,7 @@ def serve(port, listen="127.0.0.1:8765", c0=None, hfp=None):
             dash.hfp_connect()
         except OSError as e:
             dash.log(str(e))
+    dash.run_poller()
     page = open(os.path.join(os.path.dirname(__file__), "dash.html"), "rb").read()
     srv = ThreadingHTTPServer((host or "127.0.0.1", int(p)), make_handler(dash, page))
     print(f"dashboard on http://{host or '127.0.0.1'}:{p}  (Ctrl-C to stop)")
