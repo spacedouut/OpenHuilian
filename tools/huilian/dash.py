@@ -3,11 +3,14 @@
 Runs a small HTTP server (stdlib only) next to the buds and serves one page.
 It holds two Bluetooth links:
   - the C0 command channel (SPP, channel 3): settings, gestures, status
-  - the headset channel (HFP, channel 1): the factory ANC gain lines
-    `+ANCFFG=NN` feedforward, `+ANCFBG=NN` feedback, `+ANCAG=NN` ambient,
-    `+ANCDG=[-]NN` denoise, `+ANCTEST=N`. FIRM's HFP line parser
-    (FUN_00c8d364) turns them into events 0xF4000001..5. They have no
-    read-back, so the page shows the last value sent.
+  - the headset channel (HFP, channel 1): the factory ANC gain line
+    `+NTC=<side><op><B|F><6 digits>` (FUN_00c4f6f0 / dispatcher
+    0xB2000002). side L = connected bud, R = relayed to the peer;
+    op 3 sets a gain (F = feedforward, B = feedback) to digits/10000
+    (linear, factory default 1.0000), op 4 persists the pair to NV
+    'anc info', op 5 reads one back (the bud replies `AT+NTC=...`).
+    The `+ANCFFG`-family lines also parse but post events nothing
+    consumes, so they do nothing on this firmware.
 
 On the HFP channel the buds are the headset and expect a phone (audio
 gateway) on the other end, so this answers their AT commands with minimal
@@ -48,14 +51,17 @@ SETTINGS = {
     "double_tap_right": (0x5D, 0x6D, "int", (2, 5)),
 }
 
-# key -> (line prefix, min, max, signed)
+# key -> (side, selector): feedforward/feedback on the connected bud
+# (L) or the peer (R). Gain is a linear float, 1.0000 is the default.
 GAINS = {
-    "ffg": ("+ANCFFG=", 0, 99, False),
-    "fbg": ("+ANCFBG=", 0, 99, False),
-    "ag": ("+ANCAG=", 0, 99, False),
-    "dg": ("+ANCDG=", -99, 99, True),
-    "test": ("+ANCTEST=", 0, 9, False),
+    "ffl": ("L", "F"),
+    "fbl": ("L", "B"),
+    "ffr": ("R", "F"),
+    "fbr": ("R", "B"),
 }
+GAIN_MIN, GAIN_MAX = 0.0, 1.9999
+
+_NTC_REPLY = re.compile(r"^AT\+NTC=([LR])([0-9])([BF])([0-9]{6})$")
 
 _BTADDR = re.compile(r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
 
@@ -63,14 +69,16 @@ CIND_TEST = (b'+CIND: ("service",(0,1)),("call",(0,1)),("callsetup",(0-3)),'
              b'("callheld",(0-2)),("signal",(0-5)),("roam",(0,1)),("battchg",(0-5))')
 
 
+def ntc_line(side, op, sel, digits=0):
+    return f"+NTC={side}{op}{sel}{digits:06d}"
+
+
 def gain_line(key, value):
-    prefix, lo, hi, signed = GAINS[key]
-    v = int(value)
-    if not lo <= v <= hi:
-        raise ValueError(f"{key} must be {lo}..{hi}")
-    if key == "test":
-        return f"{prefix}{v}"
-    return f"{prefix}-{abs(v):02d}" if v < 0 else f"{prefix}{v:02d}"
+    side, sel = GAINS[key]
+    v = float(value)
+    if not GAIN_MIN <= v <= GAIN_MAX:
+        raise ValueError(f"{key} must be {GAIN_MIN}..{GAIN_MAX}")
+    return ntc_line(side, "3", sel, round(v * 10000))
 
 
 def ag_reply(at_line):
@@ -104,6 +112,8 @@ class HfpLink:
         self.connect_lock = threading.Lock()
         self.error = None
         self.wanted = False
+        # gains the bud reported back, keyed (side, selector)
+        self.ntc = {}
 
     @property
     def up(self):
@@ -149,6 +159,10 @@ class HfpLink:
                     if not line:
                         continue
                     self.log(f"bud> {line}")
+                    m = _NTC_REPLY.match(line)
+                    if m:
+                        self.ntc[(m.group(1), m.group(3))] = int(m.group(4)) / 10000
+                        continue
                     if line.upper().startswith("AT"):
                         with self.lock:
                             s.sendall(ag_reply(line))
@@ -301,7 +315,12 @@ class Dash:
         st["settings"] = dict(self.cache["settings"])
         st["hfp"] = self.hfp.up if self.hfp else False
         st["hfp_error"] = self.hfp.error if self.hfp else "no Bluetooth address"
-        st["gains"] = dict(self.sent)
+        g = dict(self.sent)
+        if self.hfp is not None:
+            for k, (side, sel) in GAINS.items():
+                if (side, sel) in self.hfp.ntc:
+                    g[k] = self.hfp.ntc[(side, sel)]
+        st["gains"] = g
         st["log"] = self.logbuf[-60:]
         return st
 
@@ -329,7 +348,18 @@ class Dash:
     def gain(self, key, value):
         line = gain_line(key, value)
         self.hfp.send_line(line)
-        self.sent[key] = int(value)
+        self.sent[key] = float(value)
+
+    def gain_read(self):
+        """Ask both buds to report their current FF/FB gains."""
+        for side in ("L", "R"):
+            for sel in ("F", "B"):
+                self.hfp.send_line(ntc_line(side, "5", sel))
+
+    def gain_save(self):
+        """Persist the current gains to NV 'anc info' on both buds."""
+        for side in ("L", "R"):
+            self.hfp.send_line(ntc_line(side, "4", "F"))
 
     def hfp_connect(self):
         # never tear down a working link: that is what kept killing it
@@ -372,7 +402,8 @@ def make_handler(dash, page):
             if self.path == "/api/meta":
                 return self._send(200, {"settings": {k: {"kind": v[2], "range": v[3], "readable": v[0] is not None}
                                                      for k, v in SETTINGS.items()},
-                                        "gains": {k: {"min": v[1], "max": v[2]} for k, v in GAINS.items()}})
+                                        "gains": {k: {"min": GAIN_MIN, "max": GAIN_MAX}
+                                                  for k in GAINS}})
             self._send(404, {"error": "not found"})
 
         def do_POST(self):
@@ -388,6 +419,12 @@ def make_handler(dash, page):
                     return self._send(200, {"ok": ok, "value": value})
                 if self.path == "/api/gain":
                     dash.gain(req["key"], req["value"])
+                    return self._send(200, {"ok": True})
+                if self.path == "/api/gain/read":
+                    dash.gain_read()
+                    return self._send(200, {"ok": True})
+                if self.path == "/api/gain/save":
+                    dash.gain_save()
                     return self._send(200, {"ok": True})
                 if self.path == "/api/hfp/connect":
                     dash.hfp_connect()

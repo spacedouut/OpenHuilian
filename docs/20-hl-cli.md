@@ -112,20 +112,21 @@ because it opens two links.
   StarFun names in `CMDConfig` (`68` spatial audio, `66` audio type, `67` game
   check, `85` custom volume, `86` talk sensitive, `87` low/high volume). The
   last three have no known read command, so the page shows what was last set.
-* **HFP, channel 1.** FIRM's HFP line parser (`FUN_00c8d364`) accepts
-  `+ANCFFG=NN` (feedforward), `+ANCFBG=NN` (feedback), `+ANCAG=NN` (ambient),
-  `+ANCDG=NN` or `-NN` (denoise) and `+ANCTEST=N`, and posts them as events
-  `0xF4000001..5`. Two digits, no reply, no read-back. The buds are the headset
-  on this channel, so the dashboard plays phone: it answers their AT commands
-  (`BRSF`, `CIND`, `CMER`, `XAPL`...) to bring up the service level connection
-  before it sends anything. If desktop audio (PipeWire, BlueZ) already holds
-  HFP, the channel is busy. "Release HFP" disconnects only the Handsfree
-  profile through BlueZ `DisconnectProfile`, and A2DP stays up.
+* **HFP, channel 1.** Live ANC gains go over `+NTC=<side><op><B|F><6 digits>`
+  (see [11](11-anc-transparency.md)): op `3` sets feedforward (`F`) or
+  feedback (`B`) gain to `digits/10000` (1.0000 is stock), `5` reads one back,
+  `4` writes both to NV `anc info`. `L` hits the connected bud, `R` is relayed
+  to the peer. The dashboard sends these as `+NTC=...` lines; "Read gains"
+  fills the sliders with what the buds report, "Save to flash" persists them.
+  The buds are the headset on this channel, so the dashboard plays phone: it
+  answers their AT commands (`BRSF`, `CIND`, `CMER`, `XAPL`...) to bring up
+  the service level connection first. If desktop audio (PipeWire, BlueZ)
+  already holds HFP, the channel is busy. "Release HFP" disconnects only the
+  Handsfree profile through BlueZ `DisconnectProfile`, and A2DP stays up.
 
-What the gain numbers mean (scale, units, defaults) isn't known yet. The code
-that consumes the `0xF4` events hasn't been found, and they most likely reset
-on reboot. Move in small steps, and keep the buds out of your ears for big
-changes, since too much feedback gain can squeal.
+Move in small steps and keep the buds out of your ears for big feedback
+changes, since too much feedback gain can squeal. Unsaved gains reset on
+reboot.
 
 ## The WebUI
 

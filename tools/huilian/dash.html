@@ -64,11 +64,13 @@
   <div class="card">
     <div id="gains"></div>
     <div class="row">
+      <button id="gainRead">Read gains</button>
+      <button id="gainSave">Save to flash</button>
       <button id="hfpConnect">Reconnect HFP</button>
       <button id="hfpRelease">Release HFP from desktop audio</button>
       <span id="hfpErr" class="warn"></span>
     </div>
-    <div class="warn">No read-back: values show what was last sent. Big jumps can squeal, so move in small steps.</div>
+    <div class="warn">Gain is a linear multiplier, 1.0000 is stock. L acts on the connected bud, R is relayed to the peer. Read/Save hit both buds. Small steps, big feedback gains can squeal.</div>
   </div>
 
   <div class="two">
@@ -92,8 +94,8 @@ const api = (path, body) => fetch(path, body === undefined ? {} : {
 }).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); return j; });
 
 const GAIN_INFO = {
-  ffg: ["feedforward", "outer mic"], fbg: ["feedback", "inner mic"],
-  ag: ["ambient", "transparency"], dg: ["denoise", "signed"], test: ["anc test", "mode 0..9"],
+  ffl: ["feedforward L", "outer mic, this bud"], fbl: ["feedback L", "inner mic, this bud"],
+  ffr: ["feedforward R", "outer mic, peer bud"], fbr: ["feedback R", "inner mic, peer bud"],
 };
 const ANC = [[0, "Off"], [1, "ANC"], [2, "Transparency"], [5, "Adaptive"]];
 const TOGGLES = {
@@ -135,9 +137,9 @@ function build(meta) {
     const [name, hint] = GAIN_INFO[key];
     const row = el("div", { class: "gain" });
     const lab = el("div", {}, name); lab.append(el("small", {}, hint));
-    const r = el("input", { type: "range", min: g.min, max: g.max, step: 1, value: key === "dg" ? 0 : g.min, id: "g_" + key });
+    const r = el("input", { type: "range", min: g.min, max: g.max, step: 0.0025, value: 1, id: "g_" + key });
     const out = el("output", { class: "unsent", id: "o_" + key }, "-");
-    r.oninput = () => { out.textContent = r.value; out.className = "unsent"; };
+    r.oninput = () => { out.textContent = Number(r.value).toFixed(4); out.className = "unsent"; };
     r.onchange = async () => {
       try { await api("/api/gain", { key, value: Number(r.value) }); out.className = ""; }
       catch (e) { out.textContent = "!"; $("hfpErr").textContent = e.message; }
@@ -186,8 +188,10 @@ function render(st) {
   }
   for (const [k, v] of Object.entries(st.gains || {})) {
     const out = $("o_" + k), r = $("g_" + k);
-    if (v !== null && document.activeElement !== r && out.className !== "unsent") { r.value = v; out.textContent = v; }
-    else if (v !== null && out.textContent === "-") { r.value = v; out.textContent = v; out.className = ""; }
+    if (v === null || v === undefined) continue;
+    const txt = Number(v).toFixed(4);
+    if (document.activeElement !== r && out.className !== "unsent") { r.value = v; out.textContent = txt; }
+    else if (out.textContent === "-") { r.value = v; out.textContent = txt; out.className = ""; }
   }
   const log = $("log"), atEnd = log.scrollTop + log.clientHeight >= log.scrollHeight - 4;
   log.textContent = (st.log || []).join("\n");
@@ -201,6 +205,8 @@ async function poll() {
   busy = false;
 }
 
+$("gainRead").onclick = () => api("/api/gain/read", {}).catch(e => $("hfpErr").textContent = e.message).then(poll);
+$("gainSave").onclick = () => api("/api/gain/save", {}).catch(e => $("hfpErr").textContent = e.message).then(poll);
 $("hfpConnect").onclick = () => api("/api/hfp/connect", {}).catch(e => $("hfpErr").textContent = e.message).then(poll);
 $("hfpRelease").onclick = () => api("/api/hfp/release", {}).catch(e => $("hfpErr").textContent = e.message).then(poll);
 
