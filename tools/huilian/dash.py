@@ -242,12 +242,17 @@ class Dash:
         del self.logbuf[:-200]
 
     def _read_setting(self, name):
-        rd = SETTINGS[name][0]
+        rd, _, kind, _ = SETTINGS[name]
         if rd is None:
             return
         v = self.c0.read(rd)
         if v:
-            self.cache["settings"][name] = v[0]
+            x = v[0]
+            # C0 59 answers with the index into ANC_MODES (3 = adaptive),
+            # not the mode value the write table uses
+            if kind == "anc" and x < len(ANC_MODES):
+                x = ANC_MODES[x]
+            self.cache["settings"][name] = x
 
     def refresh_fast(self):
         try:
@@ -327,9 +332,14 @@ class Dash:
         self.sent[key] = int(value)
 
     def hfp_connect(self):
-        self.hfp.connect()
+        # never tear down a working link: that is what kept killing it
+        if not self.hfp.up:
+            self.hfp.connect()
 
     def release_hfp(self):
+        if self.hfp.up:
+            self.log("HFP is up, nothing to release")
+            return
         dev = "/org/bluez/hci0/dev_" + self.addr.replace(":", "_").upper()
         r = subprocess.run(["busctl", "--system", "call", "org.bluez", dev, "org.bluez.Device1",
                             "DisconnectProfile", "s", "0000111e-0000-1000-8000-00805f9b34fb"],
