@@ -26,6 +26,7 @@ python3 tools/cfw.py apply my-buds.up my-cfw.up patches/2607061716/head-tracking
 | Patch | What it does | Knobs |
 |---|---|---|
 | `2607061716/head-tracking.json` | faster, less laggy head tracking | `tx_ms` report period in ms (stock 40), `decimate` run the fusion every N+1 samples (stock 3), `alpha` smoothing blend (stock 0.1) |
+| `2607061716/rom-read.json` | `hl read 0x80000000 <len>` reads raw memory, for dumping the mask ROM ([ROM read](../research/rom-read.md)). Not flashed to buds yet | none |
 
 You can stack more than one patch file in one `apply`. `hl patch` runs the same thing.
 

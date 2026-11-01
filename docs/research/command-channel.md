@@ -109,6 +109,8 @@ C0 83 <address> <length> <data...>
 
 The second line is the documented flash-read reply shape. The device returns at most 200 bytes per frame, regardless of the requested length. There is no address-range restriction.
 
+Stock FIRM always reads SPI flash through `FUN_0080576c`. The [ROM read patch](rom-read.md) reroutes that call so an address with bit 31 set is copied straight from memory instead, which reaches the mask ROM, RAM and peripheral registers.
+
 The app's `OtaCmdConfig.getReadFlashCmdArray()` reads 200 bytes from index address `0x3000`, also named `INDEX_START_ADDRESS = 12288`, then reads TONE and EQ2P in 100-byte blocks to preserve them for an update. `CMDConfig.getReadFlashCmdArray(addr,len)` is the entry used by [flashdump.js](../../tools/flashdump.js), which sends through `BtClient.sendBytes(cmd, 1)` and receives through `BtBase.notifyUI`.
 
 [tools/hl](../../tools/hl) can authenticate and read over a plain RFCOMM socket. The command has no matching general flash-write command in this FIRM surface. OTA supplies the write path. The [command-channel reference](../reference/command-channel.md) covers use, and [OTA protocol](../reference/ota-protocol.md) covers update framing.

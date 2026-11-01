@@ -35,6 +35,7 @@ Patches live under `patches/<firmware version>/`. Anything that exposes a knob s
 | File | What | Knobs |
 |---|---|---|
 | `2607061716/head-tracking.json` | faster, less laggy head tracking ([command channel](../research/airpods-layer.md#head-tracking)) | `tx_ms` report period (stock 40), `decimate` fusion step every N+1 samples (stock 3), `alpha` smoother blend (stock 0.1) |
+| `2607061716/rom-read.json` | `C0 83` reads raw memory when address bit 31 is set, for dumping the mask ROM ([ROM read](../research/rom-read.md)). Stub checked in Unicorn by `rom-read-selftest.py`, not flashed yet | none |
 
 ## Rules
 

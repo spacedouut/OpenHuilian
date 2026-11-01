@@ -16,6 +16,7 @@ This section describes what the H3Pro Max3 `2607061716` firmware does and where 
 | [AirPods layer](airpods-layer.md) | AAP opcodes, identity data, SDP/HID, adverts, AES, heart rate and head tracking |
 | [Audio and DSP](audio-and-dsp.md) | EQ2P and SENC readers, ANC controls, DSP tables and verified patch offsets |
 | [Mask ROM](mask-rom.md) | The 467-target call surface and named ROM services |
+| [ROM read patch](rom-read.md) | `rom-read` patch: C0 `0x83` with address bit 31 set copies raw memory, the mask-ROM dump path, its Unicorn selftest |
 | [UART boot ROM](uart-boot-rom.md) | Vendor loader sequence, `42 52` frames, USB entry and unresolved hardware details |
 | [Images and variants](images-and-variants.md) | Catalog differences, H3Pro image contents, `zero_ota.bin` and OpenPod |
 | [Addresses](addresses.md) | One table of named functions, data locations and related address ranges |
@@ -53,7 +54,7 @@ The documented headless workflow uses Ghidra 12.2 with PyGhidra. Its scripts are
 
 The sources do not document a `DumpAll` invocation. The named PyGhidra scripts describe the available headless workflow. ReVa-assisted analysis supplies the 4,512-function baseline, while the script-based workflow supplies the Ghidra 12.2 results.
 
-[upparts.py](../../tools/upparts.py) lists and extracts partitions and dumps strings. [sdp_hid.py](../../tools/sdp_hid.py) decodes SDP/HID data. [flashmap.py](../../tools/flashmap.py) generates the flash and address-space diagram from the image, including boot flow, the `.up` wrapper, acceptance rules and command channels. [cfw.py](../../tools/cfw.py) repairs partition CRCs when applying patches. See [apply a patch](../how-to/apply-a-patch.md) for the operating workflow.
+[upparts.py](../../tools/upparts.py) lists and extracts partitions and dumps strings. [sdp_hid.py](../../tools/sdp_hid.py) decodes SDP/HID data. [flashmap.py](../../tools/flashmap.py) generates the flash and address-space diagram from the image, including boot flow, the `.up` wrapper, acceptance rules and command channels. [cfw.py](../../tools/cfw.py) repairs partition CRCs when applying patches. [emu/h3emu.py](../../tools/emu/h3emu.py) rehosts FIRM in Unicorn with stubbed ROM: it boots to the scheduler, and `--call ADDR` runs a single function with `--reg`, `--poke` and `--peek`. See [apply a patch](../how-to/apply-a-patch.md) for the operating workflow.
 
 ## Open questions
 
