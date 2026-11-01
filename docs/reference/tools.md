@@ -18,5 +18,6 @@ full table with every option is in [`tools/README.md`](../../tools/README.md).
 | `upparts.py` | no | list and extract partitions of any `.up` | [`.up` format](up-format.md) |
 | `sdp_hid.py` | no | decode the SDP records and Apple HID descriptors in FIRM | [AirPods emulation](../explanation/airpods-emulation.md) |
 | `h3pro_elf.py` | no | wrap FIRM, OTAP and the bootloader as ELFs for Ghidra | [research](../research/README.md) |
+| `emu/h3emu.py` | no | Unicorn rehost of FIRM with stubbed mask ROM: boot to the scheduler, or `--call` one function (needs `unicorn`, `capstone`) | [ROM read](../research/rom-read.md), [research](../research/README.md) |
 | `flashmap.py` | no | draw `docs/flash-map.png` from a `.up` (needs PIL) | |
 | `upfmt.py` | no | shared CRC16 and index helpers, not a CLI | |

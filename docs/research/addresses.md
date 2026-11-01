@@ -72,6 +72,7 @@ BOOT also groups the vendor boot-loader destinations, while OTAP groups the sepa
 | `0xC00000` upward | FIRM | Flash XIP window, shared mapping | [Address spaces](memory-map-and-boot.md#cpu-and-address-spaces) |
 | `0xC04000` | FIRM | FIRM XIP partition start | [Address spaces](memory-map-and-boot.md#cpu-and-address-spaces) |
 | `0xC2AB6C` | FIRM | `FUN_00c2ab6c`, second module dispatch API | [Modules](firm-runtime.md#module-dispatch) |
+| `0xC30032` | FIRM | `rom-read` patch stub in zero-filled dead space, FIRM+`0x2C032` | [ROM read](rom-read.md#how-it-works) |
 | `0xC33BE8` | FIRM | Likely DRC/compressor threshold ladder | [DSP tables](audio-and-dsp.md#compiled-dsp-tables) |
 | `0xC33C04` | FIRM | Likely DRC/compressor threshold ladder | [DSP tables](audio-and-dsp.md#compiled-dsp-tables) |
 | `0xC33C8C` | FIRM | Likely DRC/compressor threshold ladder | [DSP tables](audio-and-dsp.md#compiled-dsp-tables) |
@@ -119,6 +120,7 @@ BOOT also groups the vendor boot-loader destinations, while OTAP groups the sepa
 | `0xC69958` | FIRM | C0 auth step 1 handler | [Authorization](command-channel.md#firmware-authorization) |
 | `0xC699A6` | FIRM | C0 auth step 2 handler | [Authorization](command-channel.md#firmware-authorization) |
 | `0xC69B3C` | FIRM | `FUN_00c69b3c`, C0 handler part 1 | [C0 part 1](command-channel.md#c0-handler-part-1) |
+| `0xC69D26` | FIRM | `C0 83` call to `FUN_0080576c` inside `FUN_00c69b3c`, rerouted by the `rom-read` patch, FIRM+`0x65D26` | [ROM read](rom-read.md#how-it-works) |
 | `0xC6A60C` | FIRM | `FUN_00c6a60c`, six-byte AAP opcode `0x12` payload | [AAP opcodes](airpods-layer.md#aap-opcodes) |
 | `0xC6AAC0` | FIRM | `FUN_00c6aac0`, factory-reset path | [Text console](command-channel.md#receive-demux-and-text-console) |
 | `0xC6AD1C` | FIRM | `FUN_00c6ad1c`, set boot-to-OTAP flag | [Flag](memory-map-and-boot.md#the-0x55aa-flag) |

@@ -35,6 +35,13 @@ python3 tools/build_up.py flash.bin my-buds.up
 It runs at about 1.1 KB/s, so the full 1 MiB takes about 16 minutes. The only command it sends is
 the `C0 83` flash read.
 
+## The mask ROM
+
+`C0 83` only reads SPI flash. With the `rom-read` patch flashed, an address with bit 31 set reads
+raw memory instead, so `hl read 0x80000000 0x20000 rom.bin` pulls the mask ROM. The patch has not
+been run on buds yet, and reading an unmapped address can reboot a bud. Details and probing advice
+are in [ROM read](../research/rom-read.md).
+
 ## Keep the raw dump private
 
 `flash.bin` contains the PSMP settings partition, which holds your Bluetooth addresses, serials,

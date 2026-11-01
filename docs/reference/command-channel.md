@@ -38,7 +38,7 @@ the unit is authorized. `hl auth` runs the exchange. The `55 AA` updater frames 
 | `61`, `80`, `81` | write | `sn_info`, `sn_l_info`, `sn_r_info` (opcodes `0x19`, `0x40`, `0x41`) |
 | `63` | write | BT address from payload (opcode `0x1B`) |
 | `64` | write | BT name, up to 31 chars |
-| `83` | read | flash read, `addr(4) len(4)`, up to 200 bytes per frame, no address check (this is what [device](device.md) uses) |
+| `83` | read | flash read, `addr(4) len(4)`, up to 200 bytes per frame, no address check (this is what [device](device.md) uses). The `rom-read` patch adds raw memory reads for addresses with bit 31 set ([ROM read](../research/rom-read.md)) |
 
 Frames starting `05` and `55` are handed to module 7 as type 1 and 2, which is where the
 `55AA 8x` OTA frames from [OTA protocol](ota-protocol.md) go while FIRM is still running.

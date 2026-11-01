@@ -42,8 +42,12 @@ Counts are the reported call counts from the static sweep. A dash means no count
 
 `0xB6D8` and `0xB6C4` appear as a pair around shared state. `FUN_0080576c` uses the flash-wrapper surface. FIRM's PendSV target is RAM `0x827591`, separate from the SVC and SysTick ROM targets.
 
+## Dumping it
+
+The ROM image itself is not in the repo. The [ROM read patch](rom-read.md) extends `C0 83` so an address with bit 31 set reads raw memory, which makes `hl read 0x80000000 <len>` a mask-ROM dump over Bluetooth. Start with `0x0` to `0x20000`, where the named entries above sit. Until a dump exists, [`tools/emu/h3emu.py`](../../tools/emu/h3emu.py) stands in a `bx lr` for every ROM address and emulates only the helpers named in its own table.
+
 ## Reproduction and limits
 
-The full generated target list is named `rom_surface.txt` and is not committed. The [reproduction workflow](README.md#reproduce-it) lists `oh_dump_lib.py` for decompile references and `romscan.py` for direct BL targets.
+The full generated target list, with call counts and example callers, is [`data/analysis/rom_surface_h3promax3.txt`](../../data/analysis/rom_surface_h3promax3.txt). The [reproduction workflow](README.md#reproduce-it) lists `oh_dump_lib.py` for decompile references and `romscan.py` for direct BL targets.
 
 The table above preserves every named entry in the sources. It does not assign names or behavior to the remaining targets. [UART boot ROM](uart-boot-rom.md) covers the download protocol surface, and [FIRM runtime](firm-runtime.md) covers the task and event APIs that use ROM.
