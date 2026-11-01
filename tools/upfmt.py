@@ -1,4 +1,4 @@
-"""Shared .up container / HLKJ flash format helpers (layout: docs/04-up-format.md)."""
+"""Shared .up container / HLKJ flash format helpers (layout: docs/reference/up-format.md)."""
 import struct
 
 MAGIC = b"CONFIG"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Render the Huilian H3Pro Max3 flash / address-space map as a PNG.
-All numbers from the live image 2607061716 + docs/17-21 analysis.
+All numbers from the live image 2607061716 + docs/research.
 Flash bar is to scale EXCEPT regions under 8 KB, which are expanded to a
 minimum height for legibility (marked on the ruler).
 """

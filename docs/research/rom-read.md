@@ -1,8 +1,9 @@
-# Dumping mask ROM through C0 (rom-read patch)
+# ROM read patch
 
-The mask ROM is memory-mapped, so code running on the chip can copy it like
-any other bytes. `patches/2607061716/rom-read.json` teaches the existing C0
-`0x83` read command to do that.
+The [mask ROM](mask-rom.md) is memory-mapped, so code running on the chip can copy it like
+any other bytes. [`patches/2607061716/rom-read.json`](../../patches/2607061716/rom-read.json) teaches the existing
+[C0 `0x83` flash read](command-channel.md#flash-reads) to do that. Apply it like any other patch
+([apply a patch](../how-to/apply-a-patch.md)); it has no knobs and has not been flashed to a bud yet.
 
 ## How it works
 
@@ -53,7 +54,7 @@ clobbers only `r0`-`r3`.
 5. Stretch: feed a full fake `0x83` C0 frame into `FUN_00c69b3c`'s
    caller and check the reply bytes.
 
-Both paths are covered by `patches/2607061716/rom-read-selftest.py`,
+Both paths are covered by [`patches/2607061716/rom-read-selftest.py`](../../patches/2607061716/rom-read-selftest.py),
 which runs the stub in Unicorn against a fake ROM and a `bx lr` stand-in
 for the flash reader:
 
@@ -68,7 +69,7 @@ and it does not exercise the real `0x83` handler or the reroute site.
 
 ## What this is for
 
-Pulling the real mask ROM (`0x0-0x20000`) replaces the emulator's
-`bx lr` stubs with the actual RTOS kernel, SVC/PendSV handlers and
+Pulling the real mask ROM (`0x0-0x20000`) replaces the `bx lr` stubs in the
+Unicorn rehost [`tools/emu/h3emu.py`](../../tools/emu/h3emu.py) with the actual RTOS kernel, SVC/PendSV handlers and
 library calls. Also handy: dumping live RAM state or peripheral
 registers over the same path.
