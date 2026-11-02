@@ -33,7 +33,7 @@ import threading
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from upfmt import BODY, MAGIC, crc16, index_offset, parse_index  # noqa: E402
+from upfmt import BODY, MAGIC, crc16, index_offset, live_index_problems, parse_index  # noqa: E402
 
 HOST = os.environ.get("FRIDA_HOST", "127.0.0.1:27042")
 INDEX_ADDR = 0x3000
@@ -174,20 +174,7 @@ def print_plan(frames, s):
 
 def check_live_index(raw: bytes, entries):
     """Compare the bud's index (read at 0x3000) with the image; return a list of problems."""
-    if len(raw) < 16:
-        return ["live index read came back short"]
-    count = struct.unpack_from("<I", raw, 0)[0]
-    if not 1 <= count <= INDEX_MAX // 16 - 1 or len(raw) < (count + 1) * 16:
-        return [f"live index has an implausible count ({count})"]
-    live = {t: (a, n, c) for t, a, n, c in
-            (struct.unpack_from("<4sIII", raw, 16 + 16 * i) for i in range(count))}
-    bad = []
-    for tag in (b"OTAP", b"PSMP"):
-        if live.get(tag) != entries[tag]:
-            bad.append(f"live {tag.decode()} entry {live.get(tag)} != image {entries[tag]}")
-    if live.get(b"FIRM", (None,))[0] != FIRM_ADDR:
-        bad.append(f"live FIRM is not at 0x{FIRM_ADDR:x}")
-    return bad
+    return live_index_problems(raw, entries)
 
 
 def send(frames, side, yes, entries, resume=False):

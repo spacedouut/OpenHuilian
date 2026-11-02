@@ -149,10 +149,11 @@ def _up_payloads(up_path):
     bytes are present in the file.
     """
     sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
-    from upfmt import MAGIC, BODY, index_offset, parse_index
+    from upfmt import BODY, index_offset, ota_image_problems, parse_index
     data = open(up_path, "rb").read()
-    if data[:6] != MAGIC:
-        sys.exit("not a .up (missing CONFIG header)")
+    bad = ota_image_problems(data)
+    if bad:
+        sys.exit("refusing this image, nothing sent:\n  " + "\n  ".join(bad))
     body = data[BODY:]
     io = index_offset(body)
     ver, entries = parse_index(body, io)
@@ -167,7 +168,34 @@ def _up_payloads(up_path):
     payload = body[fw_addr:last_end]
     index = body[io:io + 16 * (len(entries) + 1)]
     declared = body[io:last_end]
-    return payload, fw_addr, index, io, declared, last_end
+    parts = {tag: (addr, ln, crc) for tag, addr, ln, crc in entries}
+    return payload, fw_addr, index, io, declared, last_end, parts
+
+
+def _check_live_index(ser, a, parts):
+    """OTAP erases 0x4000..0x3000+total and writes wherever 83 says, so an image
+    built for another flash layout (e.g. a 2 MB image on a 1 MB bud) would erase
+    and overwrite the running updater, the 0x55AA flag page and PSMP. Read the
+    bud's own index first and refuse unless its OTAP/PSMP/FIRM records match."""
+    from upfmt import OTA_INDEX_ADDR, OTA_INDEX_MAX, live_index_problems
+    raw = None
+    for _ in range(3):
+        r = link.read_flash(ser, OTA_INDEX_ADDR, OTA_INDEX_MAX)
+        if r:
+            raw = r[1]
+            break
+    if raw is None:
+        if a.resume:
+            print("--resume: live index unreadable, skipping the layout check")
+            return
+        sys.exit("could not read the bud's index at 0x3000 (C0 83); nothing sent. If the "
+                 "buds are stuck in the updater from an interrupted run of this same image, "
+                 "pass --resume.")
+    bad = live_index_problems(raw, parts)
+    if bad:
+        sys.exit("refusing, the connected bud's flash layout doesn't match this image; "
+                 "nothing sent:\n  " + "\n  ".join(bad))
+    print("live index matches the image (FIRM/OTAP/PSMP)")
 
 
 def _hx(v):
@@ -306,7 +334,8 @@ def cmd_ota(ser, a):
     case). Without the 04 both buds stay in OTAP and look like a generic
     Bluetooth device.
     """
-    payload, fw_addr, index, io, declared, last_end = _up_payloads(a.file)
+    payload, fw_addr, index, io, declared, last_end, parts = _up_payloads(a.file)
+    _check_live_index(ser, a, parts)
     print(f"payload region 0x{fw_addr:x}..0x{last_end:x} ({len(payload)} bytes), "
           f"index @{io:#x} ({len(index)} bytes), declared {len(declared)} bytes")
     done = []
@@ -416,6 +445,9 @@ def main():
                    help="both: flash whichever bud answers, 04, then the other; "
                         "one: stop after the first bud")
     o.add_argument("--timeout", type=float, default=3.0)
+    o.add_argument("--resume", action="store_true",
+                   help="buds already in the updater from an interrupted run: skip the "
+                        "live index check if the bud can't answer C0 83")
     o.set_defaults(f=cmd_ota)
     sub.add_parser("leave-ota").set_defaults(f=cmd_leave_ota)
 
