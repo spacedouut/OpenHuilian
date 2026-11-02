@@ -61,6 +61,15 @@ answers `C0 01`, so any reply at all means the unit is authorized.
 `hl ota` runs the app's flow against real buds (verified on an H3Pro Max3 pair,
 both directions, stock and patched images):
 
+Before sending anything it checks the image (`upfmt.ota_image_problems`:
+CONFIG length/CRC, index at `0x3000`, FIRM at `0x4000`, every partition inside
+FIRM..OTAP with a matching CRC) and reads the bud's own index at `0x3000`
+over C0 `83`; it refuses unless the image's OTAP and PSMP records match the
+bud's. OTAP erases `0x4000..0x3000+total` and writes `83` frames anywhere, so
+an image for another flash layout (a 2 MB image on a 1 MB bud) would wipe the
+running updater, its boot flag page and PSMP. `--resume` skips only the live
+read, for buds already stuck in OTAP from an interrupted run of the same image.
+
 1. `80` enter. FIRM relays it to the peer bud, so both buds reboot into the
    updater (OTAP). Whichever bud grabs the SPP link next is the one every
    following frame lands on. OTAP ignores the side byte in requests and
