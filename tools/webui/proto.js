@@ -140,11 +140,65 @@ export function parseIndex(body, io = indexOffset(body)) {
   return { version, entries };
 }
 
+// OTAP (docs/17) erases 0x4000..0x3000+total on 82, writes 83 frames at any
+// address, and CRCs flash[0x3000:0x3000+total]; its OTAP/PSMP records are
+// pinned. Port of upfmt.ota_image_problems: reasons not to stream an image.
+export const OTA_INDEX_ADDR = 0x3000, OTA_FIRM_ADDR = 0x4000, OTA_INDEX_MAX = 0x80;
+
+export function otaImageProblems(upBytes) {
+  if (String.fromCharCode(...upBytes.slice(0, 6)) !== "CONFIG") return ["not a .up (missing CONFIG magic)"];
+  const body = upBytes.slice(UP_BODY);
+  const hdr = new DataView(upBytes.buffer, upBytes.byteOffset);
+  const bad = [];
+  if (hdr.getUint32(0x10, true) !== body.length || crc16(body) !== hdr.getUint16(0x14, true))
+    bad.push("CONFIG header length/CRC does not match the body");
+  const io = indexOffset(body);
+  if (io !== OTA_INDEX_ADDR) return [...bad, `index at 0x${io.toString(16)}; OTAP only handles an index at 0x3000`];
+  const { entries } = parseIndex(body, io);
+  const part = t => entries.find(e => e.tag === t);
+  const indexLen = (entries.length + 1) * 16;
+  if (indexLen > OTA_INDEX_MAX) bad.push(`index is ${indexLen} bytes, OTAP only buffers ${OTA_INDEX_MAX}`);
+  if (!part("OTAP") || !part("FIRM")) return [...bad, "index has no OTAP or FIRM entry"];
+  if (part("FIRM").addr !== OTA_FIRM_ADDR) bad.push(`FIRM at 0x${part("FIRM").addr.toString(16)}, expected 0x4000`);
+  const otap = part("OTAP").addr;
+  if (otap > body.length) bad.push(`OTAP at 0x${otap.toString(16)} is past the end of the image`);
+  for (const e of entries) {
+    if (e.tag === "OTAP" || e.tag === "PSMP") continue;
+    if (e.addr < OTA_FIRM_ADDR || e.addr + e.len > otap)
+      bad.push(`${e.tag} 0x${e.addr.toString(16)}+0x${e.len.toString(16)} is outside 0x4000..0x${otap.toString(16)}`);
+    else if (crc16(body.slice(e.addr, e.addr + e.len)) !== e.crc) bad.push(`${e.tag} CRC mismatch`);
+  }
+  if (body.slice(io + indexLen, OTA_FIRM_ADDR).some(x => x)) bad.push("index page padding is not all zero");
+  return bad;
+}
+
+// Compare a bud's index (C0 83 read at 0x3000) with the image's entries.
+export function liveIndexProblems(raw, entries) {
+  if (!raw || raw.length < 16) return ["live index read came back short"];
+  const dv = new DataView(raw.buffer, raw.byteOffset);
+  const count = dv.getUint32(0, true);
+  if (count < 1 || count > OTA_INDEX_MAX / 16 - 1 || raw.length < (count + 1) * 16)
+    return [`live index has an implausible count (${count})`];
+  const live = {};
+  for (let i = 0; i < count; i++) {
+    const o = 16 + 16 * i;
+    live[String.fromCharCode(...raw.slice(o, o + 4))] = [dv.getUint32(o + 4, true), dv.getUint32(o + 8, true), dv.getUint32(o + 12, true)];
+  }
+  const bad = [];
+  for (const t of ["OTAP", "PSMP"]) {
+    const e = entries.find(x => x.tag === t), l = live[t];
+    if (!e || !l || l[0] !== e.addr || l[1] !== e.len || l[2] !== e.crc)
+      bad.push(`live ${t} entry ${l ? l.map(v => "0x" + v.toString(16)) : "missing"} != image ${e ? [e.addr, e.len, e.crc].map(v => "0x" + v.toString(16)) : "missing"}`);
+  }
+  if (!live.FIRM || live.FIRM[0] !== OTA_FIRM_ADDR) bad.push("live FIRM is not at 0x4000");
+  return bad;
+}
+
 // payload=FIRM..OTAP, index=16*(n+1)B at io, declared=io..OTAP (what the
 // updater CRC16-verifies after the write).
 export function upPayloads(upBytes) {
-  const magic = String.fromCharCode(...upBytes.slice(0, 6));
-  if (magic !== "CONFIG") throw new Error("not a .up (missing CONFIG header)");
+  const bad = otaImageProblems(upBytes);
+  if (bad.length) throw new Error("refusing this image, nothing sent:\n  " + bad.join("\n  "));
   const body = upBytes.slice(UP_BODY);
   const io = indexOffset(body);
   const { entries } = parseIndex(body, io);
