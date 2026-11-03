@@ -18,6 +18,7 @@ AG replies to bring the service level connection up. If a desktop audio
 stack already holds HFP, the channel is busy; the page can release just the
 Handsfree profile through BlueZ (A2DP stays up).
 """
+import ipaddress
 import json
 import os
 import re
@@ -123,7 +124,10 @@ class HfpLink:
         """Open the channel. A link that just dropped can stay busy (EBUSY)
         for a few seconds while the kernel tears it down, so retry."""
         with self.connect_lock:
-            self.close()
+            # another caller (poller, page, send_line) may have brought the
+            # link up while we waited on the lock: keep it
+            if self.sock is not None:
+                return
             for attempt in range(tries):
                 s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
                 s.settimeout(8)
@@ -180,15 +184,20 @@ class HfpLink:
             self.log("HFP channel dropped")
 
     def send_line(self, line):
+        data = b"\r\n" + line.encode() + b"\r\n"
         if not self.up:
             self.connect()
+        s = self.sock
         try:
             with self.lock:
-                self.sock.sendall(b"\r\n" + line.encode() + b"\r\n")
+                s.sendall(data)
         except (OSError, AttributeError):
+            # drop only the socket that failed, not one another thread just opened
+            if s is not None and self.sock is s:
+                self.close()
             self.connect()
             with self.lock:
-                self.sock.sendall(b"\r\n" + line.encode() + b"\r\n")
+                self.sock.sendall(data)
         self.log(f"ag> {line}")
 
     def close(self):
@@ -349,6 +358,8 @@ class Dash:
         line = gain_line(key, value)
         self.hfp.send_line(line)
         self.sent[key] = float(value)
+        # an older read-back would otherwise mask the value just sent
+        self.hfp.ntc.pop(GAINS[key], None)
 
     def gain_read(self):
         """Ask both buds to report their current FF/FB gains."""
@@ -380,7 +391,21 @@ class Dash:
         time.sleep(2)
 
 
-def make_handler(dash, page):
+def _host_ok(host, listen_host=None):
+    """Reject DNS-rebinding hosts: an attacker's name that resolves to us
+    would otherwise pass the Origin == Host check."""
+    name = (host or "").strip().lower()
+    name = name[1:].partition("]")[0] if name.startswith("[") else name.rpartition(":")[0] or name
+    if name and name in ("localhost", (listen_host or "").lower()):
+        return True
+    try:
+        ipaddress.ip_address(name)
+        return True
+    except ValueError:
+        return False
+
+
+def make_handler(dash, page, listen_host=None):
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
             pass
@@ -409,7 +434,8 @@ def make_handler(dash, page):
         def do_POST(self):
             # same-origin only: the page is served from here
             origin = self.headers.get("Origin")
-            if origin and origin != f"http://{self.headers.get('Host')}":
+            host = self.headers.get("Host")
+            if not _host_ok(host, listen_host) or (origin and origin != f"http://{host}"):
                 return self._send(403, {"error": "cross-origin request refused"})
             try:
                 n = int(self.headers.get("Content-Length") or 0)
@@ -454,7 +480,7 @@ def serve(port, listen="127.0.0.1:8765", c0=None, hfp=None):
             dash.log(str(e))
     dash.run_poller()
     page = open(os.path.join(os.path.dirname(__file__), "dash.html"), "rb").read()
-    srv = ThreadingHTTPServer((host or "127.0.0.1", int(p)), make_handler(dash, page))
+    srv = ThreadingHTTPServer((host or "127.0.0.1", int(p)), make_handler(dash, page, host))
     print(f"dashboard on http://{host or '127.0.0.1'}:{p}  (Ctrl-C to stop)")
     try:
         srv.serve_forever()
