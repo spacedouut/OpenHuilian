@@ -32,7 +32,7 @@ out["c002_reply"] = proto.c002_reply(req).hex()
 
 if len(sys.argv) > 1:
     up_path = sys.argv[1]
-    payload, fw_addr, index, io_, declared, last_end = _up_payloads(up_path)
+    payload, fw_addr, index, io_, declared, last_end, _ = _up_payloads(up_path)
     out["declared"] = proto.with_crc8(proto.ota_declare(declared, 0x33)).hex()
     out["index_len"] = "%04x" % len(index)
     tools = Path(__file__).resolve().parent.parent

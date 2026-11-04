@@ -5,7 +5,7 @@ full table with every option is in [`tools/README.md`](../../tools/README.md).
 
 | Tool | Talks to buds | What it does | Guide |
 |---|---|---|---|
-| `hl` (`tools/huilian/`) | yes | info, settings, flash read, OTA, updater recovery, raw commands | [change settings](../how-to/change-settings.md), [flash](../how-to/flash-an-image.md) |
+| `hl` (`tools/huilian/`) | yes | info, settings, flash read, OTA, updater recovery, live ANC gain dashboard (`dash`), raw commands | [change settings](../how-to/change-settings.md), [flash](../how-to/flash-an-image.md) |
 | `webui/` | yes | `hl` in Chrome or Edge over Web Serial. Not run against buds yet | [change settings](../how-to/change-settings.md#in-a-browser-or-a-desktop-panel) |
 | `panel/` | yes | desktop control panel on top of `huilian` | [change settings](../how-to/change-settings.md#in-a-browser-or-a-desktop-panel) |
 | `flashdump.py` + `.js` | yes, read only | flash read through the StarFun app with Frida | [dump firmware](../how-to/dump-firmware.md) |

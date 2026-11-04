@@ -12,6 +12,19 @@ built by `tone_tool.py` or `cfw.py`.
 * Keep a stock image around. `firmware/h3promax3/h3promax3_2607061716_live.up` is the stock 2607061716
   build.
 
+## What `hl ota` checks first
+
+Before it sends anything, `hl ota` checks the image (`upfmt.ota_image_problems`). The `CONFIG`
+length and CRC have to be right, the index has to sit at `0x3000` and FIRM at `0x4000`, and every
+partition has to fall between FIRM and OTAP with a matching CRC. Then it reads the bud's own index
+at `0x3000` and refuses unless the image's OTAP and PSMP records match it. The updater erases from
+`0x4000` up to the end of the new image and writes wherever a frame says, so an image for another
+flash layout (a 2 MB image on these 1 MB buds) would wipe the running updater, its boot flag and
+PSMP.
+
+`--resume` skips only the live index read. Use it for buds already stuck in the updater from an
+interrupted run of the same image.
+
 ## Flash
 
 ```bash

@@ -26,7 +26,7 @@ if (!("serial" in navigator)) {
 let L = null;
 const needLink = () => { if (!L) throw new Error("not connected"); };
 
-// --- SETTINGS: name -> {read, write, desc} (from docs/18 command table) ------
+// --- SETTINGS: name -> {read, write, desc} (from docs/reference/command-channel.md) ------
 const SETTINGS = {
   anc_mode: { r: 0x59, w: 0x69, desc: "0 off · 1 ANC · 2 transparency · 5 adaptive", num: [0, 1, 2, 5] },
   ear_detect: { r: 0x55, w: 0x65, desc: "0/1" },
@@ -271,7 +271,15 @@ $("btnOta").onclick = async () => {
   try {
     needLink();
     if (!upBytes) throw new Error("pick a .up first");
-    const { payload, fwAddr, index, io, declared, lastEnd } = proto.upPayloads(upBytes);
+    const { payload, fwAddr, index, io, declared, lastEnd, entries } = proto.upPayloads(upBytes);
+    // OTAP erases and writes wherever the image says: refuse an image built for
+    // another flash layout before it can wipe the updater, flag page or PSMP.
+    let raw = null;
+    for (let i = 0; i < 3 && !raw; i++) raw = await L.readFlash(proto.OTA_INDEX_ADDR, proto.OTA_INDEX_MAX);
+    if (!raw) throw new Error("could not read the bud's index at 0x3000 (C0 83); nothing sent");
+    const bad = proto.liveIndexProblems(raw, entries);
+    if (bad.length) throw new Error("refusing, the connected bud's flash layout doesn't match this image; nothing sent:\n  " + bad.join("\n  "));
+    log("live index matches the image (FIRM/OTAP/PSMP)");
     log(`payload 0x${fwAddr.toString(16)}..0x${lastEnd.toString(16)} (${payload.length}B), index @0x${io.toString(16)} (${index.length}B)`);
     const one = $("side").value === "one";
     const done = [];

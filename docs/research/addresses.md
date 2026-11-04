@@ -51,6 +51,7 @@ BOOT also groups the vendor boot-loader destinations, while OTAP groups the sepa
 | `0x812144` | FIRM | `FUN_00812144`, post event with payload | [Event bus](firm-runtime.md#event-bus) |
 | `0x81232E` | FIRM | `FUN_0081232e`, event post without payload | [Event bus](firm-runtime.md#event-bus) |
 | `0x81234C` | FIRM | `FUN_0081234c`, event post without payload | [Event bus](firm-runtime.md#event-bus) |
+| `0x81BA1C` | FIRM | `FUN_0081ba1c`, relay a `+NTC=` line to the peer (tag `0xDA`) | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
 | `0x824B24` | FIRM | `FUN_00824b24`, master/slave role | [C0 routing](command-channel.md#c0-framing-and-routing) |
 | `0x827564` | FIRM | `FUN_00827564`, module dispatch | [Modules](firm-runtime.md#module-dispatch) |
 | `0x827591` | FIRM | PendSV vector target | [Tasks](firm-runtime.md#tasks-and-timers) |
@@ -59,6 +60,8 @@ BOOT also groups the vendor boot-loader destinations, while OTAP groups the sepa
 | `0x829850` | FIRM | `FUN_00829850`, task creation | [Tasks](firm-runtime.md#tasks-and-timers) |
 | `0x829A00` | FIRM | Scheduler start | [Tasks](firm-runtime.md#tasks-and-timers) |
 | `0x82D3A0` | FIRM | `DAT_0082d3a0`, one-byte mode read/written by `52/62` | [C0 part 2](command-channel.md#c0-handler-part-2) |
+| `0x82D494` | FIRM | `DAT_0082d494`, ANC feedforward gain | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
+| `0x82D498` | FIRM | `DAT_0082d498`, ANC feedback gain | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
 | `0x82DB5C` | FIRM | Empty orientation-filter plugin slot | [Head tracking](airpods-layer.md#head-tracking) |
 | `0x831E7C` | FIRM | Nine-entry module-handler table | [Modules](firm-runtime.md#module-dispatch) |
 | `0x831EFC` | FIRM | RAM partition-index count | [Flash access](firm-runtime.md#flash-and-partition-access) |
@@ -67,6 +70,7 @@ BOOT also groups the vendor boot-loader destinations, while OTAP groups the sepa
 | `0x834305` | FIRM | Second live byte persisted as `anc_mode_sel` | [Settings](settings-store.md#setting-semantics) |
 | `0x834306` | FIRM | Third live byte persisted as `anc_mode_sel` | [Settings](settings-store.md#setting-semantics) |
 | `0x834307` | FIRM | First live byte persisted as `anc_mode_sel` | [Settings](settings-store.md#setting-semantics) |
+| `0x83582E` | FIRM | `DAT_0083582e`, peer-side `+NTC=` buffer | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
 | `0x879820` | FIRM | Stack top | [Address spaces](memory-map-and-boot.md#cpu-and-address-spaces) |
 | `0x896744` to `0x8968B2` | FIRM | h2sturbo ANC AT handlers | [ANC controls](audio-and-dsp.md#factory-anc-controls) |
 | `0xC00000` upward | FIRM | Flash XIP window, shared mapping | [Address spaces](memory-map-and-boot.md#cpu-and-address-spaces) |
@@ -89,6 +93,8 @@ BOOT also groups the vendor boot-loader destinations, while OTAP groups the sepa
 | `0xC4ECC4` | FIRM | `FUN_00c4ecc4`, `55AA 80` handling | [OTA entry](command-channel.md#entering-ota-from-firm) |
 | `0xC4F014` | FIRM | `FUN_00c4f014`, factory-reset path | [Text console](command-channel.md#receive-demux-and-text-console) |
 | `0xC4F0CC` | FIRM | `FUN_00c4f0cc`, SPP/UART demux and `+test=` console | [Text console](command-channel.md#receive-demux-and-text-console) |
+| `0xC4F5D4` | FIRM | `FUN_00c4f5d4`, send the `AT+NTC=` read-back | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
+| `0xC4F6F0` | FIRM | `FUN_00c4f6f0`, `+NTC=` handler | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
 | `0xC4FBC0` | FIRM | `FUN_00c4fbc0`, main event dispatcher | [Event bus](firm-runtime.md#event-bus) |
 | `0xC51418` | FIRM | `FUN_00c51418`, ANC prompt map | [Settings](settings-store.md#setting-semantics) |
 | `0xC51578` | FIRM | `FUN_00c51578`, boot EQ2P reader call | [EQ2P reader](audio-and-dsp.md#eq2p-reader) |
@@ -106,6 +112,10 @@ BOOT also groups the vendor boot-loader destinations, while OTAP groups the sepa
 | `0xC58BD4` | FIRM | `FUN_00c58bd4`, IMU setup | [Head tracking](airpods-layer.md#head-tracking) |
 | `0xC59298` | FIRM | `FUN_00c59298`, `task motion` | [Head tracking](airpods-layer.md#head-tracking) |
 | `0xC5C6B0` | FIRM | `FUN_00c5c6b0`, preset-switch EQ2P read | [EQ2P reader](audio-and-dsp.md#eq2p-reader) |
+| `0xC5E888` | FIRM | `FUN_00c5e888`, set ANC feedforward gain | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
+| `0xC5E8B4` | FIRM | `FUN_00c5e8b4`, set ANC feedback gain | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
+| `0xC5E978` | FIRM | `FUN_00c5e978`, load ANC gains from NV `anc info` | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
+| `0xC5EAC4` | FIRM | `FUN_00c5eac4`, set ANC mode | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
 | `0xC602F8` | FIRM | `FUN_00c602f8`, ENC/sidetone toggle path | [Text console](command-channel.md#receive-demux-and-text-console) |
 | `0xC60324` | FIRM | `FUN_00c60324`, ENC/sidetone toggle path | [Text console](command-channel.md#receive-demux-and-text-console) |
 | `0xC604DC` | FIRM | `FUN_00c604dc`, audio context and DSP setup | [DSP tables](audio-and-dsp.md#compiled-dsp-tables) |
@@ -139,6 +149,7 @@ BOOT also groups the vendor boot-loader destinations, while OTAP groups the sepa
 | `0xC87798` | FIRM | `FUN_00c87798`, AAP sender with first byte `0x10` | [Peer AAP](airpods-layer.md#peer-aap-transport) |
 | `0xC87834` | FIRM | `FUN_00c87834`, ear-to-ear AAP parser | [Peer AAP](airpods-layer.md#peer-aap-transport) |
 | `0xC8B1C4` | FIRM | `FUN_00c8b1c4`, AAP `0x00` handler helper | [AAP opcodes](airpods-layer.md#aap-opcodes) |
+| `0xC8D364` | FIRM | `FUN_00c8d364`, AT line parser (`+NTC=`, `+ANC...`) | [`+NTC=`](audio-and-dsp.md#live-anc-gain-interface-ntc) |
 | `0xC8DF50` | FIRM | `FUN_00c8df50`, drop Bluetooth links | [OTA entry](command-channel.md#entering-ota-from-firm) |
 | `0xC97000` to `0xC9A000` | FIRM | RF calibration code | [Hardware](firm-runtime.md#hardware-blocks) |
 | `0xC9E66C` | FIRM | `FUN_00c9e66c`, module registration | [Modules](firm-runtime.md#module-dispatch) |
