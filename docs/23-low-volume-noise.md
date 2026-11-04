@@ -6,7 +6,8 @@ speaker/analog side or to firmware with a few listening tests. Static analysis o
 on the [`h3pro_elf.py`](../tools/h3pro_elf.py) ELF); **nothing here has been run on buds.**
 
 Short version: the firmware has three things that can make quiet audio sound grainy or hissy,
-plus the usual analog suspects. The tests at the bottom tell them apart.
+plus the usual analog suspects. Emulation rules out one of them (section 2). The tests at the
+bottom tell the rest apart.
 
 ## 1. Volume is a dB curve turned into a float gain
 
@@ -36,7 +37,7 @@ read it (`FUN_0080d32c`) and post it with `FUN_0080e3c2(stream, 0x11, &gain)`, w
 engine message `0x1A` (`FUN_0080c8b8`). The multiply itself runs in the engine/mask ROM, which
 we have not read yet ([22](22-rom-dump.md) is the way in).
 
-Two details matter for quiet audio:
+Two details matter for quiet audio (neither emulated yet, because the gain multiply is in ROM):
 
 * **Flat table.** `FUN_00c60090` picks the all-0 dB table when the per-link query
   `FUN_00827564(5, 0, 0, 3, addr)` returns 1. In that mode the bud does no attenuation and the
@@ -53,7 +54,7 @@ There is also an optional ×2 (+6 dB, `expf(0.690774)`) pre-gain on the music st
 (`FUN_00c60b88`, applied when ctx `+0x85` is 0 and a registered callback returns non-zero).
 What drives it is open.
 
-## 2. The voice path injects comfort noise
+## 2. The voice-path noise suppressor (emulated: passthrough)
 
 The HFP/SCO stream (8 or 16 kHz, `FUN_00c64aae`) creates an STFT noise suppressor when
 ctx `+0x86` bit 1 is set (it is: `FUN_00c521f0` passes 1). Creation is `FUN_00c64860` →
@@ -72,12 +73,25 @@ gain smoothing across bins (`FUN_00c77980`, flag bit 2); then `FUN_00c77dc4`, wh
 bin at noise level** (LCG `seed *= 6221`, `sqrt` magnitude, `sin`/`cos` phase). It also zeroes
 5.6-5.8 kHz and 6.2-6.4 kHz outright. Overlap-add back to PCM16 is `FUN_00c77f4c`.
 
-Comfort-noise fill is a constant hiss under quiet passages, which matches "white noise" at low
-volume. The stream that runs it decodes packets with packet-loss concealment right before
-(`FUN_00c66140` → `FUN_00c6522c`), which points at the receive side (what you hear), but the
-direction is not confirmed. Stock flags are `6`; the diagnostic patch
-[`patches/2607061716/voice-comfort-noise.json`](../patches/2607061716/voice-comfort-noise.json)
-sets them to `4` (keep smoothing, drop noise tracking and fill).
+**Emulated: it does not add hiss.** [`tools/emu/voice_ns.py`](../tools/emu/voice_ns.py) builds the
+module the way `FUN_00c64860` does (16 kHz, 256-sample frames, the stock `0xC33D9C` block) and
+runs `FUN_00c78228` frame by frame in Unicorn. The mask-ROM malloc/memcpy/expf/FFT and FIRM's
+`cosf`/`sinf` wrappers are stood in for in Python, and everything else is FIRM code. The
+emulation was run three times: stock flags `6`, then images rebuilt with `cfw.py` at flags `4`
+and `0`.
+
+| Input (3 s, first 1 s skipped) | in | out, flags 6 (stock) | out, flags 4 / 0 |
+|---|---|---|---|
+| digital silence | silent | silent | silent |
+| -60 dBFS white noise | -60.0 | -60.4 | -60.1 |
+| -40 dBFS 1 kHz bursts + -70 dBFS hiss, level in the gaps | -70.0 | -70.6 | -70.4 |
+
+Stock vs flags 4 differ by -73 dBFS on the noise input and -83 dBFS on the bursts, so the
+noise fill replaces noise with noise of about the same level instead of adding any. The reason
+is that flag bit 0 (`FUN_00c77a68`, the noise estimate the Wiener gain divides by) is **off** in
+stock. That leaves the estimate zeroed and floored, so the gain stays at about 1 and the stage
+passes audio straight through. Silence stays silent. This path is not the source of a
+low-volume hiss, and no patch is shipped for it.
 
 ## 3. Not firmware
 
@@ -95,7 +109,7 @@ sets them to `4` (keep smoothing, drop noise tracking and fill).
 | Same, ANC or transparency on, then FF/FB gain 0 | appears / disappears with ANC | ANC noise floor ([11](11-anc-transparency.md)) |
 | Phone at low volume vs phone at max with a -35 dB track | only the first crackles | phone-side attenuation (flat table / codec) |
 | Android: toggle *Disable absolute volume* (developer options) | changes | the flat-table switch above |
-| Music vs a call at the same loudness | only in calls | voice NS comfort noise: try `voice-comfort-noise.json` |
+| Music vs a call at the same loudness | only in calls | call codec (CVSD/mSBC) or phone side; the voice NS is ruled out (section 2) |
 | Swap buds / L vs R | only one bud | hardware |
 
 ## Open
@@ -103,5 +117,4 @@ sets them to `4` (keep smoothing, drop noise tracking and fill).
 * Which link property `FUN_00827564(5, …, 3)` reports, i.e. when the flat table is used.
 * What the engine does with message `0x1A` (multiply before or after the decoder, fixed or
   float) - needs the ROM ([22](22-rom-dump.md)).
-* The direction of the voice NS stream and the meaning of each float in the `0xC33D9C` block
-  (the 0xA900 field mapping is in `FUN_00c782d8`).
+* What the voice NS would do with flag bit 0 on (real noise reduction); `voice_ns.py` can test it.
