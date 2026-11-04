@@ -18,6 +18,7 @@ Subcommands:
   read   - dump live flash via C0 83
   ota    - flash a .up image via the 55AA OTA path (both buds)
   leave-ota - get buds that are stuck in the updater (OTAP) back into FIRM
+  dash   - local web dashboard for live tuning (settings, ANC gains)
   cmd    - send a raw frame, hex in / hex out
   tone   - list/extract/replace prompt sounds in a .up (wraps tone_tool.py)
   patch  - apply cfw patch files to a .up (wraps cfw.py)
@@ -368,6 +369,13 @@ def cmd_leave_ota(ser, a):
     sys.exit("still in the updater after 4 rounds; case-cycle both buds and rerun")
 
 
+def cmd_dash(_ser, a):
+    from . import dash
+    if not a.port:
+        sys.exit("--port is required (Bluetooth address of the buds)")
+    dash.serve(a.port, a.listen)
+
+
 def cmd_cmd(ser, a):
     frame = bytes.fromhex(a.hex)
     ser.write(frame)
@@ -418,6 +426,10 @@ def main():
     o.add_argument("--timeout", type=float, default=3.0)
     o.set_defaults(f=cmd_ota)
     sub.add_parser("leave-ota").set_defaults(f=cmd_leave_ota)
+
+    d = sub.add_parser("dash")
+    d.add_argument("--listen", default="127.0.0.1:8765", help="host:port to serve on")
+    d.set_defaults(f=cmd_dash, needs_link=False)
 
     c = sub.add_parser("cmd"); c.add_argument("hex"); c.set_defaults(f=cmd_cmd)
 
