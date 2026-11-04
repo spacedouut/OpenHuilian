@@ -7,7 +7,7 @@ on the [`h3pro_elf.py`](../tools/h3pro_elf.py) ELF); **nothing here has been run
 
 Short version: the firmware has three things that can make quiet audio sound grainy or hissy,
 plus the usual analog suspects. Emulation rules out one of them (section 2) and
-measures another (the ROM gain, section 1). The tests at the
+another after the music path was traced to the 32-bit mixer ramp (the ROM gain, section 1). The tests at the
 bottom tell the rest apart.
 
 ## 1. Volume is a dB curve turned into a float gain
@@ -60,14 +60,25 @@ routines in Unicorn on the A2DP curve and compares them with an ideal float mult
 | 5 (-35) | 17.1 (22.8) dB, 8 % of samples zeroed | 114.6 (118.3) dB |
 
 On a **16-bit** stream, quiet passages at low volume come out at 17-30 dB SNR. The error is
-signal-correlated truncation, which is heard as grit or crackle, and truncation costs 3-8 dB
-more than rounding would. On a **32-bit** stream the stage is inaudible. The mixer reports its
-output format as 48 kHz, mono, 4 bytes (`FUN_0080c8b8` cases 7/8/9), and ramps built on that
-format (`FUN_00c6df08`) are 32-bit. Music source ramps (`FUN_00c5f43c`, called from
-`FUN_00c5eec0`) take channels and bytes per sample from the source's own format record (bytes
-`+0xC/+0xD`), and several decoders set `+0xD = 2`. **Which width the A2DP ramp runs at is not
-pinned yet.** If it is 16-bit, this is the leading firmware explanation for the low-volume
-crackle.
+signal-correlated truncation, which is heard as grit or crackle. On a **32-bit** stream the
+stage is inaudible.
+
+**A2DP music runs at 32-bit, so this stage is ruled out for music.** The trace:
+
+1. The A2DP sink opens its stream with a format record whose `+0xE` type is `2`
+   (`FUN_00c60b88` → `FUN_00c66b4c` → `FUN_0080c8b8(1, …)` → `FUN_00c5db7a` → `FUN_00c6df08`,
+   which stores the type at obj `+0x3A`).
+2. For type-2 streams the volume message does not touch the per-stream ramp.
+   `FUN_00810d24(obj, 0xC)` posts `FUN_0080c8b8(0x24, &gain)` instead, and that calls
+   `0xBA48(gain, mixer + 0x68)`, the **mixer's master ramp**.
+3. The master ramp is initialised in `FUN_00c5dd04` (the mixer, `*0x82D410`) as
+   `0xBA0C(1.0, mixer + 0x68, 48000, 1, 4)`: 48 kHz, mono, **4 bytes per sample**. The mixer
+   reports the same format to its sources (`FUN_0080c8b8` cases 7/8/9), and `FUN_00c6df08`
+   builds a converter (`FUN_00c70784`) from the source's own format to it.
+
+The ramp reads its sample width from its own struct (`+0xD`), so the music multiply takes the
+int32 branch. At 5 % volume that is still 114 dB SNR on a -40 dBFS passage. Other stream types
+use the per-stream ramp at obj `+0x54`, which is initialised with the mixer format too.
 
 Two more details matter for quiet audio:
 
@@ -147,7 +158,7 @@ low-volume hiss, and no patch is shipped for it.
 ## Open
 
 * Which link property `FUN_00827564(5, …, 3)` reports, i.e. when the flat table is used.
-* Whether the A2DP source ramp is 16- or 32-bit (the `+0xD` of the source format record that
-  `FUN_00c5eec0` passes to `FUN_00c5f43c`). If it is 16-bit, the fix is a ROM-call detour: apply
-  the gain in a 32-bit stage, or round and dither it.
+* What sits after the 32-bit mixer: the final conversion to the DAC/amp format and its width.
+  That is the last digital stage where low-volume resolution could be lost. Past it, the analog
+  tests in the table are the next step.
 * What the voice NS would do with flag bit 0 on (real noise reduction); `voice_ns.py` can test it.
