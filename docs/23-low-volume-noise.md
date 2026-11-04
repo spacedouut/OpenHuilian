@@ -6,7 +6,8 @@ speaker/analog side or to firmware with a few listening tests. Static analysis o
 on the [`h3pro_elf.py`](../tools/h3pro_elf.py) ELF); **nothing here has been run on buds.**
 
 Short version: the firmware has three things that can make quiet audio sound grainy or hissy,
-plus the usual analog suspects. Emulation rules out one of them (section 2). The tests at the
+plus the usual analog suspects. Emulation rules out one of them (section 2) and
+measures another (the ROM gain, section 1). The tests at the
 bottom tell the rest apart.
 
 ## 1. Volume is a dB curve turned into a float gain
@@ -34,10 +35,41 @@ music level (ctx `0x82D4D0 + 0x34`, 0-100) becomes the linear gain at ctx `+0x38
 
 The gain is handed to the audio engine, not applied in FIRM: `FUN_00c60b88`/`FUN_00c618f4`
 read it (`FUN_0080d32c`) and post it with `FUN_0080e3c2(stream, 0x11, &gain)`, which becomes
-engine message `0x1A` (`FUN_0080c8b8`). The multiply itself runs in the engine/mask ROM, which
-we have not read yet ([22](22-rom-dump.md) is the way in).
+engine message `0x1A` (`FUN_0080c8b8`), then `FUN_00810d24(obj, 0xC, &gain)`, then the
+mask-ROM gain ramp at `obj + 0x54`.
 
-Two details matter for quiet audio (neither emulated yet, because the gain multiply is in ROM):
+### The ROM gain ramp (emulated on the recovered mask ROM)
+
+| ROM | Does |
+|---|---|
+| `0xBA0C(gain, ramp, rate, channels, bytes/sample)` | init: `{cur, coef = 1 - 3/(rate/4), target}` plus format bytes at `+0xC/+0xD` |
+| `0xBA48(gain, ramp)` | set target (`vstr s0, [r0, #8]`) |
+| `0xBA50(ramp, pcm, frames)` | apply. While ramping it does `x = (int)(float(x) * cur)` per sample (int16 or int32), then `cur = coef*cur + (1-coef)*target` per frame. Once within 1e-4 of the target it snaps and uses the block path `0xBB54` |
+
+The multiply is `vcvt.s32.f32`: **it truncates toward zero, with no rounding and no dither**.
+The ramp time constant is about 83 ms (`coef` 0.99975 at 48 kHz), and a full volume jump takes
+about 0.8 s to snap. [`tools/emu/rom_gain.py`](../tools/emu/rom_gain.py) runs those three ROM
+routines in Unicorn on the A2DP curve and compares them with an ideal float multiply. The
+"round" column is the best any undithered integer output could do:
+
+| vol % (dB) | 16-bit, -40 dBFS sine: SNR (round) | 32-bit, -40 dBFS sine: SNR (round) |
+|---|---|---|
+| 50 (-15) | 38.9 (43.2) dB | 133.3 (140.4) dB |
+| 25 (-26) | 27.9 (34.1) dB | 121.6 (127.8) dB |
+| 10 (-32) | 20.8 (28.8) dB | 118.1 (122.1) dB |
+| 5 (-35) | 17.1 (22.8) dB, 8 % of samples zeroed | 114.6 (118.3) dB |
+
+On a **16-bit** stream, quiet passages at low volume come out at 17-30 dB SNR. The error is
+signal-correlated truncation, which is heard as grit or crackle, and truncation costs 3-8 dB
+more than rounding would. On a **32-bit** stream the stage is inaudible. The mixer reports its
+output format as 48 kHz, mono, 4 bytes (`FUN_0080c8b8` cases 7/8/9), and ramps built on that
+format (`FUN_00c6df08`) are 32-bit. Music source ramps (`FUN_00c5f43c`, called from
+`FUN_00c5eec0`) take channels and bytes per sample from the source's own format record (bytes
+`+0xC/+0xD`), and several decoders set `+0xD = 2`. **Which width the A2DP ramp runs at is not
+pinned yet.** If it is 16-bit, this is the leading firmware explanation for the low-volume
+crackle.
+
+Two more details matter for quiet audio:
 
 * **Flat table.** `FUN_00c60090` picks the all-0 dB table when the per-link query
   `FUN_00827564(5, 0, 0, 3, addr)` returns 1. In that mode the bud does no attenuation and the
@@ -115,6 +147,7 @@ low-volume hiss, and no patch is shipped for it.
 ## Open
 
 * Which link property `FUN_00827564(5, …, 3)` reports, i.e. when the flat table is used.
-* What the engine does with message `0x1A` (multiply before or after the decoder, fixed or
-  float) - needs the ROM ([22](22-rom-dump.md)).
+* Whether the A2DP source ramp is 16- or 32-bit (the `+0xD` of the source format record that
+  `FUN_00c5eec0` passes to `FUN_00c5f43c`). If it is 16-bit, the fix is a ROM-call detour: apply
+  the gain in a 32-bit stage, or round and dither it.
 * What the voice NS would do with flag bit 0 on (real noise reduction); `voice_ns.py` can test it.
