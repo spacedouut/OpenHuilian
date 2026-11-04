@@ -7,9 +7,36 @@ version in [`data/reports/aap-transparency-analysis.html`](../data/reports/aap-t
 
 ## Live tuning interface in FIRM
 
-The incoming AT-command parser has an ANC block. Each parses a decimal argument and posts a
-message with a fixed ID (dispatch table FIRM `0x96AA0–0x96AC4`, handlers `0x896744–0x8968B2`,
-Thumb-2, image base `0x7FFE14`). Present in both h2sturbo builds.
+The real runtime gain interface is `+NTC=`, an AT line on the HFP channel (RFCOMM 1).
+The line parser (`FUN_00c8d364`) copies the 9 chars after `+NTC=` into a buffer and posts
+event `0xB2000002`; the dispatcher hands it to `FUN_00c4f6f0`:
+
+```
++NTC=<side><op><B|F><6 digits>
+```
+
+* side `L` runs on the connected bud; `R` is relayed to the peer over the TWS link
+  (tag `0xDA`, `FUN_0081ba1c`) and lands in the peer's `DAT_0083582e` path.
+* op `2` sets the ANC mode: the selector position char is the mode index
+  (`FUN_00c5eac4(buf[2]-'0')`).
+* op `3` sets a gain: `F` = feedforward mic, `B` = feedback mic. The value is a linear
+  float `digits / 10000`, so `010000` = 1.0000 (the factory default). Stored in
+  `DAT_0082d494` (FF) / `DAT_0082d498` (FB), set via `FUN_00c5e888` / `FUN_00c5e8b4`.
+* op `4` persists both gains to NV key `anc info` (16 bytes = 4 floats).
+* op `5` reads a gain back: the bud replies `AT+NTC=<same 9 chars>` with the value
+  filled in, sent by `FUN_00c4f5d4`.
+
+Example: `+NTC=L3F012000` sets this bud's feedforward gain to 1.2.
+
+Boot defaults come from `FUN_00c5e978`, which loads NV `anc info` if present and
+otherwise uses 1.0 for every slot (gains 2 and 5 in its init struct are code literals,
+so two of the six are always 1.0 unless an `anc info` key exists).
+
+### Dead code: the `+ANC` family
+
+The parser also accepts the lines below and posts `0xF4`-family events
+(`FUN_00c8d364` → `FUN_00812144`), but nothing in FIRM consumes that event family.
+They are factory leftovers and do nothing on this build.
 
 | Command | Message ID | Argument | Reads as |
 |---|---|---|---|
@@ -19,8 +46,8 @@ Thumb-2, image base `0x7FFE14`). Present in both h2sturbo builds.
 | `+ANCAG=` | `0xF4000004` | signed (parses leading `-`) | overall ANC gain |
 | `+ANCDG=` | `0xF4000005` | digits | denoise / depth gain |
 
-Neighbouring strings: `+MICTEST=`, `+MVS=`, `+NTC=`. Whether these are accepted over the BT
-command channel without the keyed challenge/response, and their valid ranges, are untested.
+Neighbouring strings: `+MICTEST=`, `+MVS=`. Whether `+MVS=` (mic volume?) is wired up
+the same way as `+NTC=` is unchecked.
 
 ## The data pages that *could* hold filters are never shipped
 
@@ -69,5 +96,5 @@ layout: its EQ2P has 7 profiles (`SLEQ 02 07`, see [16](16-live-flash-dump.md)).
 | Prompts / SFX | data (TONE) — proven |
 | Music EQ, ANC-mode EQ | data (EQ2P) — proven repack |
 | Call-mic noise reduction params | data (SENC) — structure known, meaning partly |
-| ANC / transparency gains | runtime AT commands — exist, untested |
+| ANC / transparency gains | `+NTC=` over HFP — wired end to end, has read-back and NV persistence |
 | ANC / transparency **filters** | **code** in FIRM, or populate pages 51–57 *if* FIRM honours them (unknown) |

@@ -31,6 +31,7 @@ hl --port PORT set <name> <v>   write a setting (mirrored to the peer bud)
 hl --port PORT read 0x0 0x100000 out.bin   dump flash via C0 83 (200 B/reply cap)
 hl --port PORT ota file.up      flash a .up through the 55AA path, both buds
 hl --port PORT leave-ota        get buds stuck in the updater back into FIRM
+hl --port BTADDR dash           local web dashboard for live tuning (see below)
 hl --port PORT cmd <hex>        send a raw frame, print the raw reply
 hl tone ...                     wraps tone_tool.py (file-side, no port needed)
 hl patch fw.up out.up ...       wraps cfw.py apply (file-side, no port needed)
@@ -98,6 +99,34 @@ answers and `C0 12` reads `00` (both buds linked; `02` is no peer). The flag
 page itself is at `OTAP.addr + ((OTAP.len >> 12) + 1) * 0x1000` (`0xFB000` on
 the H3Pro layout): `AA 55 00 00` set, `00 00 00 00` cleared, readable with
 `hl read 0xfb000 4 flag.bin`.
+
+## The tuning dashboard
+
+`hl --port AA:BB:CC:DD:EE:FF dash` starts a stdlib-only HTTP server on
+`127.0.0.1:8765` (`--listen host:port` to change it) and serves one page:
+battery, in-ear, peer link, ANC mode, the C0 toggles and gestures, and sliders
+for the factory ANC gains. It needs the Bluetooth address form of `--port`
+because it opens two links.
+
+* **C0, channel 3.** Same reads and writes as `hl get`/`set`, plus the toggles
+  StarFun names in `CMDConfig` (`68` spatial audio, `66` audio type, `67` game
+  check, `85` custom volume, `86` talk sensitive, `87` low/high volume). The
+  last three have no known read command, so the page shows what was last set.
+* **HFP, channel 1.** Live ANC gains go over `+NTC=<side><op><B|F><6 digits>`
+  (see [11](11-anc-transparency.md)): op `3` sets feedforward (`F`) or
+  feedback (`B`) gain to `digits/10000` (1.0000 is stock), `5` reads one back,
+  `4` writes both to NV `anc info`. `L` hits the connected bud, `R` is relayed
+  to the peer. The dashboard sends these as `+NTC=...` lines; "Read gains"
+  fills the sliders with what the buds report, "Save to flash" persists them.
+  The buds are the headset on this channel, so the dashboard plays phone: it
+  answers their AT commands (`BRSF`, `CIND`, `CMER`, `XAPL`...) to bring up
+  the service level connection first. If desktop audio (PipeWire, BlueZ)
+  already holds HFP, the channel is busy. "Release HFP" disconnects only the
+  Handsfree profile through BlueZ `DisconnectProfile`, and A2DP stays up.
+
+Move in small steps and keep the buds out of your ears for big feedback
+changes, since too much feedback gain can squeal. Unsaved gains reset on
+reboot.
 
 ## The WebUI
 
