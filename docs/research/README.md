@@ -63,7 +63,7 @@ The sources do not document a `DumpAll` invocation. The named PyGhidra scripts d
 - Which OTAP role and channel states permit the gated `C0` handlers to reply beyond the observed read subset?
 - What replaces or wraps `zero_ota.bin` to make a valid H3Pro update? Its partition target and recovery use are unverified.
 - What are the remaining AAP opcode semantics and compatibility gaps? Opcode `0x4B` likely controls listen mode. The exact use of `air_adv_key` for post-pairing AES content still needs confirmation.
-- Can the factory ANC commands be reached over SPP, and what argument ranges are valid? Which h2sturbo profile binds to transparency versus ANC-on, and what do the partly decoded SENC parameters mean?
+- What gain ranges are safe through `+NTC=`, and is `+MVS=` wired the same way? Which h2sturbo profile binds to transparency versus ANC-on, and what do the partly decoded SENC parameters mean?
 - What are the precise roles of the likely compressor tables, EQ2P `0xFC` field and extra page-0 filter block?
 - What chip-name string belongs in an official H3Pro `CONFIG` header? No official H3Pro `.up` supplies one.
 - Does exposing the app's dormant local-file picker work on hardware? Its code path exists, but that route is unverified.

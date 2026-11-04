@@ -39,6 +39,30 @@ shows what each gesture action ID does.
 
 Use channel 3. Channel 1 is the buds' hands-free channel and answers with `AT` commands.
 
+## Tune ANC gains live
+
+```bash
+python3 tools/hl --port AA:BB:CC:DD:EE:FF dash
+```
+
+This starts a local page at `http://127.0.0.1:8765` (`--listen host:port` to change it). It shows
+battery, in-ear, peer link, ANC mode, the `C0` toggles and gestures, and sliders for the factory
+ANC gains. It needs the Bluetooth address form of `--port` because it opens two links.
+
+* **Settings** go over channel 3, the same as `hl get` and `hl set`. The page also has the toggles
+  the app's `CMDConfig` names (`68` spatial audio, `66` audio type, `67` game check, `85` custom
+  volume, `86` talk sensitive, `87` low/high volume). The last three have no known read command,
+  so the page shows what was last set.
+* **ANC gains** go over channel 1, the hands-free channel, as `+NTC=` lines
+  ([ANC and transparency](../explanation/anc-and-transparency.md#live-tuning-interface-in-firm)).
+  "Read gains" fills the sliders with what the buds report, and "Save to flash" keeps them across
+  reboots. The page answers the buds' hands-free `AT` commands first to bring the channel up.
+* If desktop audio (PipeWire, BlueZ) already holds the hands-free channel, it's busy. "Release HFP"
+  drops only that profile, and music keeps playing.
+
+Move the gains in small steps and keep the buds out of your ears for big feedback changes, since
+too much feedback gain can squeal. Gains you don't save reset on reboot.
+
 ## In a browser or a desktop panel
 
 * `tools/webui/index.html` does the same in Chrome or Edge through Web Serial. Serve it with

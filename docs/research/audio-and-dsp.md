@@ -69,6 +69,29 @@ The `piVar5[3] == 1` mode check selects between two destination layouts, describ
 
 H3Pro SENC is 2,056 bytes with CRC `0x77AA`, matching the H2S Turbo size and CRC.
 
+## Live ANC gain interface (`+NTC=`)
+
+The runtime gain interface is an AT line on the HFP channel (RFCOMM 1). The line parser
+`FUN_00c8d364` copies the 9 characters after `+NTC=` into a buffer and posts event `0xB2000002`.
+The dispatcher hands it to `FUN_00c4f6f0`.
+
+```
++NTC=<side><op><B|F><6 digits>
+```
+
+| Field | Values |
+|---|---|
+| side | `L` runs on the connected bud. `R` is relayed to the peer over the TWS link (tag `0xDA`, `FUN_0081ba1c`) and lands in the peer's `DAT_0083582e` path |
+| op `2` | Set the ANC mode. The selector character is the mode index (`FUN_00c5eac4(buf[2]-'0')`) |
+| op `3` | Set a gain. `F` is the feedforward mic, `B` the feedback mic. The value is a linear float `digits / 10000`, so `010000` is 1.0, the factory default. Stored in `DAT_0082d494` (FF) and `DAT_0082d498` (FB) through `FUN_00c5e888` and `FUN_00c5e8b4` |
+| op `4` | Persist both gains to NV key `anc info` (16 bytes, 4 floats) |
+| op `5` | Read a gain back. The bud replies `AT+NTC=<same 9 chars>` with the value filled in, sent by `FUN_00c4f5d4` |
+
+Example `+NTC=L3F012000` sets the connected bud's feedforward gain to 1.2. Boot defaults come from
+`FUN_00c5e978`, which loads NV `anc info` if present and otherwise uses 1.0 for every slot. Gains 2
+and 5 in its init struct are code literals, so two of the six are always 1.0 unless an `anc info`
+key exists. `hl dash` drives this interface on hardware.
+
 ## Factory ANC controls
 
 The h2sturbo AT parser has a decimal-argument ANC block. It is present in both compared builds. These locations use that image's mapping and are not H3Pro runtime addresses.
@@ -87,7 +110,7 @@ The h2sturbo AT parser has a decimal-argument ANC block. It is present in both c
 | `+ANCAG=` | `0xF4000004` | Signed, recognizes a leading `-` | Overall ANC gain |
 | `+ANCDG=` | `0xF4000005` | Digits | Denoise/depth gain |
 
-Neighboring strings include `+MICTEST=`, `+MVS=` and `+NTC=`. H3Pro retains the ANC command strings and the factory audio interface. Its hidden `+test=` receive path is a likely route from SPP, but command replies over SPP and valid argument ranges are unverified.
+The parser accepts these lines and posts `0xF4`-family events (`FUN_00c8d364` to `FUN_00812144`), but nothing in the H3Pro FIRM consumes that event family. They are factory leftovers with no effect on this build. Neighboring strings include `+MICTEST=` and `+MVS=`. Whether `+MVS=` is wired up like `+NTC=` is unchecked.
 
 The runtime overview calls `ANCAG` an ambient gain and leaves `ANCDG` as a fourth ANC gain. The parser analysis labels them overall ANC gain and denoise/depth gain. Those semantic labels are not fully verified.
 
@@ -125,7 +148,7 @@ ANC mode values are 0 for off, 1 for ANC, 2 for transparency and 5 for adaptive.
 | Prompts and SFX | TONE data replacement works on hardware |
 | Music EQ and ANC-mode EQ | EQ2P data, repacking verified |
 | Call-mic noise reduction | SENC data, structure known and meanings partly decoded |
-| ANC/transparency gains | Runtime AT commands exist, live use unverified |
+| ANC/transparency gains | `+NTC=` over HFP, with read-back and NV persistence |
 | ANC/transparency filters | FIRM code or compiled data changes |
 
 ## Compiled DSP tables
