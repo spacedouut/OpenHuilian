@@ -59,7 +59,6 @@ Patches live under `patches/<firmware version>/`. Anything that exposes a knob s
 | File | What | Knobs |
 |---|---|---|
 | `2607061716/head-tracking.json` | faster, less laggy head tracking ([18](18-firm-walkthrough.md#head-tracking-pipeline)) | `tx_ms` report period (stock 40), `decimate` fusion step every N+1 samples (stock 3), `alpha` smoother blend (stock 0.1) |
-| `2607061716/voice-comfort-noise.json` | diagnostic, untested: turn off the voice-path comfort-noise fill ([23](23-low-volume-noise.md)) | `ns_flags` voice NS mode flags (stock 6) |
 
 ## Rules
 
