@@ -68,6 +68,10 @@ and it does not exercise the real `0x83` handler or the reroute site.
 
 ## What this is for
 
+Done: the dump of `0x0-0x5ffff` is in
+[`firmware/h3promax3/rom/`](../firmware/h3promax3/rom/README.md).
+
+
 Pulling the real mask ROM (`0x0-0x20000`) replaces the emulator's
 `bx lr` stubs with the actual RTOS kernel, SVC/PendSV handlers and
 library calls. Also handy: dumping live RAM state or peripheral
