@@ -109,7 +109,12 @@ command byte picks the branch:
 **`82` declare.** Saves the CRC16 and total length the phone sends (it only uses the low 16 bits of
 the 4-byte CRC field). Then it:
 * erases flash from `0x4000` up to `0x3000 + total` (4 KiB sectors to `0x10000`, 64 KiB blocks
-  after that, 4 KiB for the tail);
+  after that, 4 KiB for the tail). Emulated in Unicorn (`0x80E4C0`, erase helper hooked): total
+  `0xCF000` erases exactly `0x4000..0xD2000`, `0x1CF000` erases `..0x1D2000`, a total that isn't a
+  4 KiB multiple rounds up past `0x3000 + total`, and a total below `0xD000` underflows
+  `total - 0xD000` and erases every 64 KiB block in the address space (the whole chip). `upfmt.py`,
+  `flashota.py` and the WebUI therefore refuse an image whose OTAP isn't 4 KiB-aligned at
+  `>= 0x10000`;
 * takes a CRC16 of `flash[0 : 0x3000]` (bootloader + config) and keeps it as a guard.
 
 **`83` data.** Writes the payload at whatever absolute address the frame says, in 256-byte pages.

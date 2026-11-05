@@ -144,6 +144,8 @@ export function parseIndex(body, io = indexOffset(body)) {
 // address, and CRCs flash[0x3000:0x3000+total]; its OTAP/PSMP records are
 // pinned. Port of upfmt.ota_image_problems: reasons not to stream an image.
 export const OTA_INDEX_ADDR = 0x3000, OTA_FIRM_ADDR = 0x4000, OTA_INDEX_MAX = 0x80;
+// OTAP 82 erases up to 0x3000+total rounded to 4 KiB; total < 0xD000 underflows into a whole-chip erase.
+export const OTA_MIN_OTAP = 0x10000;
 
 export function otaImageProblems(upBytes) {
   if (String.fromCharCode(...upBytes.slice(0, 6)) !== "CONFIG") return ["not a .up (missing CONFIG magic)"];
@@ -162,6 +164,8 @@ export function otaImageProblems(upBytes) {
   if (part("FIRM").addr !== OTA_FIRM_ADDR) bad.push(`FIRM at 0x${part("FIRM").addr.toString(16)}, expected 0x4000`);
   const otap = part("OTAP").addr;
   if (otap > body.length) bad.push(`OTAP at 0x${otap.toString(16)} is past the end of the image`);
+  if (otap < OTA_MIN_OTAP || otap & 0xFFF)
+    bad.push(`OTAP at 0x${otap.toString(16)}; 82's erase only stops short of it for a 4 KiB-aligned OTAP at >= 0x10000 (lower wraps and erases the whole chip)`);
   for (const e of entries) {
     if (e.tag === "OTAP" || e.tag === "PSMP") continue;
     if (e.addr < OTA_FIRM_ADDR || e.addr + e.len > otap)
