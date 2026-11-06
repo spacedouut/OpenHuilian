@@ -7,7 +7,7 @@
 The music volume from FIRM (engine message 0x1A, FUN_00810d24 case 0xC) lands in a ROM gain
 ramp: 0xBA0C init(s0=gain, r0=ramp, r1=rate, r2=channels, r3=bytes/sample), 0xBA48
 set target(s0, r0=ramp), 0xBA50 apply(r0=ramp, r1=pcm, r2=frames). This calls those three
-ROM routines in Unicorn on the A2DP volume curve (docs/23) and compares the output with an
+ROM routines in Unicorn on the A2DP volume curve (docs/research/low-volume-noise.md) and compares the output with an
 ideal float multiply ("round" = the best any undithered integer output could do). Offline only.
 """
 import argparse
