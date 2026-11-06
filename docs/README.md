@@ -47,7 +47,7 @@ recovery.
 
 [Firmware internals by subsystem](research/README.md): memory map and boot, the updater, the FIRM
 runtime, the command channel, the settings store, the AirPods layer, audio and DSP, the mask ROM
-and the patch that dumps it, the UART boot ROM, and an address index. Written for people and agents working on the firmware
+and the patch that dumps it, the UART boot ROM, what the firmware does to quiet audio, and an address index. Written for people and agents working on the firmware
 itself.
 
 ## Glossary
@@ -82,3 +82,4 @@ itself.
 | 19 CFW patching | [how-to/apply-a-patch.md](how-to/apply-a-patch.md), [reference/patch-files.md](reference/patch-files.md) |
 | 20 hl CLI | [how-to/change-settings.md](how-to/change-settings.md), [how-to/flash-an-image.md](how-to/flash-an-image.md), [reference/command-channel.md](reference/command-channel.md) |
 | 22 ROM dump | [research/rom-read.md](research/rom-read.md) |
+| 23 Low-volume noise | [research/low-volume-noise.md](research/low-volume-noise.md) |
