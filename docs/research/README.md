@@ -15,6 +15,7 @@ This section describes what the H3Pro Max3 `2607061716` firmware does and where 
 | [Settings store](settings-store.md) | NV API, key lengths, defaults and setting semantics |
 | [AirPods layer](airpods-layer.md) | AAP opcodes, identity data, SDP/HID, adverts, AES, heart rate and head tracking |
 | [Audio and DSP](audio-and-dsp.md) | EQ2P and SENC readers, ANC controls, DSP tables and verified patch offsets |
+| [Low-volume noise](low-volume-noise.md) | Volume curves, the mask-ROM gain ramp, undithered PCM16, the voice-path noise suppressor (emulated), tests to tell firmware from hardware |
 | [Mask ROM](mask-rom.md) | The 467-target call surface and named ROM services |
 | [ROM read patch](rom-read.md) | `rom-read` patch: C0 `0x83` with address bit 31 set copies raw memory, the mask-ROM dump path, its Unicorn selftest |
 | [UART boot ROM](uart-boot-rom.md) | Vendor loader sequence, `42 52` frames, USB entry and unresolved hardware details |
