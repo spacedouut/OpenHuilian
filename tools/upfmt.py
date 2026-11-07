@@ -36,6 +36,9 @@ def parse_index(flash, idx_off=None):
 OTA_INDEX_ADDR = 0x3000
 OTA_FIRM_ADDR = 0x4000
 OTA_INDEX_MAX = 0x80
+# OTAP 82 erases 0x4000..0x10000, then 64 KiB blocks for (total - 0xD000) unsigned, then 4 KiB
+# sectors rounded up: erase end = 0x3000 + total rounded up to 4 KiB, or the whole chip if total < 0xD000.
+OTA_MIN_OTAP = 0x10000
 
 
 def ota_image_problems(data):
@@ -62,6 +65,9 @@ def ota_image_problems(data):
     otap = parts[b"OTAP"][0]
     if otap > len(body):
         bad.append(f"OTAP at 0x{otap:x} is past the end of the image")
+    if otap < OTA_MIN_OTAP or otap & 0xFFF:
+        bad.append(f"OTAP at 0x{otap:x}; 82's erase only stops short of it for a 4 KiB-aligned "
+                   f"OTAP at >= 0x{OTA_MIN_OTAP:x} (lower wraps and erases the whole chip)")
     for tag, addr, ln, crc in entries:
         if tag in (b"OTAP", b"PSMP"):
             continue
