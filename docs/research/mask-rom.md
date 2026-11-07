@@ -44,7 +44,7 @@ Counts are the reported call counts from the static sweep. A dash means no count
 
 ## Dumping it
 
-The ROM image itself is not in the repo. The [ROM read patch](rom-read.md) extends `C0 83` so an address with bit 31 set reads raw memory, which makes `hl read 0x80000000 <len>` a mask-ROM dump over Bluetooth. Start with `0x0` to `0x20000`, where the named entries above sit. Until a dump exists, [`tools/emu/h3emu.py`](../../tools/emu/h3emu.py) stands in a `bx lr` for every ROM address and emulates only the helpers named in its own table.
+The ROM image is in [`firmware/h3promax3/rom/`](../../firmware/h3promax3/rom/README.md), `0x0` to `0x5FFFF`, read with the [ROM read patch](rom-read.md). That patch extends `C0 83` so an address with bit 31 set reads raw memory, which makes `hl read 0x80000000 <len>` a mask-ROM dump over Bluetooth. [`tools/emu/h3emu.py`](../../tools/emu/h3emu.py) still stands in a `bx lr` for every ROM address and emulates only the helpers named in its own table.
 
 ## Reproduction and limits
 
