@@ -22,7 +22,7 @@ are applied with their default unless overridden with --set name=value.
 Types: u8, u16, u32 (little endian), f32, bytes (hex string).
 
 Nothing here talks to the buds. Flash the result with the app's local-file path or
-tools/flashota.py, and read docs/19-cfw-patching.md first.
+tools/flashota.py, and read docs/reference/patch-files.md first.
 """
 import json
 import struct

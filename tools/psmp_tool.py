@@ -12,7 +12,7 @@ shows superseded (flag 0xFE) records in log order.  `verify` recomputes every re
 `set` appends records the way the firmware does (old record flagged 0xFE, new one appended)
 and writes a new file; values are text, `@file` for raw bytes, or `:hex`.
 
-Record layout (see docs/09-psmp-nvds.md):
+Record layout (see docs/reference/psmp.md):
   55 AA | flag (FF live / FE stale) | u32 check | u16 value_len | u16 key_id | u8 key_len |
   key | value
 

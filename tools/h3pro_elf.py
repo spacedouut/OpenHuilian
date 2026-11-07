@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Wrap the H3Pro Max3 FIRM / OTAP / bootloader in ARM ELFs so Ghidra & co. load them at the
-right addresses. Offline only, standard library only. Layout is from docs/17.
+right addresses. Offline only, standard library only. Layout is from docs/research/memory-map-and-boot.md.
 
 usage: h3pro_elf.py <h3promax3.up | raw flash dump> [outdir]
 writes firm.elf, otap.elf, boot.elf

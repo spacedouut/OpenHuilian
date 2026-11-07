@@ -1,4 +1,4 @@
-"""Shared .up container / HLKJ flash format helpers (layout: docs/04-up-format.md)."""
+"""Shared .up container / HLKJ flash format helpers (layout: docs/reference/up-format.md)."""
 import struct
 
 MAGIC = b"CONFIG"
@@ -30,7 +30,7 @@ def parse_index(flash, idx_off=None):
                      for i in range(count)]
 
 
-# OTAP (docs/17) erases 0x4000..0x3000+total on 82, writes 83 frames at any address with no
+# OTAP (docs/research/updater-otap.md) erases 0x4000..0x3000+total on 82, writes 83 frames at any address with no
 # bounds check, and CRCs flash[0x3000:0x3000+total]. Both are fixed at 0x3000, and its OTAP/PSMP
 # records are pinned, so an image is only safe to stream if its layout matches that.
 OTA_INDEX_ADDR = 0x3000
