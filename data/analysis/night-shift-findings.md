@@ -38,26 +38,26 @@ ROM services from patched code the same way FIRM does.
   check battery, and talk to module 4 (the Apple "air" layer).
 - The Apple Continuity advertisement template sits at FIRM 0xC4BF58
   (`1E FF 4C 00 07 19 01 0E20 75 ...`), and the adv builder `FUN_00cab92c` fills the
-  battery nibbles / lid counter / status bytes at runtime (matches doc 10's layout).
+  battery nibbles / lid counter / status bytes at runtime (matches the [AirPods layer](../../docs/research/airpods-layer.md) advert layout).
 - Working theory (strong): the AES is the encryption for Apple proximity-pairing /
   continuity follow-up messages using the PSMP `air_adv_key` (16 bytes). The "16 zero bytes
   filled at runtime" in the template are filled with ciphertext, not plaintext.
 - No TEA/XTEA/SHA/MD5/RC4 constants anywhere in FIRM. CRC32 table confirmed at 0xC451F4
-  (standard reflected CRC32, matches doc 09).
+  (standard reflected CRC32, matches [PSMP](../../docs/reference/psmp.md)).
 
 ## 3. New build-identity strings in H3Pro FIRM (not in docs)
 
 - `20230713_70aa57dc` at FIRM 0x42BB95+0xC04000... (string offset 0x02BB95) - looks like a
   vendor SDK/library build stamp (date_hash).
 - `H3Pro2` and `H3Pro3` model names at 0x040D93/0x040D9A - the model-string table knows two
-  more H3Pro variants that doc 18's table doesn't list.
+  more H3Pro variants that the [command channel](../../docs/research/command-channel.md) model table doesn't list.
 - `com.apple.hid.heartrate-access` (x2, 0x047D5F/0x047DA3) - the buds expose Apple's
   heart-rate-access HID service (the thing AirPods Pro 2 use for heart-rate sharing with
   Apple Watch). Doc 10 (h2sturbo-based) doesn't mention it. The H3Pro has a VC30Fx HR sensor
   and a `sensor-hr` task, so this is likely a real, working feature.
 - AAP identity plist (0x045B49): MaxReportSize 182, SerialNumber base64
   `R1dYWkZLSjZKUUgzAA==` = `GWYZLKJ6JQH3\0`, CFG# base64 `QjI5OC9SUi9SMDAxL1ZWLwA=` =
-  `B298/RR/R001/VV/`. Different CFG# than the h2sturbo build (doc 10).
+  `B298/RR/R001/VV/`. Different CFG# than the h2sturbo build ([AirPods layer](../../docs/research/airpods-layer.md)).
 
 ## 4. EQ2P consumption in FIRM (answers an open question)
 
@@ -72,12 +72,12 @@ EQ2P pages 51-57 would be dead weight for this build - the filters really are co
 ## 5. Command surface
 
 - The receive demux `FUN_00c4f0cc` (recovered - it was one of the functions auto-analysis
-  missed) matches doc 18: C0/05/55 -> StarFun handler, E0 and A0..AF dropped, else `+test=`.
-- C0 part-2 dispatcher `FUN_00c52e4c` (also recovered) matches doc 18's table; additionally
+  missed) matches [command channel](../../docs/research/command-channel.md): C0/05/55 -> StarFun handler, E0 and A0..AF dropped, else `+test=`.
+- C0 part-2 dispatcher `FUN_00c52e4c` (also recovered) matches the [command channel](../../docs/research/command-channel.md) table; additionally
   confirmed opcodes 0x67/0x68 write handlers post events, 0x85 calls FUN_00ca9610.
 - The `05`-frame path: first-byte `05` frames are the **TWS peer (bud-to-bud) protocol**, not
   a phone channel - OTAP's peer handler checks `05 <op> 00 …` frames and FIRM routes them to
-  module 7 type 1 (same transport family as the peer-sync opcodes in docs/18). The app side
+  module 7 type 1 (same transport family as the [peer-sync](../../docs/research/firm-runtime.md#peer-sync) opcodes). The app side
   has a separate second protocol (`constructCmd`: 16-byte header with cmdId 0x8001/0x8002,
   divideType, offset, crc32 - getBiuShakeHandsCmd/getBiuVerifyCmd) for OTHER Huilian products
   (watches); no Biu/JSON strings exist in H3Pro FIRM, so on the buds that channel is almost
@@ -96,7 +96,7 @@ is 0x1720/0x1724. Both may be true (direct vs literal-pool indirect calls).
 ## 7. Tooling added
 
 - `tools/upparts.py` - the generic .up partition lister/extractor/strings tool the repo
-  listed as missing. Verified against doc 04's h2sturbo numbers and the H3Pro image.
+  listed as missing. Verified against the [.up format](../../docs/reference/up-format.md) h2sturbo numbers and the H3Pro image.
 - Ghidra 12.2 headless project at ~/tmp/oh-ghidra/proj (firm.elf/otap.elf/boot.elf,
   ARM:LE:32:Cortex), PyGhidra dump/recover scripts in ~/tmp/oh-scripts/.
 - ReVa (mcp-reva) installed but has no Ghidra 12.2 extension build yet (latest is 12.1.3);
@@ -117,7 +117,7 @@ is 0x1720/0x1724. Both may be true (direct vs literal-pool indirect calls).
 OTAP's own C0 dispatcher `FUN_00810914` (1,196 B) CONTAINS handlers for: 01/02 (full app
 auth), 04 (model), 05 (version), 06 (BT addr), 07 (device_id), 09 (battery), 10 (side), 11,
 12 (link state), 13, 50/51/53/54, 60/61, 63/64, 83 (flash read, 200 B cap). But in the earlier
-hardware run (before this analysis - the same one behind docs/20), stuck buds answered only FOUR of those - the handlers are
+hardware run (before this analysis - the same one behind [the command channel reference](../../docs/reference/command-channel.md)), stuck buds answered only FOUR of those - the handlers are
 gated (auth flag + a 0x40 channel argument for 01/02, role/peer-state checks elsewhere).
 Recovery tooling: assume the four observed replies + C0 83 reads, nothing more. Also: the
 55AA exit step `04` is MANDATORY - skipping it after 84 leaves both buds in the updater
@@ -151,7 +151,7 @@ Flash class is data, not code.
 - +test= command set is complete at 8 commands: recover, version, shutdown, encen, encdis,
   getaddr, pair_, vbusp:.
 - Model-name table in the C0 03 handler: H2S Ultra, H2S Turbo, H3sProMax, H3Pro2, H3Pro3,
-  377Super PRO3, Super2026+ (docs/18's table missed H3Pro2/H3Pro3).
+  377Super PRO3, Super2026+ (the [command channel](../../docs/research/command-channel.md) table missed H3Pro2/H3Pro3).
 
 ## Still open (for the next pass)
 
