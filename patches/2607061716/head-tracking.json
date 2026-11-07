@@ -2,7 +2,7 @@
   "name": "Faster head tracking",
   "firmware": 2607061716,
   "partition": "FIRM",
-  "about": "Stock FIRM sends a head pose every 40 ms, only steps the orientation filter on every 4th IMU sample (240 Hz / 4 = 60 Hz) and smooths the result with alpha 0.1. These knobs are the literals behind that. See docs/18-firm-walkthrough.md, Head tracking pipeline.",
+  "about": "Stock FIRM sends a head pose every 40 ms, only steps the orientation filter on every 4th IMU sample (240 Hz / 4 = 60 Hz) and smooths the result with alpha 0.1. These knobs are the literals behind that. See docs/research/command-channel.md, Head tracking pipeline.",
   "ops": [],
   "settings": [
     {"name": "tx_ms", "offset": "0xa7550", "type": "u8", "stock": 40, "default": 20, "min": 10, "max": 100,

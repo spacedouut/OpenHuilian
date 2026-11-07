@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """First-steps rehost of the H3Pro Max3 FIRM in Unicorn. Offline only; never touches a bud.
 
-Memory map is from docs/17. The mask ROM is NOT available, so every ROM address is filled with a
+Memory map is from docs/research/memory-map-and-boot.md. The mask ROM is NOT available, so every ROM address is filled with a
 Thumb `bx lr` and a code hook logs each call; the few ROM routines whose job is known
 (memcpy/memset/memcmp/malloc/free/flash read) are emulated. Anything outside RAM/flash/ROM is
 treated as a peripheral: pages are mapped on first touch and every register access is recorded.

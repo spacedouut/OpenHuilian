@@ -1,4 +1,4 @@
-# 07 · TONE partition — voice prompts & sound effects
+# TONE: voice prompts
 
 The easiest thing in the image to change, and the one that needs no code reverse-engineering.
 All of it was checked by extracting and doing a full replace/repack round-trip on
@@ -12,7 +12,7 @@ TONE partition
   0x400 ..         raw audio files, concatenated in directory order, no padding
 ```
 
-Extension in the name is cosmetic — several `.mp3` entries are actually RIFF/WAV
+Extension in the name is cosmetic, several `.mp3` entries are actually RIFF/WAV
 (the decoder sniffs content).
 
 ## Contents of h2sturbo 2506281656 (17 files, 83,143 B, packed to the byte)
@@ -37,8 +37,8 @@ Extension in the name is cosmetic — several `.mp3` entries are actually RIFF/W
 | `key.wav` | 2,772 | WAV PCM16 mono 48 kHz | key click |
 | `slip_min.wav` | 9,840 | WAV PCM16 mono 48 kHz | volume-slide min click |
 
-All 17 are in [`data/tones-h2sturbo/`](../data/tones-h2sturbo/). Across the catalog there are 10
-distinct TONE blobs — packs are shared between product families.
+All 17 are in [`data/tones-h2sturbo/`](../../data/tones-h2sturbo/). Across the catalog there are 10
+distinct TONE blobs, packs are shared between product families.
 
 ## The tool
 
@@ -58,16 +58,21 @@ untouched prompts byte-identical; only 4 bytes changed outside the TONE payload 
 
 1. **Match the original encoding**: MP3 mono at 16 kHz/24 kbps (or 48 kHz/56 kbps) or WAV PCM16
    mono 48 kHz. The on-device decoder's exact capabilities are untested, so stick to formats
-   that already ship.
+   that already ship. What has worked on H3Pro buds is matching each slot's stock sample rate and
+   bitrate, mono, with leading and trailing silence trimmed and no ID3 or Xing header.
 2. **Fit the partition**: stock TONE is exactly full; there is ~2.8 KB of slack before EQ2P
    (`0xBC000 + 0x144C7` vs EQ2P at `0xD1000`… check per image). To grow it, move TONE into the
-   ~1 MB of zero padding after EQ2P by rewriting its index `flash_addr`/`length` — the transport
+   ~1 MB of zero padding after EQ2P by rewriting its index `flash_addr`/`length`, the transport
    writes to whatever addresses the index says, so this is feasible but untested on hardware.
 3. Directory has 0x400 bytes for names+sizes (~1 KB), plenty for ~17–40 entries.
-4. Keep filenames identical — FIRM looks prompts up by name (the strings appear in FIRM).
+4. Keep filenames identical, FIRM looks prompts up by name (the strings appear in FIRM).
 
 ## On the H3Pro
 
 The round-trip above was on an SL6801 H2S Turbo image. The live H3Pro image
-([16](16-live-flash-dump.md)) uses the same TONE format: `tools/tone_tool.py` lists its 18 prompts
-and its CRC verifies. A replaced prompt hasn't been played on the buds yet.
+([device](device.md)) uses the same TONE format: `tools/tone_tool.py` lists its 18 prompts
+and its CRC verifies. An image with six replaced prompts (connected, disconnected and the ANC /
+transparency / adaptive ones), built with `tone_tool.py replace`, has been flashed to real buds
+with `tools/hl ota` ([command channel](command-channel.md)). The H3Pro TONE is packed to its declared 84,903 B and
+`tone_tool.py replace` won't go past that, so the new set has to fit in the same total. `low_power`
+is 8 kHz PCM in an `.mp3`-named slot.

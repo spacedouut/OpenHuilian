@@ -1,9 +1,8 @@
-# 11 · ANC and transparency ("talk-through")
+# ANC and transparency
 
 Can transparency be made better, and is that a data edit or a code patch? It's a code patch, or
 live gain tweaking. The filters ship compiled into FIRM, and the container's dedicated ANC data
-pages are empty in every image we have. Details below; narrative
-version in [`data/reports/aap-transparency-analysis.html`](../data/reports/aap-transparency-analysis.html).
+pages are empty in every image in the repo. A longer write-up with plots is in [`data/reports/aap-transparency-analysis.html`](../../data/reports/aap-transparency-analysis.html).
 
 ## Live tuning interface in FIRM
 
@@ -52,7 +51,7 @@ the same way as `+NTC=` is unchecked.
 ## The data pages that *could* hold filters are never shipped
 
 The app's `Eq2ItemType` (archived in
-[`reference/starfun-app/2.0.7.016/uparser/model/eq/Eq2ItemType.java`](../reference/starfun-app/2.0.7.016/uparser/model/eq/Eq2ItemType.java))
+[`reference/starfun-app/2.0.7.016/uparser/model/eq/Eq2ItemType.java`](../../reference/starfun-app/2.0.7.016/uparser/model/eq/Eq2ItemType.java))
 reserves seven page IDs:
 
 ```
@@ -63,7 +62,7 @@ reserves seven page IDs:
 
 Every `EQ2P`, `SENC` and `SEN2` in all 24 catalog images was parsed and page IDs counted:
 **pages 51–57 appear zero times.** What ships is pages 21–32 (call-mic ENC) in SENC/SEN2 and
-pages 0–5 / 0–13 (EQ) in EQ2P ([08](08-eq2p-senc.md)).
+pages 0–5 / 0–13 (EQ) in EQ2P ([EQ2P](../reference/eq2p-senc.md)).
 
 ## The app can *compute* ANC filters
 
@@ -77,7 +76,7 @@ native int ancGetFfRefCurve(AncCalRespParam, CurveAncReference);                
 
 with models `AncCalRespParam` (frequency list, amplitude/phase response, delay), `CurveAncReference`,
 `CurveAncAssist`, `EqCoeffAnc` (objective gain, minimum phase, biquad coefficients). So the
-vendor's *calibration* tooling produces ANC filters from measured responses — i.e. the pipeline to
+vendor's *calibration* tooling produces ANC filters from measured responses, i.e. the pipeline to
 generate pages 51–57 exists, it's just not how these consumer images were built (filters were
 baked into FIRM). No UI in StarFun calls these.
 
@@ -87,14 +86,14 @@ h2sturbo EQ2P carries its five pages **twice**. StarFun's EQ store has scheme ty
 `TYPE_EQ=1, TYPE_ANC=2, TYPE_ENC=3, TYPE_ANC_2=4` and an `isAnc` flag → the second profile is
 the output EQ used in ANC/transparency mode. It is an editable float table in a CRC-only partition.
 Which profile binds to transparency vs. ANC-on is still unknown. The H3Pro Max3 doesn't use this
-layout: its EQ2P has 7 profiles (`SLEQ 02 07`, see [16](16-live-flash-dump.md)).
+layout: its EQ2P has 7 profiles (`SLEQ 02 07`, see [device](../reference/device.md)).
 
 ## Summary
 
 | Want to change | Kind of change |
 |---|---|
-| Prompts / SFX | data (TONE) — proven |
-| Music EQ, ANC-mode EQ | data (EQ2P) — proven repack |
-| Call-mic noise reduction params | data (SENC) — structure known, meaning partly |
-| ANC / transparency gains | `+NTC=` over HFP — wired end to end, has read-back and NV persistence |
-| ANC / transparency **filters** | **code** in FIRM, or populate pages 51–57 *if* FIRM honours them (unknown) |
+| Prompts / SFX | data (TONE), proven |
+| Music EQ, ANC-mode EQ | data (EQ2P), proven repack |
+| Call-mic noise reduction params | data (SENC), structure known, meaning partly |
+| ANC / transparency gains | `+NTC=` over HFP, wired end to end, with read-back and NV persistence |
+| ANC / transparency **filters** | **code** in FIRM. The H3Pro FIRM never reads pages 51–57 ([research](../research/README.md)) |

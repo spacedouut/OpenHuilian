@@ -140,7 +140,7 @@ export function parseIndex(body, io = indexOffset(body)) {
   return { version, entries };
 }
 
-// OTAP (docs/17) erases 0x4000..0x3000+total on 82, writes 83 frames at any
+// OTAP (docs/research/updater-otap.md) erases 0x4000..0x3000+total on 82, writes 83 frames at any
 // address, and CRCs flash[0x3000:0x3000+total]; its OTAP/PSMP records are
 // pinned. Port of upfmt.ota_image_problems: reasons not to stream an image.
 export const OTA_INDEX_ADDR = 0x3000, OTA_FIRM_ADDR = 0x4000, OTA_INDEX_MAX = 0x80;

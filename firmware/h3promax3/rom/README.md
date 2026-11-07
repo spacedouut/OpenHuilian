@@ -2,7 +2,7 @@
 
 `mask_rom_0x00000-0x5ffff.bin`: the H3Pro mask ROM, raw from address `0x0`, 393,216 bytes
 (`0x60000`). It was read off the owner's buds with the `rom-read` patch
-([docs/22](../../../docs/22-rom-dump.md)) applied to the image flashed on 2026-10-31, in three
+([ROM read](../../../docs/research/rom-read.md)) applied to the image flashed on 2026-10-31, in three
 128 KiB reads. The parts were recovered from quasar `~/romread` and archived on the NAS under
 `private/projects/openhuilian/romread-recovered/` (`rom.bin`, `rom2.bin`, `rom3.bin`).
 
@@ -18,8 +18,8 @@ Sanity checks:
 
 * The vector table has initial SP `0x00806000` and reset `0x41`. The reset handler at `0x40`
   clears the registers.
-* The ROM entry points FIRM calls ([17](../../../docs/17-firmware-internals.md),
-  [21](../../../docs/21-night-shift.md)) disassemble as real Thumb functions:
+* The ROM entry points FIRM calls ([mask ROM](../../../docs/research/mask-rom.md),
+  [addresses](../../../docs/research/addresses.md)) disassemble as real Thumb functions:
   `0x8ca4` scheduler start, `0xb4f4` SVC context restore (`ldm r0!, {r4-r11, lr}`), `0xb5a8`,
   `0x11044` malloc, `0xb6c4` and `0xb6d8` critical sections.
 * The three parts are all different, so the ROM doesn't alias at 128 KiB. Code runs to about

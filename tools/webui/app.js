@@ -26,7 +26,7 @@ if (!("serial" in navigator)) {
 let L = null;
 const needLink = () => { if (!L) throw new Error("not connected"); };
 
-// --- SETTINGS: name -> {read, write, desc} (from docs/18 command table) ------
+// --- SETTINGS: name -> {read, write, desc} (from docs/reference/command-channel.md) ------
 const SETTINGS = {
   anc_mode: { r: 0x59, w: 0x69, desc: "0 off · 1 ANC · 2 transparency · 5 adaptive", num: [0, 1, 2, 5] },
   ear_detect: { r: 0x55, w: 0x65, desc: "0/1" },
