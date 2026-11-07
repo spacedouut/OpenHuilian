@@ -34,6 +34,17 @@ See the [OTA protocol](../reference/ota-protocol.md) for frame encoding and [com
 
 The guard is CRC16. It detects a change only after writes have happened.
 
+Unicorn emulation of the `82` handler (`0x80E4C0`, erase helper hooked) pins down the erase span.
+
+| Declared total | Erased |
+|---|---|
+| `0xCF000` | exactly `0x4000..0xD2000` |
+| `0x1CF000` | exactly `0x4000..0x1D2000` |
+| not a 4 KiB multiple | rounds up past `0x3000 + total` |
+| below `0xD000` | `total - 0xD000` underflows and every 64 KiB block in the address space is erased, the whole chip |
+
+`upfmt.py`, `flashota.py` and the WebUI refuse an image whose OTAP isn't 4 KiB-aligned at `>= 0x10000` for that reason.
+
 ## Data, CRC and index handling
 
 `83` accepts the absolute address in the frame without a bounds check. It can address flash below `0x3000`. The guard CRC does not prevent such writes.

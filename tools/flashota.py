@@ -115,6 +115,9 @@ def plan(image, stock, side=0x11):
         if parts[tag] != sparts[tag]:
             fail.append(f"{tag.decode()} index entry differs from stock")
     otap, otap_len, _ = parts[b"OTAP"]
+    if otap < 0x10000 or otap & 0xFFF:
+        fail.append(f"OTAP at 0x{otap:x}; 82's erase only stops short of it for a 4 KiB-aligned "
+                    "OTAP at >= 0x10000 (lower wraps and erases the whole chip)")
     if len(body) < otap + otap_len or sbody[otap:otap + otap_len] != body[otap:otap + otap_len]:
         fail.append("OTAP bytes differ from stock (or are missing)")
 
