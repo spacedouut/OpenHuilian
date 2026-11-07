@@ -46,7 +46,7 @@ def wrap(x, y, s, font, width, fill=INK, lh=4):
 
 
 text(M, 24, "Huilian H3Pro Max3 (377H3) - flash & address-space map", f_t)
-text(M, 66, "live image 2607061716 · addresses from the partition index + Ghidra analysis (docs/17-21)", f_r, "#666")
+text(M, 66, "live image 2607061716 · addresses from the partition index + Ghidra analysis (docs/research: memory-map-and-boot, updater-otap, firm-runtime, command-channel, images-and-variants)", f_r, "#666")
 
 # ============ COLUMN 1: FLASH ============
 FX, FY, FW, FH = M + 58, 130, 300, 1560
@@ -234,7 +234,7 @@ for head, note in [
     wrap(BX + 10, by + 20, note, f_ms, BW - 20, "#555")
     by += 50
 
-text(M, H - 28, "Biscut · 2026-10-29 · static analysis of files, nothing written to hardware · numbers: docs/16-21 + ~/tmp/oh-dump", f_ms, "#999")
+text(M, H - 28, "Biscut · 2026-10-29 · static analysis of files, nothing written to hardware · numbers: docs/how-to/dump-firmware.md + docs/research + ~/tmp/oh-dump", f_ms, "#999")
 
 import sys as _sys
 img.save(_sys.argv[1] if len(_sys.argv) > 1 else "/home/ubuntu/tmp/oh-flash-map.png")
