@@ -5,7 +5,8 @@ Both are plain little-endian float tables in CRC-only partitions. Raw copies fro
 
 ## EQ2P (magic `SLEQ`)
 
-Records of 8 bytes starting at offset 26:
+Bytes 4/5 are the version and page count, the u16 at offset 8 is the header size (50 in
+h2sturbo, 28 in H3Pro), and 8-byte records start right after it:
 
 ```
 [u8 kind][u8 param][u16 band][f32 value]
