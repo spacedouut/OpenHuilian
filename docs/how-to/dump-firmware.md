@@ -14,8 +14,8 @@ python3 tools/build_up.py flash.bin my-buds.up
 python3 tools/tone_tool.py verify my-buds.up
 ```
 
-* `read` takes a start address, a length and an output file. The buds answer with at most 200
-  bytes per request, and `--chunk` can only make that smaller.
+* `read` takes a start address, a length and an output file. It reads 100 bytes per request by
+  default; `--chunk N` accepts 1..200 (the buds answer with at most 200 bytes per request).
 * `build_up.py` checks every partition CRC and refuses to write the `.up` if one is wrong. A wrong
   CRC almost always means a bad read, so read again.
 * To read just the partition index, use `read 0x3000 200 index.bin`.

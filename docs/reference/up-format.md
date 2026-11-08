@@ -77,9 +77,9 @@ outer: body length 2,075,984, container CRC 0x7B79, chip "SL6801"
 | `FIRM` | Main application + DSP image, ARM **Thumb-2** | 0.7–0.75 MB | 0x30-byte wrapper then a load descriptor; entry `0x00804C41` (Thumb bit set); image base ≈ `0x7FFE14` for h2sturbo. 24/24 unique. Contains the Bluetooth stack, AAP server, ANC code, NV key names, and a software AES used for Continuity adverts, not for image checks ([integrity](../explanation/how-updates-are-accepted.md), [research](../research/README.md)). |
 | `SENC` | Sensor / call-mic parameter table | 2,056 B constant | `[u16 group][u16 idx][f32]` records; pages 21–32 ([EQ2P](eq2p-senc.md)) |
 | `SEN2` | Second sensor table | - | only h2slim, h2spro |
-| `TONE` | Voice prompts + UI clicks archive | 83–94 KB | `[u32 size][name\0]…` directory, then raw MP3/WAV ([TONE](tone.md)) |
-| `EQ2P` | EQ profiles, magic `SLEQ` | ~1.5 KB | plain float table ([EQ2P](eq2p-senc.md)) |
-| `OTAP` | OTA updater stub | **exactly 167,248 B in all 24 images** | 23 distinct blobs despite fixed size; in h2sturbo only the first 4 KB changed between builds. No crypto strings found. |
+| `TONE` | Voice prompts + UI clicks archive | 33–104 KB (H3Pro 85 KB) | `[u32 size][name\0]…` directory, then raw MP3/WAV ([TONE](tone.md)) |
+| `EQ2P` | EQ profiles, magic `SLEQ` | 0.6–1.6 KB (H3Pro 4.1 KB) | plain float table ([EQ2P](eq2p-senc.md)) |
+| `OTAP` | OTA updater stub | **167,248 B in 22 of 24 images** (166,816 B in `fit30_2209242029` and `fit50_2210141125`) | 23 distinct blobs despite fixed size; in h2sturbo only the first 4 KB changed between builds. No crypto strings found. |
 | `PSMP` | Persistent settings (NV key/value store) | 16 KB at end of flash | declared with crc 0 and address beyond EOF, **not shipped in OTAs** so user settings survive. Present in raw dumps. Editable with the vendor's `psm-nvds.dll` or offline with `tools/psmp_tool.py` ([PSMP](psmp.md)). |
 
 ## Flash classes
@@ -128,10 +128,10 @@ vendor flasher:
 
 ### Across the catalog
 
-* Partition CRCs: **match in 24/24 images** (5 or 6 partitions each).
-* Container CRC: **match in 23/24**. The exception, `a10_2311090955_RYEQ.up`, has correct
-  partition CRCs and a stale outer CRC, looks like a reseller EQ re-tune that fixed the inner
-  checksum but not the outer one, and StarFun still serves it as `types: all`. The buds never
+* Partition CRCs: **match in 23/24 images** (5 or 6 partitions each); `a10_2311090955_RYEQ.up`'s FIRM
+  CRC is stale (stored `0xE63A`, computed `0xD620`).
+* Container CRC: **match in 23/24**. The exception, `a10_2311090955_RYEQ.up`, has a stale
+  outer CRC (stored `0xEC7F`, computed `0x4A69`) as well as the stale FIRM CRC above, and StarFun still serves it as `types: all`. The buds never
   see the container header. The app strips it and the `82` CRC is computed from the bytes it
   sends ([updater](../research/updater-otap.md)), so the outer CRC only matters for the vendor flasher
   and the tools here.
