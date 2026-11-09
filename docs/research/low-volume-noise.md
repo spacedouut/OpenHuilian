@@ -80,6 +80,52 @@ The ramp reads its sample width from its own struct (`+0xD`), so the music multi
 int32 branch. At 5 % volume that is still 114 dB SNR on a -40 dBFS passage. Other stream types
 use the per-stream ramp at obj `+0x54`, which is initialised with the mixer format too.
 
+### Decoder output width: int16, widened losslessly before the volume multiply
+
+The trace above starts at the stream. This follows the samples from the SBC decoder into it.
+[`tools/emu/a2dp_path.py`](../../tools/emu/a2dp_path.py) runs the converter, mixer and master
+ramp below in Unicorn (ROM plus `firm.elf`).
+
+1. **The SBC decoder emits int16.** The ROM synthesis filter (around `0x1A0F4`) does
+   `(acc + 0x800) >> 12`, clamps to -32768..32767, `sxth` and `strh`. The A2DP context
+   (`FUN_00c60600`) sets bytes/sample at ctx `+0x180` to **2**. Only codec type `0x0B` (a
+   decoder registered through a plugin table, `FUN_00c6091c`) switches it to 4. That path also
+   decodes int16 and widens in place with ROM `0x13B4` (`FUN_00c60e0c`/`FUN_00c60e70`). SBC
+   (`FUN_00c75880` frame parser) keeps 2.
+2. **The stream is opened as int16.** `FUN_00c60b88` puts ctx `+0x180` into the format record it
+   passes to `FUN_00c66b4c` (byte `+0x15`, type 2 at `+0xE`).
+3. **The mixer converts to int32 before it sums.** `FUN_00c6df08` reads the mixer format (1 ch,
+   4 bytes, 48 kHz) and picks a converter from `FUN_00c70784`, keyed
+   `dst_bps<<24 | dst_ch<<16 | src_bps<<8 | src_ch`. For stereo SBC that is `0x04010202` = ROM
+   `0x128A`: `out = (L << 15) + (R << 15)`. For mono it is `0x04010201` = ROM `0x13B4`:
+   `out = x << 16`. Both are exact; no bits are lost. 44.1 kHz streams are then resampled to
+   48 kHz in the int32 domain (`FUN_00c6ff84`). The resampler is not emulated.
+4. **The volume multiply runs on that int32.** The mixer task sums sources with the int32
+   `qadd` loop (`0x8124D0`), then calls `FUN_00812084(mixer + 0x68, buf, 64)`, the master ramp
+   whose target the A2DP volume message sets. Its bytes/sample is 4, so it takes the int32 branch
+   (`0x811E9A` while ramping, `0x812754` once snapped). This is the RAM-resident FIRM copy of the
+   ROM ramp, with the same truncating `vcvt.s32.f32`.
+
+Result: int16 decoder precision, and a 32-bit volume multiply. The volume stage keeps the 16
+extra low bits the shift created, so it does not cause the 16-bit graininess. `a2dp_path.py`,
+-40 dBFS 1 kHz sine fed as int16, SNR against an ideal float gain:
+
+| vol % (dB) | mixer output (int32) | same samples cut to 24 bit | cut to 16 bit |
+|---|---|---|---|
+| 50 (-15) | 134.1 dB | 85.7 dB | 37.5 dB |
+| 25 (-26) | 121.0 dB | 74.6 dB | 26.1 dB |
+| 10 (-32) | 117.5 dB | 68.7 dB | 19.7 dB |
+| 5 (-35) | 114.7 dB | 65.2 dB | 17.4 dB, 4 % of samples zeroed |
+
+**Ruled out:** the decoder width and the volume multiply. Neither loses resolution at low volume.
+**Ruled in:** whatever narrows the mixer's int32 output. The mixer writes int32 into its sink
+(`*(mixer + 8)`, `FUN_0080c7c0`, which negates and copies per the sink's own bytes/sample at
+`+0x2D`) and on into the output ring (`FUN_00811af6`, opened by `FUN_00c70c14`). If the DAC
+path later keeps only the top 16 bits, quiet audio at 5 % lands at the same ~17 dB SNR as a
+16-bit volume stage would. At 24 bits it stays clean (65 dB at 5 % on a -40 dBFS passage). So the
+DAC driver's sample width is now the firmware suspect to check next, alongside phone-side
+attenuation (flat table) and analog noise.
+
 Two more details matter for quiet audio:
 
 * **Flat table.** `FUN_00c60090` picks the all-0 dB table when the per-link query
@@ -158,7 +204,9 @@ low-volume hiss, and no patch is shipped for it.
 ## Open
 
 * Which link property `FUN_00827564(5, …, 3)` reports, i.e. when the flat table is used.
-* What sits after the 32-bit mixer: the final conversion to the DAC/amp format and its width.
-  That is the last digital stage where low-volume resolution could be lost. Past it, the analog
-  tests in the table are the next step.
+* What sits after the 32-bit mixer: the sink's bytes/sample (`+0x2D`), the output device driver
+  that `FUN_00c70c14` opens via `FUN_00ca0510`, and the width the DAC/amp actually takes. The
+  decoder and the volume multiply are ruled out (section 1, "Decoder output width"). This is the
+  last digital stage where low-volume resolution could be lost; `a2dp_path.py` shows what a 16-
+  or 24-bit cut would cost. Past it, the analog tests in the table are the next step.
 * What the voice NS would do with flag bit 0 on (real noise reduction); `voice_ns.py` can test it.
