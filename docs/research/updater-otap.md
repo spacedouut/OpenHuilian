@@ -71,6 +71,32 @@ A failed CRC restores the old index only. FIRM has already been erased and partl
 
 Hardware confirms that omitting `04` leaves the buds in OTAP across power cycles. They continue to answer a limited set of `C0` reads. A retry after a genuine CRC failure is unverified. The standard full-image erase range stops below the flag page, but a larger announced layout could reach it.
 
+## Emulated end-to-end update
+
+[`tools/emu/otap_check.py`](../../tools/emu/otap_check.py) runs the stock OTAP in Unicorn from `0x804800` and feeds it the RFCOMM bytes from `hl ota`'s one-bud routine (`cli._ota_one_bud`). The 55AA parser `FUN_00805e54`, the handler `FUN_0080e770`, the erase planner, index save/restore, OTAP/PSMP pinning, the final CRC, the guard CRC and the `04` flag clear all run unmodified. SPI erase (`FUN_0082bc40`) and page program (`FUN_0082bbd4`) act on a NOR model in which erase sets `FF` and program ANDs bits, so a write to flash that wasn't erased is caught. The ROM flash read and libc helpers are emulated. Timers, peer relay and reboot are recorded.
+
+| Scenario | Result with the `--tone-len 0x20000` image |
+|---|---|
+| Update from stock | Status `0`. Erases exactly `0x4000..0xD2000`, writes 3,313 pages and rewrites the index page. Flash below OTAP matches the image byte for byte. Boot area, OTAP and PSMP are unchanged. `04` clears the flag at `0xFB000` and reboots |
+| Rollback to stock from the updated flash | Same as the update, ending byte-identical to stock |
+| Chunk corrupted in flight, frame CRC8 valid | `84` returns status `1` and the old index is restored. FIRM is already partly rewritten. `hl` stops before `04` and the flag stays set |
+| Retry after that failure, with and without a power cycle | Succeeds, ending identical to a clean update |
+| Link drop after 200 chunks, power cycle, `hl ota` again | Old index and flag kept. The rerun succeeds |
+
+The SPI driver, the RFCOMM stack, the low-battery refusal and the linked-master `04` path are not emulated. The emulated retry after a genuine CRC failure has not been confirmed on hardware.
+
+## FIRM's own flash writes
+
+FIRM has one flash-write routine, `FUN_008286a0`, and one sector-erase routine, `FUN_008287b0`. A Ghidra caller scan finds these callers.
+
+| Caller | Writes to |
+|---|---|
+| `FUN_00c6ad1c` | The OTA flag page, located from the OTAP record |
+| `FUN_00c6f760` / `FUN_00c6f7bc` / `FUN_00c6ea04`, erase `FUN_00c6f8f8` | The settings store, set up by `FUN_00c6e7a0` from the `PSMP` lookup |
+| `FUN_00c542d0`, commands `C0 A3` / `C0 A4` | Host-supplied absolute addresses. `A3` writes up to 32 bytes through ROM `0x84A8` at an address above `0x3000`. `A4` erases a sector |
+
+FIRM never writes EQ2P on its own. Its only EQ2P access is the read in `FUN_00c690e8`, which resolves through the index. `repart_check.py` hooks both routines during boot. Neither is called for stock, the `0x20000` image or the shuffled layout, and any call outside PSMP fails the check. Repartitioning moves none of these targets. A host using `C0 A3`/`A4` with stock EQ2P or TONE addresses would hit other partitions, but nothing in this repo sends them. StarFun's `CMDConfig` defines `CMD_A3`/`CMD_A4`; whether the app uses them is unknown.
+
 ## What is checked
 
 | Item | Behavior |

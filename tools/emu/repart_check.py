@@ -17,6 +17,9 @@ partition lands at a new address. For each image this:
      prompt number) and FUN_00c6fa38 (number -> flash address, length), and checks them against
      tone_tool's directory and the prompt bytes.
 
+  4. records every call to FIRM's flash write (FUN_008286a0) and erase (FUN_008287b0) during boot;
+     each must land in PSMP, the only partition FIRM writes on its own (see docs/research/updater-otap.md).
+
 An access outside every partition, or at a stock address in a moved image, fails the check.
 """
 import argparse
@@ -34,6 +37,7 @@ from tone_tool import TONE_DATA_START, read_dir
 from upfmt import BODY, MAGIC, crc16, index_offset, ota_image_problems, parse_index
 
 LOOKUP, TONE_FIND, TONE_LOCATE = 0x805444, 0xC6F9B8, 0xC6FA38
+FLASH_WRITE, FLASH_ERASE = 0x8286A0, 0x8287B0
 MOVABLE = [b"SENC", b"TONE", b"EQ2P"]
 SENT, STACK, SCRATCH = 0x7F000, 0x8F8000, 0x8FC000
 
@@ -80,6 +84,10 @@ class Probe(Emu):
         self.hi = p[b"OTAP"][0]
         self.accesses, self.lookups, self.pending = [], [], None
         self.uc.hook_add(UC_HOOK_CODE, self.on_lookup, begin=LOOKUP, end=LOOKUP)
+        self.writes = []
+        for fn, kind, reg in ((FLASH_WRITE, "write", UC_ARM_REG_R1), (FLASH_ERASE, "erase", UC_ARM_REG_R0)):
+            self.uc.hook_add(UC_HOOK_CODE, lambda uc, a, s, _, k=kind, r=reg: self.writes.append((k, self.r(r) & 0xFFFFFF)),
+                             begin=fn, end=fn)
         self.uc.hook_add(UC_HOOK_BLOCK, self.on_ret)
         self.uc.hook_add(UC_HOOK_MEM_READ, self.on_xip, begin=FLASH + self.lo, end=FLASH + self.hi - 1)
 
@@ -184,6 +192,9 @@ def main():
         ntone, terrs = tone_check(e, flash)
         errs = [f"access outside any partition: {k} {off:#x}+{n}" for k, t, off, n, _ in seq if t is None]
         errs += terrs
+        p = parts_of(flash)
+        psmp = (p[b"PSMP"][0], p[b"PSMP"][0] + p[b"PSMP"][1])
+        errs += [f"FIRM flash {k} at {x:#x} outside PSMP" for k, x in e.writes if not psmp[0] <= x < psmp[1]]
         if e.fault:
             errs.append(f"CPU fault during boot: {e.fault}")
         if ref is None:
@@ -207,6 +218,7 @@ def main():
         print(f"{'FAIL' if errs else 'ok  '}  {name}\n      {layout}")
         print(f"      boot: {blocks:,} blocks, {len(seq)} flash accesses in span, lookups "
               + ", ".join(f"{t}->{r[0]}+{r[1]:#x} len {n:#x}" for t, r, n in looks))
+        print(f"      FIRM flash writes/erases during boot: {len(e.writes)} (all must be in PSMP)")
         print(f"      TONE readers: {ntone - len(terrs)}/{ntone} prompts resolved to the right bytes")
         for m in errs:
             print("      !", m)
