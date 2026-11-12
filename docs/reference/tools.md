@@ -19,5 +19,9 @@ full table with every option is in [`tools/README.md`](../../tools/README.md).
 | `sdp_hid.py` | no | decode the SDP records and Apple HID descriptors in FIRM | [AirPods emulation](../explanation/airpods-emulation.md) |
 | `h3pro_elf.py` | no | wrap FIRM, OTAP and the bootloader as ELFs for Ghidra | [research](../research/README.md) |
 | `emu/h3emu.py` | no | Unicorn rehost of FIRM with stubbed mask ROM: boot to the scheduler, or `--call` one function (needs `unicorn`, `capstone`) | [ROM read](../research/rom-read.md), [research](../research/README.md) |
+| `repartition.py` | no | move SENC, TONE and EQ2P, grow TONE or FIRM, rewrite the index and CRCs | [memory map](../research/memory-map-and-boot.md#flash-layout) |
+| `emu/repart_check.py` | no | check in Unicorn that FIRM follows a moved layout | [memory map](../research/memory-map-and-boot.md#flash-layout) |
+| `cave/build.py` | no | build the debug monitor into its patch file (needs `ziglang`, `pyelftools`) | [debug monitor](../research/debug-monitor.md) |
+| `emu/monitor_check.py` | no | run the debug monitor through the real C0 handler in Unicorn | [debug monitor](../research/debug-monitor.md) |
 | `flashmap.py` | no | draw `docs/flash-map.png` from a `.up` (needs PIL) | |
 | `upfmt.py` | no | shared CRC16 and index helpers, not a CLI | |

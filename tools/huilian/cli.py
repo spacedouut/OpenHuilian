@@ -22,6 +22,7 @@ Subcommands:
   cmd    - send a raw frame, hex in / hex out
   tone   - list/extract/replace prompt sounds in a .up (wraps tone_tool.py)
   patch  - apply cfw patch files to a .up (wraps cfw.py)
+  mon    - debug monitor (needs the debug-monitor patch): info, peek, poke, call, log
 """
 import argparse
 import struct
@@ -422,6 +423,83 @@ def cmd_tone(_ser, a):
     os.execvp("python3", args)
 
 
+MON_STATUS = {1: "bad request", 2: "locked (run the C0 01/02 handshake)", 3: "unknown command"}
+
+
+def _mon(ser, cmd, payload=b""):
+    r = link.c0(ser, cmd, payload)
+    p = _payload(r)
+    if not p:
+        sys.exit(f"C0 {cmd:02X}: no reply - is the debug-monitor patch flashed? (`hl mon info`)")
+    if p[0]:
+        sys.exit(f"C0 {cmd:02X}: {MON_STATUS.get(p[0], f'status {p[0]}')}")
+    return p[1:]
+
+
+def _mon_peek(ser, addr, n):
+    out = bytearray()
+    while len(out) < n:
+        k = min(200, n - len(out))
+        out += _mon(ser, 0xD1, struct.pack("<IB", addr + len(out), k))[4:]
+    return bytes(out)
+
+
+def cmd_mon(ser, a):
+    num = lambda s: int(s, 0)
+    if a.action == "info":
+        d = _mon(ser, 0xD0)
+        ram, ram_len, log, log_size, head, cave = struct.unpack_from("<6I", d, 6)
+        print(f"monitor {d[:4].decode(errors='replace')} v{d[4]}  handshake {'done' if d[5] == 1 else 'not done'}")
+        print(f"  code 0x{cave:x}  state 0x{ram:x}+0x{ram_len:x}  log 0x{log:x} ({log_size} B, {head} written)")
+    elif a.action == "peek":
+        addr, n = num(a.args[0]), num(a.args[1]) if len(a.args) > 1 else 4
+        data = _mon_peek(ser, addr, n)
+        if a.out:
+            open(a.out, "wb").write(data)
+            print(f"wrote {len(data)} bytes to {a.out}")
+        elif n in (1, 2, 4):
+            print(f"0x{addr:08x}: 0x{int.from_bytes(data, 'little'):0{2 * n}x}")
+        else:
+            for i in range(0, len(data), 16):
+                row = data[i:i + 16]
+                print(f"0x{addr + i:08x}: {row.hex(' '):<48} {''.join(chr(c) if 32 <= c < 127 else '.' for c in row)}")
+    elif a.action in ("poke", "call"):
+        cmd_auth_quiet(ser)
+        addr = num(a.args[0])
+        if a.action == "poke":
+            if a.bytes:
+                d = _mon(ser, 0xD2, struct.pack("<IB", addr, 0) + bytes.fromhex(a.args[1]))
+            else:
+                d = _mon(ser, 0xD2, struct.pack("<IBI", addr, a.width, num(a.args[1]) & 0xFFFFFFFF))
+            print(f"0x{addr:08x} <- readback {d[4:].hex()}")
+        else:
+            regs = [num(x) & 0xFFFFFFFF for x in a.args[1:5]]
+            d = _mon(ser, 0xD3, struct.pack(f"<I{len(regs)}I", addr, *regs))
+            r0, r1 = struct.unpack("<II", d)
+            print(f"call 0x{addr:x}({', '.join(hex(x) for x in regs)}) -> r0=0x{r0:x} r1=0x{r1:x}")
+    elif a.action == "log":
+        if a.clear:
+            _mon(ser, 0xD4, b"\x01")
+        if a.mark:
+            _mon(ser, 0xD4, b"\x02" + a.mark.encode())
+        magic, head, size, wraps, log = struct.unpack("<5I", _mon(ser, 0xD4, b"\x00"))
+        ring = _mon_peek(ser, log, size)
+        data = ring[head % size:] + ring[:head % size] if head > size else ring[:head]
+        print(f"log: {head} bytes written, showing last {len(data)}")
+        if a.out:
+            open(a.out, "wb").write(data)
+            print(f"wrote {a.out}")
+        else:
+            print(data.decode("latin1"))
+
+
+def cmd_auth_quiet(ser):
+    """The app's C0 01/02 handshake without the printout; FIRM sets its session flag on 02."""
+    link.c0(ser, 0x01, b"\x3d" + proto.challenge1())
+    if link.c0(ser, 0x02, b"\x3d" + proto.challenge2()) is None:
+        sys.exit("no reply to the C0 02 handshake")
+
+
 def cmd_patch(_ser, a):
     import os
     cf = os.path.join(os.path.dirname(__file__), "..", "cfw.py")
@@ -472,6 +550,18 @@ def main():
     pa.add_argument("fw"); pa.add_argument("out")
     pa.add_argument("patch_args", nargs=argparse.REMAINDER)
     pa.set_defaults(f=cmd_patch, needs_link=False)
+
+    m = sub.add_parser("mon", help="debug monitor (debug-monitor patch)",
+                       description="info | peek ADDR [LEN] | poke ADDR VALUE | poke --bytes ADDR HEX | "
+                                   "call ADDR [r0 r1 r2 r3] | log [--clear] [--mark TEXT]")
+    m.add_argument("action", choices=["info", "peek", "poke", "call", "log"])
+    m.add_argument("args", nargs="*")
+    m.add_argument("--width", type=int, choices=[1, 2, 4], default=4, help="poke store width")
+    m.add_argument("--bytes", action="store_true", help="poke: VALUE is a hex byte string")
+    m.add_argument("--out", help="peek/log: write raw bytes to this file")
+    m.add_argument("--clear", action="store_true", help="log: reset the ring first")
+    m.add_argument("--mark", help="log: append this text first")
+    m.set_defaults(f=cmd_mon)
 
     a = p.parse_args()
     ser = None
