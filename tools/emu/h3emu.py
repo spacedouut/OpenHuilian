@@ -34,7 +34,7 @@ HEAP, HEAP_END = 0x880000, 0x8F0000
 MMIO_HOOKS = [(0x480000, 0x7FFFFF), (0xD00000, 0xFFFFFFFF)]
 
 ROM_NAMES = {
-    0xB2A: "memcpy", 0xBAA: "memset", 0xC54: "memcmp", 0xC70: "malloc", 0xC74: "free",
+    0xAB2: "strcmp", 0xB2A: "memcpy", 0xBAA: "memset", 0xC54: "memcmp", 0xC70: "malloc", 0xC74: "free",
     0xB6D8: "crit_enter", 0xB6C4: "crit_exit", 0xB78C: "sleep_ms", 0x83B4: "flash_read",
     0xB534: "flash_read_wrap", 0xB514: "flash_write_wrap", 0x48268: "flash_helper",
     0x1A90: "queue_post", 0x2A7C: "timer_queue_helper", 0x4B29C: "bt_stack_helper",
@@ -105,6 +105,9 @@ class Emu:
             return None
         return b.decode("ascii") if b and all(32 <= c < 127 for c in b) else None
 
+    def cstr_raw(self, addr, n=256):
+        return bytes(self.uc.mem_read(addr, n)).split(b"\0")[0]
+
     def note(self, msg):
         self.events.append((self.count(), msg))
         if self.args.verbose:
@@ -141,6 +144,9 @@ class Emu:
             uc.mem_write(r0, bytes([r1 & 0xFF]) * r2) if r2 else None
         elif name == "memcmp" and r2 < 0x100000:
             a, b = bytes(uc.mem_read(r0, r2)), bytes(uc.mem_read(r1, r2))
+            uc.reg_write(UC_ARM_REG_R0, (a > b) - (a < b) & 0xFFFFFFFF)
+        elif name == "strcmp":
+            a, b = self.cstr_raw(r0), self.cstr_raw(r1)
             uc.reg_write(UC_ARM_REG_R0, (a > b) - (a < b) & 0xFFFFFFFF)
         elif name == "flash_read":
             off = r1 & 0xFFFFFF
