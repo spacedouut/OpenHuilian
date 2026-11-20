@@ -20,8 +20,7 @@ changes the gain of one band and fixes both CRCs (run it from the repo root):
 ```python
 # eq_gain.py <in.up> <out.up> <profile> <band> <gain_db>
 import struct, sys
-sys.path.insert(0, "tools")
-from upfmt import BODY, crc16, index_offset, parse_index
+from openhuilian.format.upfmt import BODY, crc16, index_offset, parse_index
 
 src, dst, page, band, gain = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), float(sys.argv[5])
 up = bytearray(open(src, "rb").read())
