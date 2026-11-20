@@ -41,11 +41,11 @@ Profile 1 contains the H2S Turbo factory curve byte for byte, padded to 14 bands
 
 Profiles 2 through 6 are five alternative 14-band curves, including bass-heavy, vocal and treble-cut shapes. They likely back the app's model-dependent EQ presets and `eq_preset_cur_num`. Profile 0 is a more aggressive 14-band curve with the extra compressor-like block.
 
-The complete decoded coefficients are in [eq2p_profiles.txt](../../data/partitions-h3promax3/eq2p_profiles.txt). The [EQ2P and SENC reference](../reference/eq2p-senc.md) describes the data format.
+The complete decoded coefficients are in [eq2p_profiles.txt](../../data/eq2p_profiles.txt). The [EQ2P and SENC reference](../reference/eq2p-senc.md) describes the data format.
 
 ## Reserved ANC pages
 
-The app's [Eq2ItemType.java](../../reference/starfun-app/2.0.7.016/uparser/model/eq/Eq2ItemType.java) reserves these decimal kind IDs. TT means talk-through.
+The app's Eq2ItemType.java (historical input, not distributed) reserves these decimal kind IDs. TT means talk-through.
 
 | Kind | Name |
 |---|---|
@@ -179,6 +179,6 @@ The [2607061716 head-tracking patch](../../patches/2607061716/head-tracking.json
 | `decimate` | `+0x64A1A` | 3 | Literal used by the every-fourth-entry orientation update |
 | `alpha` | `+0x64C74` | 0.1 | Smoothing constant |
 
-The [head-tracking pipeline](airpods-layer.md#head-tracking) describes the 240 Hz samples, about 60 Hz pose updates and 25 Hz reports these constants affect. Use [apply a patch](../how-to/apply-a-patch.md) and [cfw.py](../../tools/cfw.py) for version checks and CRC repair.
+The [head-tracking pipeline](airpods-layer.md#head-tracking) describes the 240 Hz samples, about 60 Hz pose updates and 25 Hz reports these constants affect. Use [apply a patch](../how-to/apply-a-patch.md) and [cfw.py](../../openhuilian/patch/cfw.py) for version checks and CRC repair.
 
-The [ANC and transparency explanation](../explanation/anc-and-transparency.md) covers the practical limits. The detailed static audio report is [aap-transparency-analysis.html](../../data/reports/aap-transparency-analysis.html).
+The [ANC and transparency explanation](../explanation/anc-and-transparency.md) covers the practical limits. The detailed static audio report is [aap-transparency-analysis.html](../../docs/research/reports/aap-transparency-analysis.html).

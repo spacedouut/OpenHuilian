@@ -1,8 +1,7 @@
 # Bluetooth OTA protocol
 
-Read from the `com.shenju.ota` SDK bundled in StarFun (archived in
-[`reference/starfun-app/2.0.7.016/ota/`](../../reference/starfun-app/2.0.7.016/ota/)), then checked
-against the OTAP code ([updater](../research/updater-otap.md)) and on real buds with `tools/hl ota`
+Read from the `com.shenju.ota` SDK bundled in StarFun (not distributed here), then checked
+against the OTAP code ([updater](../research/updater-otap.md)) and on real buds with `hl ota`
 ([command channel](command-channel.md)).
 
 ## Transport
@@ -117,7 +116,7 @@ set, `00 00 00 00` cleared.
 
 Nothing in the protocol carries a signature or key. The `55AA` frames don't need the
 command-channel challenge/response (`verificationCmd`) first. FIRM routes them separately
-([command channel](../research/command-channel.md)), and `tools/hl ota` flashes the buds without it.
+([command channel](../research/command-channel.md)), and `hl ota` flashes the buds without it.
 
 ## Practical notes for a future CFW push
 
@@ -129,7 +128,5 @@ command-channel challenge/response (`verificationCmd`) first. FIRM routes them s
 * A one-line patch exposing `SettingMoreActivity.chooseFile()` gives a local-file flasher using
   this exact transport, on the app that already knows how to talk to the buds. It still splices the
   bud's current EQ2P/TONE into your file, though.
-* [`tools/flashota.py`](../../tools/flashota.py) sends the same frames through StarFun's socket via
-  Frida, without the splice, one bud per run, with the safety checks listed in its docstring. It
-  hasn't been run against a bud yet. [`tools/hl ota`](command-channel.md) has: both buds, stock and
-  patched images, over a plain RFCOMM socket.
+* [`hl ota`](command-channel.md) sends these frames without the splice over a plain
+  RFCOMM socket. It has been run against both buds with stock and patched images.

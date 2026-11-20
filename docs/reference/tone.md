@@ -37,15 +37,15 @@ Extension in the name is cosmetic, several `.mp3` entries are actually RIFF/WAV
 | `key.wav` | 2,772 | WAV PCM16 mono 48 kHz | key click |
 | `slip_min.wav` | 9,840 | WAV PCM16 mono 48 kHz | volume-slide min click |
 
-All 17 are in [`data/tones-h2sturbo/`](../../data/tones-h2sturbo/). Across the catalog there are 10
+The extracted audio files are not distributed. Across the analyzed catalog there were 10
 distinct TONE blobs, packs are shared between product families.
 
 ## The tool
 
 ```
-python3 tools/tone_tool.py list    fw.up
-python3 tools/tone_tool.py extract fw.up outdir/
-python3 tools/tone_tool.py replace fw.up game_mode_open.mp3=my.mp3 [more=...] -o out.up
+python3 -m openhuilian.format.tone_tool list    fw.up
+python3 -m openhuilian.format.tone_tool extract fw.up outdir/
+python3 -m openhuilian.format.tone_tool replace fw.up game_mode_open.mp3=my.mp3 [more=...] -o out.up
 ```
 
 `replace` rebuilds the directory, rewrites sizes, recomputes the TONE partition CRC16 and the outer
@@ -70,9 +70,9 @@ untouched prompts byte-identical; only 4 bytes changed outside the TONE payload 
 ## On the H3Pro
 
 The round-trip above was on an SL6801 H2S Turbo image. The live H3Pro image
-([device](device.md)) uses the same TONE format: `tools/tone_tool.py` lists its 18 prompts
+([device](device.md)) uses the same TONE format: `openhuilian/format/tone_tool.py` lists its 18 prompts
 and its CRC verifies. An image with six replaced prompts (connected, disconnected and the ANC /
 transparency / adaptive ones), built with `tone_tool.py replace`, has been flashed to real buds
-with `tools/hl ota` ([command channel](command-channel.md)). The H3Pro TONE is packed to its declared 84,903 B and
+with `hl ota` ([command channel](command-channel.md)). The H3Pro TONE is packed to its declared 84,903 B and
 `tone_tool.py replace` won't go past that, so the new set has to fit in the same total. `low_power`
 is 8 kHz PCM in an `.mp3`-named slot.

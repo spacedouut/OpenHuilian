@@ -5,12 +5,12 @@ built by `tone_tool.py` or `cfw.py`.
 
 **Before you start:**
 
-* Only flash images built for the H3Pro. Never send an SL6801 image from `firmware/starfun-catalog/`.
+* Only flash images built for the H3Pro. Never send an SL6801 or another model's image.
   The buds don't check the chip, and there's no tested way back from a wrong image.
-* Run `python3 tools/tone_tool.py verify <image>` and make sure it says `ALL CRCs VALID`.
+* Run `python3 -m openhuilian.format.tone_tool verify <image>` and make sure it says `ALL CRCs VALID`.
 * Charge the buds. The firmware refuses to enter the updater on a low battery.
-* Keep a stock image around. `firmware/h3promax3/h3promax3_2607061716_live.up` is the stock 2607061716
-  build.
+* Keep your own stock image around; [dump it first](dump-firmware.md) and set
+  `OPENHUILIAN_STOCK_UP` to its path. No stock image is bundled.
 
 ## What `hl ota` checks first
 
@@ -28,7 +28,7 @@ interrupted run of the same image.
 ## Flash
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF ota custom.up
+python3 hl --port AA:BB:CC:DD:EE:FF ota custom.up
 ```
 
 What happens:

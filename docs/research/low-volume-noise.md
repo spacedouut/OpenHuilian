@@ -3,7 +3,7 @@
 Users report a crackle or white-noise hiss that shows up when the volume is low. This page
 collects what FIRM `2607061716` does to audio level, so the cause can be pinned to the
 speaker/analog side or to firmware with a few listening tests. Static analysis only (Ghidra
-on the [`h3pro_elf.py`](../../tools/h3pro_elf.py) ELF); **nothing here has been run on buds.**
+on the [`h3pro_elf.py`](../../openhuilian/format/h3pro_elf.py) ELF); **nothing here has been run on buds.**
 
 Short version: the firmware has three things that can make quiet audio sound grainy or hissy,
 plus the usual analog suspects. Emulation rules out one of them (section 2) and
@@ -48,7 +48,7 @@ mask-ROM gain ramp at `obj + 0x54`.
 
 The multiply is `vcvt.s32.f32`: **it truncates toward zero, with no rounding and no dither**.
 The ramp time constant is about 83 ms (`coef` 0.99975 at 48 kHz), and a full volume jump takes
-about 0.8 s to snap. [`tools/emu/rom_gain.py`](../../tools/emu/rom_gain.py) runs those three ROM
+about 0.8 s to snap. [`openhuilian/emu/rom_gain.py`](../../openhuilian/emu/rom_gain.py) runs those three ROM
 routines in Unicorn on the A2DP curve and compares them with an ideal float multiply. The
 "round" column is the best any undithered integer output could do:
 
@@ -83,7 +83,7 @@ use the per-stream ramp at obj `+0x54`, which is initialised with the mixer form
 ### Decoder output width: int16, widened losslessly before the volume multiply
 
 The trace above starts at the stream. This follows the samples from the SBC decoder into it.
-[`tools/emu/a2dp_path.py`](../../tools/emu/a2dp_path.py) runs the converter, mixer and master
+[`openhuilian/emu/a2dp_path.py`](../../openhuilian/emu/a2dp_path.py) runs the converter, mixer and master
 ramp below in Unicorn (ROM plus `firm.elf`).
 
 1. **The SBC decoder emits int16.** The ROM synthesis filter (around `0x1A0F4`) does
@@ -162,7 +162,7 @@ gain smoothing across bins (`FUN_00c77980`, flag bit 2); then `FUN_00c77dc4`, wh
 bin at noise level** (LCG `seed *= 6221`, `sqrt` magnitude, `sin`/`cos` phase). It also zeroes
 5.6-5.8 kHz and 6.2-6.4 kHz outright. Overlap-add back to PCM16 is `FUN_00c77f4c`.
 
-**Emulated: it does not add hiss.** [`tools/emu/voice_ns.py`](../../tools/emu/voice_ns.py) builds the
+**Emulated: it does not add hiss.** [`openhuilian/emu/voice_ns.py`](../../openhuilian/emu/voice_ns.py) builds the
 module the way `FUN_00c64860` does (16 kHz, 256-sample frames, the stock `0xC33D9C` block) and
 runs `FUN_00c78228` frame by frame in Unicorn. The mask-ROM malloc/memcpy/expf/FFT and FIRM's
 `cosf`/`sinf` wrappers are stood in for in Python, and everything else is FIRM code. The

@@ -8,7 +8,7 @@ flash tells them to boot into the updater.
 ## Fix it
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF leave-ota
+python3 hl --port AA:BB:CC:DD:EE:FF leave-ota
 ```
 
 It checks whether the bud that answers is in the updater, sends `04` only then, and checks again
@@ -16,7 +16,7 @@ after the restart. If one bud is already back in its normal firmware and the oth
 the updater, it tells you to power one off. Do that by putting the recovered bud in the case and
 closing the lid, then run `leave-ota` again.
 
-It's done when `python3 tools/hl --port AA:BB:CC:DD:EE:FF info` shows both buds linked.
+It's done when `python3 hl --port AA:BB:CC:DD:EE:FF info` shows both buds linked.
 
 ## Why it's careful
 
@@ -28,7 +28,7 @@ alone. `leave-ota` follows that rule, sending `04` by hand with `hl cmd` doesn't
 ## Check the flag yourself
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF read 0xfb000 4 flag.bin
+python3 hl --port AA:BB:CC:DD:EE:FF read 0xfb000 4 flag.bin
 xxd flag.bin
 ```
 

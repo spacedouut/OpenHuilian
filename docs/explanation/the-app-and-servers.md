@@ -1,7 +1,7 @@
 # The StarFun app and its servers
 
 StarFun is the generic control app for Huilian TWS products. Two builds were decompiled with
-JADX; the parts that matter are archived in [`reference/starfun-app/`](../../reference/starfun-app/).
+JADX; the decompiled code is not distributed here.
 
 ## Versions
 
@@ -19,14 +19,14 @@ The app self-update endpoint pushes .017 as "suggested". Stay on .016 for these 
 | `https://ota.starfun.fun` | Firmware/APK catalog. `POST /api/v1/authentication/user` → JWT; `GET /api/v1/_/appversions` (list, 30 records); `GET /api/v1/_/appversions/update?package=&version=&deviceid=` (per-device check) | Tenant login baked into the APK (`OtaPresenter.getUserToken`). Tenant name `yiguo` appears in every download URL path. |
 | `https://api.starfun.fun` | Main app API (accounts etc.) | user JWT |
 | `https://info-api.starfun.fun` | New in .017: `/api/client/query?id=`, unused, returns empty for everything | none |
-| `https://ota.shenjugroup.com` | Shenju OTA v2. Public Swagger at `/v2/api-docs` (saved as [`data/catalog/shenju_api.json`](../../data/catalog/shenju_api.json)). Endpoints: `release/auth`, `release/last`, `release/report`. No list endpoint; keyed by `firmware_id`. The IDs hardcoded in the app belong to a smartwatch (`w10_watch_2.0.4.up`). | app_id/app_secret from APK, no user login |
+| `https://ota.shenjugroup.com` | Shenju OTA v2. Public Swagger at `/v2/api-docs` (saved as historical input (not distributed)). Endpoints: `release/auth`, `release/last`, `release/report`. No list endpoint; keyed by `firmware_id`. The IDs hardcoded in the app belong to a smartwatch (`w10_watch_2.0.4.up`). | app_id/app_secret from APK, no user login |
 
 Download URLs look like
 `https://ota.starfun.fun/api/data/update/yiguo/<package>/up/<file>.up` and need the JWT (the catalog
-returns `http://`; `tools/pull_ota.py` upgrades it to `https://` before sending the token).
+returns `http://`; `openhuilian/device/pull_ota.py` upgrades it to `https://` before sending the token).
 Directory listing on the CDN is 403; guessing `h3promax3` paths gives 404.
 
-> The tenant username/password are **not** in this repo. `tools/pull_ota.py` reads
+> The tenant username/password are **not** in this repo. `openhuilian/device/pull_ota.py` reads
 > `STARFUN_USER` / `STARFUN_PASS` from the environment. They can be recovered from the APK
 > (`OtaPresenter.getUserToken`) if needed.
 
@@ -47,7 +47,7 @@ private void chooseFile() {
 // and hands it to BtOtaHelper, the same transport used for server OTAs.
 ```
 
-See `reference/starfun-app/2.0.7.017/SettingMoreActivity.java` around lines 613–651.
+The source examined was `SettingMoreActivity.java` in version 2.0.7.017, around lines 613–651.
 So the H3Pro `.up` rebuilt from the live dump ([device](../reference/device.md)) could be pushed with the app's own transport by a one-line patch
 that exposes `chooseFile()`, with no server involved. That's read from the code; nobody has tried it.
 
@@ -56,8 +56,8 @@ that exposes `chooseFile()`, with no server involved. That's read from the code;
 `CMDConfig.java` has `encryptData` / `verificationCmd`: a challenge/response, implemented in a
 native `.so`, that unlocks the `C0` command channel. It is **not** a check on the firmware image.
 The native code is the same 16-bit LFSR scrambler FIRM uses, so it's obfuscation, not a keyed
-cipher, and `tools/huilian/proto.py` reproduces it ([command channel](../research/command-channel.md),
-[research](../research/README.md)). OTA frames skip it. `tools/hl ota` flashes the buds without running the
+cipher, and `openhuilian/device/proto.py` reproduces it ([command channel](../research/command-channel.md),
+[research](../research/README.md)). OTA frames skip it. `hl ota` flashes the buds without running the
 handshake at all.
 
 ## Interesting command IDs seen
@@ -87,8 +87,8 @@ The firmware side of the whole `C0` set, about sixty commands, is tabled in
 
 The public catalog on `ota.starfun.fun` (tenant `yiguo`) has 30 records: 24 firmware images
 across 16 product packages, plus APK self-update entries. Every image was downloaded,
-`CONFIG`-validated and partition-parsed; they live in
-[`firmware/starfun-catalog/`](../../firmware/starfun-catalog/). Raw dumps: `data/catalog/`.
+`CONFIG`-validated and partition-parsed during the original analysis. Images and raw catalog
+dumps are not distributed here.
 
 **All 24 images declare chip `SL6801`.** There is no `h3promax3`, no `377`, no `h3*` package.
 
@@ -143,6 +143,6 @@ end-to-end (737,080 → 746,256 bytes). So a published `.up` is a full base imag
 
 ```
 export STARFUN_USER=… STARFUN_PASS=…
-python3 tools/pull_ota.py a10                    # download + parse newest a10
-python3 tools/pull_ota.py h3promax3 2607061716   # "No update returned" so far
+python3 -m openhuilian.device.pull_ota a10                    # download + parse newest a10
+python3 -m openhuilian.device.pull_ota h3promax3 2607061716   # "No update returned" so far
 ```

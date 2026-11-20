@@ -31,7 +31,7 @@ Use the address `bluetoothctl` printed in place of `AA:BB:CC:DD:EE:FF` in every 
 ## 2. Ask the buds who they are
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF info
+python3 hl --port AA:BB:CC:DD:EE:FF info
 ```
 
 You should see the model (`H3Pro Max3`), the firmware version (`2607061716` on the build this
@@ -45,9 +45,9 @@ If it hangs or times out, check that the phone's Bluetooth is really off, then t
 Read the noise-control mode, switch to transparency, then read it back:
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF get anc_mode
-python3 tools/hl --port AA:BB:CC:DD:EE:FF set anc_mode 2
-python3 tools/hl --port AA:BB:CC:DD:EE:FF get anc_mode
+python3 hl --port AA:BB:CC:DD:EE:FF get anc_mode
+python3 hl --port AA:BB:CC:DD:EE:FF set anc_mode 2
+python3 hl --port AA:BB:CC:DD:EE:FF get anc_mode
 ```
 
 You should hear the transparency prompt in your ears. `0` is off, `1` is noise cancelling, `2` is
@@ -60,14 +60,14 @@ Read the whole 1 MiB flash into a file. This takes a while, so leave the buds ou
 near the computer.
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF read 0x0 0x100000 flash.bin
+python3 hl --port AA:BB:CC:DD:EE:FF read 0x0 0x100000 flash.bin
 ```
 
 Turn the raw dump into a `.up` image and check it:
 
 ```bash
-python3 tools/build_up.py flash.bin my-buds.up
-python3 tools/tone_tool.py verify my-buds.up
+python3 -m openhuilian.format.build_up flash.bin my-buds.up
+python3 -m openhuilian.format.tone_tool verify my-buds.up
 ```
 
 `verify` should end with `ALL CRCs VALID`. Keep `flash.bin` somewhere private. It contains data

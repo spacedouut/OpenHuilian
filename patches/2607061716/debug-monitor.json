@@ -2,7 +2,7 @@
   "name": "Debug monitor (C0 D0-D4: info, peek, poke, call, log)",
   "firmware": 2607061716,
   "partition": "FIRM",
-  "about": "Adds C0 D0 info, D1 peek, D2 poke, D3 call and D4 log ring to the SPP command channel, in new code after the end of stock FIRM. Poke and call answer only after the C0 01/02 handshake (hl auth). Use with `hl mon`. Grows FIRM by one page (SENC/TONE/EQ2P move up 4 KiB) and reserves 1 KiB of heap RAM. Source tools/cave/monitor.c, built by tools/cave/build.py; checked in tools/emu/monitor_check.py. See docs/research/debug-monitor.md.",
+  "about": "Adds C0 D0 info, D1 peek, D2 poke, D3 call and D4 log ring to the SPP command channel, in new code after the end of stock FIRM. Poke and call answer only after the C0 01/02 handshake (hl auth). Use with `hl mon`. Grows FIRM by one page (SENC/TONE/EQ2P move up 4 KiB) and reserves 1 KiB of heap RAM. Source openhuilian/patch/cave/monitor.c, built by openhuilian/patch/cave/build.py; checked in openhuilian/emu/monitor_check.py. See docs/research/debug-monitor.md.",
   "layout": {
     "firm_end": "0xaf000",
     "ram": {

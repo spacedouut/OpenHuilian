@@ -16,7 +16,7 @@ This section describes what the H3Pro Max3 `2607061716` firmware does and where 
 | [AirPods layer](airpods-layer.md) | AAP opcodes, identity data, SDP/HID, adverts, AES, heart rate and head tracking |
 | [Audio and DSP](audio-and-dsp.md) | EQ2P and SENC readers, ANC controls, DSP tables and verified patch offsets |
 | [Low-volume noise](low-volume-noise.md) | Volume curves, the mask-ROM gain ramp, undithered PCM16, the voice-path noise suppressor (emulated), tests to tell firmware from hardware |
-| [Docs audit (Nov 2026)](docs-audit-2026-11.md) | Which doc claims were checked against the tools and checked-in data, what was corrected, what still needs hardware |
+| [Docs audit (Nov 2026)](docs-audit-2026-11.md) | Historical offline checks, corrections and remaining hardware questions |
 | [Mask ROM](mask-rom.md) | The 467-target call surface and named ROM services |
 | [Debug monitor patch](debug-monitor.md) | `debug-monitor` patch: C0 `D0`-`D4` peek, poke, call and a log ring, in new code after stock FIRM; the code-cave and heap-reservation layout; its emulator check |
 | [ROM read patch](rom-read.md) | `rom-read` patch: C0 `0x83` with address bit 31 set copies raw memory, the mask-ROM dump path, its Unicorn selftest |
@@ -32,15 +32,15 @@ Addresses refer to H3Pro Max3 `2607061716` unless a row names another image. FIR
 
 The analysis uses ARM ELFs, Capstone Thumb-2 disassembly, Ghidra decompilation, strings, literal pools and cross references. The original whole-program FIRM decompile contains 4,512 functions. Ghidra 12.2 auto-analysis finds 3,864. A pass over branch targets and Thumb pointer references adds 44 FIRM functions, 20 OTAP functions and one BOOT function. Indirectly reached functions such as `FUN_00c4f0cc` and `FUN_00c52e4c` need that recovery.
 
-CRC-only update acceptance works on hardware with stock and patched images through `tools/hl ota`. Hardware also confirms that omitting `04` after `84` leaves the buds in OTAP across power cycles. A retry after a real CRC failure remains unverified.
+CRC-only update acceptance works on hardware with stock and patched images through `hl ota`. Hardware also confirms that omitting `04` after `84` leaves the buds in OTAP across power cycles. A retry after a real CRC failure remains unverified.
 
 ## Reproduce it
 
-Run from the repository root. The output directory must exist before calling [h3pro_elf.py](../../tools/h3pro_elf.py).
+Run from the repository root. The output directory must exist before calling [h3pro_elf.py](../../openhuilian/format/h3pro_elf.py).
 
 ```bash
 mkdir -p out
-python3 tools/h3pro_elf.py firmware/h3promax3/h3promax3_2607061716_live.up out/
+python3 -m openhuilian.format.h3pro_elf "$OPENHUILIAN_STOCK_UP" out/
 ```
 
 Load `out/firm.elf`, `out/otap.elf` and `out/boot.elf` in Ghidra as ARM Cortex, little endian, Thumb-2. The Ghidra language is `ARM:LE:32:Cortex`. Use the ELF memory mappings rather than assigning one raw-image base. [Memory map and boot](memory-map-and-boot.md) describes the RAM and XIP segments.
@@ -57,7 +57,7 @@ The documented headless workflow uses Ghidra 12.2 with PyGhidra. Its scripts are
 
 The sources do not document a `DumpAll` invocation. The named PyGhidra scripts describe the available headless workflow. ReVa-assisted analysis supplies the 4,512-function baseline, while the script-based workflow supplies the Ghidra 12.2 results.
 
-[upparts.py](../../tools/upparts.py) lists and extracts partitions and dumps strings. [sdp_hid.py](../../tools/sdp_hid.py) decodes SDP/HID data. [flashmap.py](../../tools/flashmap.py) generates the flash and address-space diagram from the image, including boot flow, the `.up` wrapper, acceptance rules and command channels. [cfw.py](../../tools/cfw.py) repairs partition CRCs when applying patches. [emu/h3emu.py](../../tools/emu/h3emu.py) rehosts FIRM in Unicorn with stubbed ROM: it boots to the scheduler, and `--call ADDR` runs a single function with `--reg`, `--poke` and `--peek`. See [apply a patch](../how-to/apply-a-patch.md) for the operating workflow.
+[upparts.py](../../openhuilian/format/upparts.py) lists and extracts partitions and dumps strings. [sdp_hid.py](../../openhuilian/format/sdp_hid.py) decodes SDP/HID data. [flashmap.py](../../openhuilian/format/flashmap.py) generates the flash and address-space diagram from the image, including boot flow, the `.up` wrapper, acceptance rules and command channels. [cfw.py](../../openhuilian/patch/cfw.py) repairs partition CRCs when applying patches. [emu/h3emu.py](../../openhuilian/emu/h3emu.py) rehosts FIRM in Unicorn with stubbed ROM: it boots to the scheduler, and `--call ADDR` runs a single function with `--reg`, `--poke` and `--peek`. See [apply a patch](../how-to/apply-a-patch.md) for the operating workflow.
 
 ## Open questions
 

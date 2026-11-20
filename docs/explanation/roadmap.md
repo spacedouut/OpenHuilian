@@ -23,7 +23,7 @@ What's done, what's open, and what to keep in mind before writing anything to an
 | Physical recovery path for buds | unknown. UART boot ROM likely, PC-side frames decoded, pins unidentified, untested | [vendor tools](vendor-tools-and-prior-art.md), [research](../research/README.md) |
 | On-device acceptance of a modified image | done. CRC only, and patched images flashed fine on real buds | [updater](../research/updater-otap.md), [command channel](../reference/command-channel.md) |
 | Entering / leaving the updater | known: FIRM sets the `0x55AA` flag on `80`, OTAP clears it on `04`. Recovery for stuck buds is `hl leave-ota` | [OTA protocol](../reference/ota-protocol.md), [updater](../research/updater-otap.md), [command channel](../reference/command-channel.md) |
-| App auth handshake | done. 16-bit LFSR, reimplemented in `tools/huilian` | [command channel](../research/command-channel.md), [command channel](../reference/command-channel.md) |
+| App auth handshake | done. 16-bit LFSR, reimplemented in `openhuilian/device` | [command channel](../research/command-channel.md), [command channel](../reference/command-channel.md) |
 | Binary patches to FIRM | done. `cfw.py` + version-pinned patch files, head-tracking patch flashed | [patch files](../reference/patch-files.md) |
 
 ## The path, in order
@@ -33,12 +33,11 @@ What's done, what's open, and what to keep in mind before writing anything to an
    names, all CRCs valid; `tone_tool.py list/verify` and `psmp_tool.py` run unchanged.
 3. **Data-only mods first**: TONE prompts, EQ2P profiles. Zero code changes, CRC-only, and the
    original image is the recovery path.
-4. **Flash**: done with [`tools/hl ota`](../reference/command-channel.md), which speaks the app's `55AA` transport
+4. **Flash**: done with [`hl ota`](../reference/command-channel.md), which speaks the app's `55AA` transport
    over a plain RFCOMM socket, flashes both buds and doesn't touch your EQ2P/TONE. StarFun's
    dormant local-file OTA path (`chooseFile` → `BtOtaHelper`, [the app](the-app-and-servers.md)) should also
    work after a one-line patch (untried), but it copies the bud's current EQ2P/TONE into your image first,
-   which undoes prompt mods. [`tools/flashota.py`](../../tools/flashota.py) sends the frames through
-   StarFun's socket via Frida, one bud per run, and hasn't been run against a bud.
+   which undoes prompt mods. Use `hl ota` instead.
 5. Only then: code-level work on FIRM (AAP model bytes, XAPL features, ANC listen-mode handling,
    transparency filters). Note the H3Pro Max3 is a **1 MiB** part with almost no free flash
    ([device](../reference/device.md)), the ~1 MiB spare region only exists on the 2 MiB H2S-class devices.
@@ -67,7 +66,7 @@ What's done, what's open, and what to keep in mind before writing anything to an
       The `COM.dll` frame format is done ([research](../research/README.md)), the loader is partly mapped
 - [x] Extract `encryptData` / challenge-response from StarFun's native lib into Python: the
       native `SmartLinkCore::CLFSR::Encrypt_OneByte` is byte-for-byte the LFSR
-      `tools/huilian/proto.py` already implements ([research](../research/README.md))
+      `openhuilian/device/proto.py` already implements ([research](../research/README.md))
 - [x] Does FIRM honour EQ2P pages 51–57 if present? **No** - the only EQ2P consumer in the
       H3Pro build loads profile 0 / kind 0 at boot; nothing requests kinds 51–57 ([research](../research/README.md))
 - [ ] Which EQ2P profile binds to transparency vs. ANC-on

@@ -49,10 +49,10 @@ open(dst, "wb").write(up)
 
 ```bash
 python3 eq_gain.py my-buds.up eq.up 1 4 2.0      # profile 1, band 4 (2421 Hz) from +3.8 to +2.0 dB
-python3 tools/tone_tool.py verify eq.up
+python3 -m openhuilian.format.tone_tool verify eq.up
 ```
 
 Band numbers and current values for every profile are in
-[`data/partitions-h3promax3/eq2p_profiles.txt`](../../data/partitions-h3promax3/eq2p_profiles.txt).
+[`data/eq2p_profiles.txt`](../../data/eq2p_profiles.txt).
 The same record format holds frequency (`param` 0) and Q (`param` 1). An edited EQ2P hasn't been
 flashed to buds yet, only round-tripped offline.

@@ -72,21 +72,21 @@ PSMP stay pinned, everything else just moves in the index.)
 
 ### The stock image in this repo
 
-[`tools/build_up.py`](../../tools/build_up.py) wraps `flash[0 : end-of-OTAP]` in the standard
+[`openhuilian/format/build_up.py`](../../openhuilian/format/build_up.py) wraps `flash[0 : end-of-OTAP]` in the standard
 256-byte `CONFIG` header (body length, CRC16 of body, `55 AA` trailer). It passes
 `tone_tool.py verify` ("ALL CRCs VALID"). Two caveats:
 
 * The **chip-name string at header `+0x16` is left empty**. It isn't stored in flash, and there's
   no official H3Pro `.up` to copy it from. The bud's updater never sees the header
   ([updater](../research/updater-otap.md)); the desktop flasher does read it ([vendor tools](../explanation/vendor-tools-and-prior-art.md)).
-* PSMP is **not** in the committed image. It holds per-bud data: the Bluetooth address,
+* PSMP is **not** included by the container builder. It holds per-bud data: the Bluetooth address,
   `authorization_code`, both ear serials, the Apple `air_adv_key` and the paired phone's address.
   Keep your own dump private.
 
 ## What's in the image
 
-Everything below is from `firm_strings.txt` / the extracted partitions in
-[`data/partitions-h3promax3/`](../../data/partitions-h3promax3/).
+Everything below comes from the historical `firm_strings.txt` and extracted partitions,
+which are not distributed here. Dump and extract your own image to reproduce the analysis.
 
 **Build identity.** FIRM carries `377Super PRO3` and `Super2026+`, against `377 Super++` in the
 newest catalog image and `LHK-SL6800-TEST` in the older ones.
@@ -114,7 +114,7 @@ Page 1 is **byte-for-byte the H2S Turbo factory curve** (80/130/240/420/900/2421
 alternative 14-band curves (bass-heavy, vocal, treble-cut and so on), almost certainly the presets
 behind StarFun .017's "EQ adjustment (only some models)" and the `eq_preset_cur_num` NV key. Page 0 is a
 different, more aggressive 14-band curve with the extra compressor block. Full decoded table:
-[`eq2p_profiles.txt`](../../data/partitions-h3promax3/eq2p_profiles.txt). ANC/talk-through pages 51–57
+[`eq2p_profiles.txt`](../../data/eq2p_profiles.txt). ANC/talk-through pages 51–57
 are **still absent**, consistent with [ANC](../explanation/anc-and-transparency.md): filters live in FIRM code.
 
 **SENC** is identical in size and CRC to the H2S Turbo one (`0x77AA`).

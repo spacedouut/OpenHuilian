@@ -3,8 +3,8 @@
 Read statically from `h2s_turbo_2506281656.up` FIRM (377-generation SL6801 build), compared with
 the 2409191721 build. The H3Pro build has the same layer, with differences listed at the end of
 this page. Full narrative report:
-[`data/reports/aap_anc_body.html`](../../data/reports/aap_anc_body.html); decoder:
-[`tools/sdp_hid.py`](../../tools/sdp_hid.py).
+[`docs/research/reports/aap_anc_body.html`](../../docs/research/reports/aap_anc_body.html); decoder:
+[`openhuilian/format/sdp_hid.py`](../../openhuilian/format/sdp_hid.py).
 
 ## What it is
 

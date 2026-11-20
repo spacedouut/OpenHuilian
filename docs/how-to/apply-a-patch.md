@@ -4,8 +4,8 @@ Patch files in `patches/<firmware version>/` change specific bytes in FIRM. `cfw
 to your own dump and fixes every checksum. The head-tracking patch has been flashed to real buds.
 
 ```bash
-python3 tools/cfw.py info  my-buds.up
-python3 tools/cfw.py apply my-buds.up my-cfw.up patches/2607061716/head-tracking.json
+python3 -m openhuilian.patch.cfw info  my-buds.up
+python3 -m openhuilian.patch.cfw apply my-buds.up my-cfw.up patches/2607061716/head-tracking.json
 ```
 
 Then flash `my-cfw.up` ([flash an image](flash-an-image.md)).
@@ -19,7 +19,7 @@ point. Don't edit the patch to make it fit.
 Patches can expose settings. Without `--set` you get the patch's defaults.
 
 ```bash
-python3 tools/cfw.py apply my-buds.up my-cfw.up patches/2607061716/head-tracking.json \
+python3 -m openhuilian.patch.cfw apply my-buds.up my-cfw.up patches/2607061716/head-tracking.json \
     --set tx_ms=25 --set alpha=0.4
 ```
 

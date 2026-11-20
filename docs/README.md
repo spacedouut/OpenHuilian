@@ -32,7 +32,7 @@ recovery.
 * [Command channel](reference/command-channel.md): every `C0` command, the auth handshake
 * [TONE](reference/tone.md), [EQ2P and SENC](reference/eq2p-senc.md), [PSMP](reference/psmp.md): the data partitions
 * [Patch files](reference/patch-files.md): the `cfw.py` format
-* [Tools](reference/tools.md): every script in `tools/`
+* [Tools](reference/tools.md): the `openhuilian` package
 
 ## Explanation
 

@@ -3,9 +3,9 @@
 `PSMP` is the 16 KB partition at the end of flash (`0x1FC000` on 2 MB parts, `0x0FC000` on 1 MB)
 that holds device identity and user settings. OTA images **declare** it but never ship it, which is
 how settings survive an update. You only see it in a raw flash dump. The H3Pro's PSMP uses the same record format as SL6801's;
-`tools/psmp_tool.py` parses it cleanly. It holds per-bud data (addresses, serials, Apple pairing
-keys), so don't publish yours. The example dump below is the SL6801 OpenPod player in
-`firmware/openpod-sl6801/`.
+`openhuilian/format/psmp_tool.py` parses it cleanly. It holds per-bud data (addresses, serials, Apple pairing
+keys), so don't publish yours. The historical example below used an SL6801 OpenPod player
+dump, which is not distributed here.
 
 ## What the vendor calls it
 
@@ -18,7 +18,7 @@ consumes on next boot.
 
 ## On-flash record format
 
-Decoded from the dump (`tools/psmp_tool.py`), 73 records parse back-to-back with zero slack, then
+Decoded from the dump (`openhuilian/format/psmp_tool.py`), 73 records parse back-to-back with zero slack, then
 `FF` fill:
 
 ```
@@ -88,7 +88,7 @@ Because the store is a log, `--all` shows the history (e.g. `audio_volume` writt
 55 NV key names appear in the 377 FIRM, including `key_tap2_*` / `key_long_*` (gesture → action
 map), `ear_detection_en`, `authorization_code`, `air_*`, `eq_ud_gain`, `eq_preset_cur_num`, `bt_name`,
 `bt_addr`, `paired_flag`, `ear_type`. The full list is in
-[`data/analysis/firmware_internals.txt`](../../data/analysis/firmware_internals.txt).
+[`docs/research/firmware_internals.md`](../../docs/research/firmware_internals.md).
 
 ## Keys on the H3Pro
 
@@ -104,7 +104,7 @@ Names only: `authorization_code`, `authorization_code_length`, `bt_addr`, `ble_a
 
 * Gesture mapping, ear-detection, EQ preset and the Apple `authorization_code` live here → many
   "feature" changes may be **settings writes**, not firmware patches.
-* The app's `C0` command set and the factory tool both write PSM. `tools/hl set` writes the
+* The app's `C0` command set and the factory tool both write PSM. `hl set` writes the
   user-facing keys over `C0` ([command channel](command-channel.md)). A Bluetooth path to set arbitrary keys hasn't
   been found.
 * Offline PSMP writes work now that the record check is reproduced (`psmp_tool.py set`). It has

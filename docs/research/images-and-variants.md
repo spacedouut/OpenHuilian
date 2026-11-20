@@ -4,7 +4,7 @@ The comparison set contains 24 catalog images and an OpenPod dump, with H3Pro Ma
 
 ## Catalog sweep
 
-[upparts.py](../../tools/upparts.py) lists partitions, extracts them and dumps strings. The sweep covers every catalog image and the OpenPod dump. Per-image reports compare unique strings against H3Pro and both h2sturbo references.
+[upparts.py](../../openhuilian/format/upparts.py) lists partitions, extracts them and dumps strings. The sweep covers every catalog image and the OpenPod dump. Per-image reports compare unique strings against H3Pro and both h2sturbo references.
 
 These strings occur in other builds and are absent from H3Pro `2607061716`. Counts refer to builds in the collection.
 
@@ -25,19 +25,19 @@ String presence suggests features but does not prove every corresponding code pa
 
 ## H3Pro container
 
-The reference image is [h3promax3_2607061716_live.up](../../firmware/h3promax3/h3promax3_2607061716_live.up). It is reconstructed from a complete 1 MiB flash read using `C0 83`.
+The reference image is h3promax3_2607061716_live.up (historical input, not distributed). It is reconstructed from a complete 1 MiB flash read using `C0 83`.
 
-[build_up.py](../../tools/build_up.py) wraps `flash[0 : end-of-OTAP]` in a standard 256-byte `CONFIG` header with body length, body CRC16 and a `55 AA` trailer. [tone_tool.py](../../tools/tone_tool.py) reports `ALL CRCs VALID`.
+[build_up.py](../../openhuilian/format/build_up.py) wraps `flash[0 : end-of-OTAP]` in a standard 256-byte `CONFIG` header with body length, body CRC16 and a `55 AA` trailer. [tone_tool.py](../../openhuilian/format/tone_tool.py) reports `ALL CRCs VALID`.
 
 The chip-name field at header `+0x16` is empty. Flash does not contain that outer-container field and no official H3Pro `.up` supplies a value. OTAP never sees it, while the desktop flasher uses it to select the chip.
 
-PSMP is declared in the index but excluded from the committed image. Its records contain device identity, authorization, pairing and advert-key data. The [settings-store page](settings-store.md) lists key names and lengths without per-unit values.
+PSMP is declared in the index but excluded by the container builder. Its records contain device identity, authorization, pairing and advert-key data. The [settings-store page](settings-store.md) lists key names and lengths without per-unit values.
 
 The live image keeps the HLKJ body, index at `0x3000`, partition names and CRC conventions used by SL6801 images. The repository's offline tools handle it without format changes. [Memory map and boot](memory-map-and-boot.md#flash-layout) gives every partition address, length and stored CRC.
 
 ## H3Pro image contents
 
-The extracted data is under [data/partitions-h3promax3](../../data/partitions-h3promax3/), including `firm_strings.txt`.
+Extracted partitions and `firm_strings.txt` are not distributed; reproduce them from your own dump.
 
 | Area | H3Pro contents | Comparison |
 |---|---|---|
@@ -115,6 +115,6 @@ Any transfer through the known OTA path still requires the complete sequence `80
 
 Both StarFun versions contain a dormant local-file picker in `SettingMoreActivity.chooseFile()`. It uses `ACTION_GET_CONTENT`, `CATEGORY_OPENABLE`, MIME type `*/*` and request code 100.
 
-`onActivityResult(100, ...)` reads the selected `.up`, preserves device EQ and TONE, then calls `BtOtaHelper`, the same transport used by server updates. The relevant archived code is [SettingMoreActivity.java](../../reference/starfun-app/2.0.7.017/SettingMoreActivity.java), around lines 613 through 651.
+`onActivityResult(100, ...)` reads the selected `.up`, preserves device EQ and TONE, then calls `BtOtaHelper`, the same transport used by server updates. The relevant archived code is SettingMoreActivity.java (historical input, not distributed), around lines 613 through 651.
 
 Exposing the picker is a possible app change, but this route is unverified on hardware. The [app and servers explanation](../explanation/the-app-and-servers.md) covers the surrounding app behavior. [Command channel](command-channel.md#native-library) covers its native LFSR and CRC functions.

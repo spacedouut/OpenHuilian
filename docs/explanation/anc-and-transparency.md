@@ -2,7 +2,7 @@
 
 Can transparency be made better, and is that a data edit or a code patch? It's a code patch, or
 live gain tweaking. The filters ship compiled into FIRM, and the container's dedicated ANC data
-pages are empty in every image in the repo. A longer write-up with plots is in [`data/reports/aap-transparency-analysis.html`](../../data/reports/aap-transparency-analysis.html).
+pages were empty in every image analyzed. A longer write-up with plots is in [`reports/aap-transparency-analysis.html`](../research/reports/aap-transparency-analysis.html).
 
 ## Live tuning interface in FIRM
 
@@ -50,8 +50,7 @@ the same way as `+NTC=` is unchecked.
 
 ## The data pages that *could* hold filters are never shipped
 
-The app's `Eq2ItemType` (archived in
-[`reference/starfun-app/2.0.7.016/uparser/model/eq/Eq2ItemType.java`](../../reference/starfun-app/2.0.7.016/uparser/model/eq/Eq2ItemType.java))
+The app's `Eq2ItemType` (from independently obtained app code, not distributed here)
 reserves seven page IDs:
 
 ```

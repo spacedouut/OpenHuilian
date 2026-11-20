@@ -111,9 +111,9 @@ The second line is the documented flash-read reply shape. The device returns at 
 
 Stock FIRM always reads SPI flash through `FUN_0080576c`. The [ROM read patch](rom-read.md) reroutes that call so an address with bit 31 set is copied straight from memory instead, which reaches the mask ROM, RAM and peripheral registers.
 
-The app's `OtaCmdConfig.getReadFlashCmdArray()` reads 200 bytes from index address `0x3000`, also named `INDEX_START_ADDRESS = 12288`, then reads TONE and EQ2P in 100-byte blocks to preserve them for an update. `CMDConfig.getReadFlashCmdArray(addr,len)` is the entry used by [flashdump.js](../../tools/flashdump.js), which sends through `BtClient.sendBytes(cmd, 1)` and receives through `BtBase.notifyUI`.
+The app's `OtaCmdConfig.getReadFlashCmdArray()` reads 200 bytes from index address `0x3000`, also named `INDEX_START_ADDRESS = 12288`, then reads TONE and EQ2P in 100-byte blocks to preserve them for an update. The supported independent dump path is `hl read`, which implements the same `C0 83` request.
 
-[tools/hl](../../tools/hl) can authenticate and read over a plain RFCOMM socket. The command has no matching general flash-write command in this FIRM surface. OTA supplies the write path. The [command-channel reference](../reference/command-channel.md) covers use, and [OTA protocol](../reference/ota-protocol.md) covers update framing.
+[hl](../../hl) can authenticate and read over a plain RFCOMM socket. The command has no matching general flash-write command in this FIRM surface. OTA supplies the write path. The [command-channel reference](../reference/command-channel.md) covers use, and [OTA protocol](../reference/ota-protocol.md) covers update framing.
 
 ## Firmware authorization
 
@@ -135,7 +135,7 @@ s = rotl16(s, 1) ^ (s & 0x8000 ? 0xD103 : 0)
 
 `C0 01` derives the seed from two challenge bytes XOR `0x3098` and returns 59 scrambled bytes. `C0 02` makes four passes with challenge-derived seeds, including XOR `0x1728`, a byte sum and XOR `0x358`, and XOR-mixes the challenge into the result.
 
-This matches the app's `CMDConfig.verificationCmd`. The LFSR is reproducible obfuscation and is the app-session gate on the command channel. OTA frames bypass it. `tools/hl ota` does not need the handshake.
+This matches the app's `CMDConfig.verificationCmd`. The LFSR is reproducible obfuscation and is the app-session gate on the command channel. OTA frames bypass it. `hl ota` does not need the handshake.
 
 ## Native library
 
@@ -147,7 +147,7 @@ The StarFun `2.0.7.016` APK contains `lib/arm64-v8a/libuparser-lib.so`. The APK 
 | `BtUtils.getCrc` | `SmartLinkCore::CLFSR::get_crc` | CRC16/CCITT-FALSE, polynomial `0x1021`, MSB-first |
 | `BtUtils.crc8Maxim` | `SmartLinkCore::CLFSR::crc8_maxim` | CRC8/Maxim, polynomial `0x31`, reflected form `0x8C` |
 
-`Encrypt_OneByte` clocks the LFSR eight times per byte and XORs the keystream in place. Its byte output matches [huilian/proto.py](../../tools/huilian/proto.py), which implements the handshake used by `hl auth`. This mechanism does not verify firmware images.
+`Encrypt_OneByte` clocks the LFSR eight times per byte and XORs the keystream in place. Its byte output matches [huilian/proto.py](../../openhuilian/device/proto.py), which implements the handshake used by `hl auth`. This mechanism does not verify firmware images.
 
 ## Entering OTA from FIRM
 

@@ -1,7 +1,7 @@
 # The `.up` container
 
 Derived from all 24 catalog images, then **cross-checked against the vendor's own parser**
-(`vendor/shenju-flashloader/decompiled-src/burn_service/flash_loader/up_parser.py`) and two
+(not distributed here) and two
 independent open-source implementations (`smartlink_flash/fwhelper/main.c`, `sl6806/docs`).
 
 ## Big picture
@@ -18,7 +18,7 @@ independent open-source implementations (`smartlink_flash/fwhelper/main.c`, `sl6
 ```
 
 Rule that makes everything easy: **`file_offset = flash_address + 0x100`**. The body is literally
-what ends up in flash. A raw flash dump (see the OpenPod dump in `firmware/openpod-sl6801/`) starts
+what ends up in flash. A raw flash dump (such as the historical OpenPod dump) starts
 directly with `HLKJ`; wrapping it with a 256-byte `CONFIG` header turns it into a `.up`.
 
 ## Outer header (file offset 0x000–0x0FF)
@@ -80,7 +80,7 @@ outer: body length 2,075,984, container CRC 0x7B79, chip "SL6801"
 | `TONE` | Voice prompts + UI clicks archive | 33–104 KB (H3Pro 85 KB) | `[u32 size][name\0]…` directory, then raw MP3/WAV ([TONE](tone.md)) |
 | `EQ2P` | EQ profiles, magic `SLEQ` | 0.6–1.6 KB (H3Pro 4.1 KB) | plain float table ([EQ2P](eq2p-senc.md)) |
 | `OTAP` | OTA updater stub | **167,248 B in 22 of 24 images** (166,816 B in `fit30_2209242029` and `fit50_2210141125`) | 23 distinct blobs despite fixed size; in h2sturbo only the first 4 KB changed between builds. No crypto strings found. |
-| `PSMP` | Persistent settings (NV key/value store) | 16 KB at end of flash | declared with crc 0 and address beyond EOF, **not shipped in OTAs** so user settings survive. Present in raw dumps. Editable with the vendor's `psm-nvds.dll` or offline with `tools/psmp_tool.py` ([PSMP](psmp.md)). |
+| `PSMP` | Persistent settings (NV key/value store) | 16 KB at end of flash | declared with crc 0 and address beyond EOF, **not shipped in OTAs** so user settings survive. Present in raw dumps. Editable with the vendor's `psm-nvds.dll` or offline with `openhuilian/format/psmp_tool.py` ([PSMP](psmp.md)). |
 
 ## Flash classes
 
@@ -99,7 +99,7 @@ Tone/EQ/sensor packs are shared assets reused across product families; FIRM and 
 
 ## Related raw-dump format
 
-A raw flash dump (`firmware/openpod-sl6801/GN438_sl6801_fulldump.bin`, 2 MiB) begins with `HLKJ`.
+A historical 2 MiB OpenPod raw flash dump (not distributed) begins with `HLKJ`.
 `smartlink_flash/fwhelper` scans it as: HLKJ @0, partition table @`0xD000`, `FIRM` @`0xE000`
 (0x192570 B), `TONE` @`0x1A1000`, `PSMP` @`0x1FC000` (0x4000 B, with live `bt_addr`, `device_id`
 records). `fwhelper flash.bin dump2fw out.up` rebuilds a `.up` from a dump.
