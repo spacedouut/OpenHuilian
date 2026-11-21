@@ -1,6 +1,6 @@
 # Chip peripherals
 
-Register behavior of the Huilian 377H3 that code polls or depends on, read from the `2607061716` bootloader, FIRM, OTAP and the mask ROM with Hopper through [REA](../how-to/set-up-rea-and-hopper.md). Everything here is static analysis. Nothing was measured on a bud.
+Register behavior of the Huilian 377H3 that code polls or depends on, read from the `2607061716` bootloader, FIRM, OTAP and the mask ROM with Hopper through [REA](https://github.com/morluto/rea). Everything here is static analysis. Nothing was measured on a bud.
 
 The point of this page is the emulator. A register listed with a polled bit hangs [`h3emu.py`](../../openhuilian/emu/h3emu.py) unless a read returns that bit.
 
