@@ -23,19 +23,29 @@ if [ "$("$PREFIX/bin/node" --version 2>/dev/null)" != "v$NODE_VERSION" ]; then
 fi
 export PATH="$PREFIX/bin:$PATH"
 
-if [ "$(rea --version 2>/dev/null)" != "$REA_VERSION" ]; then
+if [ "$("$PREFIX/bin/rea" --version 2>/dev/null)" != "$REA_VERSION" ]; then
   npm install -g --silent "rea-agents@$REA_VERSION"
 fi
 
 # Hopper's command-line launcher finds the app through Spotlight.
 if ! mdutil -s /System/Volumes/Data | grep -q "Indexing enabled"; then
-  sudo -n mdutil -i on /System/Volumes/Data
+  sudo -n mdutil -i on /System/Volumes/Data ||
+    echo "warning: run 'sudo mdutil -i on /System/Volumes/Data', Hopper's launcher needs Spotlight" >&2
 fi
 
 # Installs Hopper to ~/Applications after checking its signature, registers the REA MCP server
-# and skill with every agent client it detects. Exits non-zero while a manual step remains.
-rea setup --yes --all-detected --install-hopper --json >/dev/null || true
-mdimport "$HOME/Applications/Hopper Disassembler.app" 2>/dev/null || true
+# and skill with every agent client it detects. Its exit status is non-zero while Hopper's
+# license sheet is unanswered, so success is judged by the app being in place.
+HOPPER="$HOME/Applications/Hopper Disassembler.app"
+setup_log=$(mktemp)
+rea setup --yes --all-detected --install-hopper --json >"$setup_log" 2>&1 || true
+if [ ! -x "$HOPPER/Contents/MacOS/hopper" ]; then
+  cat "$setup_log" >&2
+  echo "rea setup did not install Hopper" >&2
+  exit 1
+fi
+rm -f "$setup_log"
+mdimport "$HOPPER" 2>/dev/null || true
 
 rea --version
 echo "REA MCP server (stdio): $PREFIX/bin/node $PREFIX/bin/rea mcp"

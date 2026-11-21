@@ -31,6 +31,7 @@ Both appear on the first analysis and can't be scripted.
 Hopper and REA both refuse headerless images, so wrap the partitions in ELFs first. The inputs are private; keep the ELFs and any output outside this repo.
 
 ```sh
+mkdir -p ~/rea-work
 python3 -m openhuilian.format.h3pro_elf "$OPENHUILIAN_STOCK_UP" ~/rea-work
 rea inspect ~/rea-work/firm.elf --provider hopper --json
 rea decompile ~/rea-work/boot.elf 0x860168 --provider hopper --json
