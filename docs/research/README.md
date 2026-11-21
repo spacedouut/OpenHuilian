@@ -18,6 +18,7 @@ This section describes what the H3Pro Max3 `2607061716` firmware does and where 
 | [Low-volume noise](low-volume-noise.md) | Volume curves, the mask-ROM gain ramp, undithered PCM16, the voice-path noise suppressor (emulated), tests to tell firmware from hardware |
 | [Docs audit (Nov 2026)](docs-audit-2026-11.md) | Historical offline checks, corrections and remaining hardware questions |
 | [Mask ROM](mask-rom.md) | The 467-target call surface and named ROM services |
+| [Hardware model](hardware-model.md) | Power-on boot in Unicorn with the real ROM: modelled peripheral registers, the boot timeline, and what is not modelled |
 | [Debug monitor patch](debug-monitor.md) | `debug-monitor` patch: C0 `D0`-`D4` peek, poke, call and a log ring, in new code after stock FIRM; the code-cave and heap-reservation layout; its emulator check |
 | [ROM read patch](rom-read.md) | `rom-read` patch: C0 `0x83` with address bit 31 set copies raw memory, the mask-ROM dump path, its Unicorn selftest |
 | [UART boot ROM](uart-boot-rom.md) | Vendor loader sequence, `42 52` frames, USB entry and unresolved hardware details |
