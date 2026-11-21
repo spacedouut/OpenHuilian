@@ -6,9 +6,9 @@ ring that other patches can write to. It is the first patch that adds new code i
 bytes in place. It has been checked in the emulator only and has not been flashed to a bud.
 
 ```
-python3 tools/cfw.py apply my.up my-mon.up patches/2607061716/debug-monitor.json
-python3 tools/hl --port <mac> ota my-mon.up
-python3 tools/hl --port <mac> mon info
+python3 -m openhuilian.patch.cfw apply my.up my-mon.up patches/2607061716/debug-monitor.json
+python3 hl --port <mac> ota my-mon.up
+python3 hl --port <mac> mon info
 ```
 
 ## Commands
@@ -48,23 +48,23 @@ initializes it the first time it runs, when the magic word doesn't match.
 ## Building
 
 The JSON is build output, so applying the patch needs no compiler. To change the monitor, edit
-[`tools/cave/monitor.c`](../../tools/cave/monitor.c) and rebuild:
+[`openhuilian/patch/cave/monitor.c`](../../openhuilian/patch/cave/monitor.c) and rebuild:
 
 ```
-uv run --with ziglang==0.13.0 --with pyelftools python3 tools/cave/build.py
+uv run --with ziglang==0.13.0 --with pyelftools python3 -m openhuilian.patch.cave.build
 ```
 
 `build.py` compiles with zig's clang for Cortex-M4 Thumb, links with
-[`monitor.ld`](../../tools/cave/monitor.ld) at the cave address, and refuses undefined symbols
+[`monitor.ld`](../../openhuilian/patch/cave/monitor.ld) at the cave address, and refuses undefined symbols
 and initialized data. Cave code calls FIRM and ROM only through fixed addresses.
 
 ## Emulator check
 
 ```
-uv run --with unicorn==2.1.1 --with capstone==5.0.3 python3 tools/emu/monitor_check.py firmware/h3promax3/h3promax3_2607061716_live.up
+uv run --with unicorn==2.1.1 --with capstone==5.0.3 python3 -m openhuilian.emu.monitor_check "$OPENHUILIAN_STOCK_UP"
 ```
 
-[`tools/emu/monitor_check.py`](../../tools/emu/monitor_check.py) applies the patch with `cfw.py`,
+[`openhuilian/emu/monitor_check.py`](../../openhuilian/emu/monitor_check.py) applies the patch with `cfw.py`,
 boots stock and patched FIRM into `task main` and feeds request frames into `FUN_00c69b3c`. It
 checks the following:
 
@@ -77,7 +77,7 @@ checks the following:
 * The log ring wraps correctly.
 * `hl mon` itself, driven over an emulated link.
 
-[`tools/emu/repart_check.py`](../../tools/emu/repart_check.py) also passes on a patched image
+[`openhuilian/emu/repart_check.py`](../../openhuilian/emu/repart_check.py) also passes on a patched image
 stacked with `head-tracking.json` and `rom-read.json`.
 
 ## Not verified

@@ -21,11 +21,11 @@ iPhone playback, timestamps, peer operation, or physical mounting.
 
 - Image SHA256: `7554b57974b79c270804b79f2bcac1580a663057524030c7b6a5c582dc6231d7`.
 - Mask ROM SHA256: `81f733395d0aa7402541dcc004d65070a998c484d058d6ddf41688e199eec8df`.
-- Machine-readable measurements: `tools/headtrack/results.json`.
-- Harness: `tools/emu/headtrack.py`; postprocessor: `headtrack_analysis.py`;
+- Machine-readable measurements: `openhuilian/patch/headtrack/results.json`.
+- Harness: `openhuilian/emu/headtrack.py`; postprocessor: `headtrack_analysis.py`;
   regression tests: `headtrack_test.py`.
 - Reference algorithm, C source, linker script, patch builder, focused Ghidra
-  recovery: `tools/headtrack/{reference.py,filter.c,filter.ld,build.py,recover.py}`.
+  recovery: `openhuilian/patch/headtrack/{reference.py,filter.c,filter.ld,build.py,recover.py}`.
 - Full sample/report traces, compiler artifacts, rebuilt images and decompilation
   are in `/home/ubuntu/.openclaw/workspace/tmp/headtrack/`; focused decompilation
   and assembly are in its `evidence/` directory. Traces retain raw report bytes.
@@ -264,7 +264,7 @@ the slow 80-degree turn and undershoots the fast peak by about 3.50 degrees.
 Thus timebase and bias defects partially cancel in some motions: changing
 one constant cannot repair the speed-dependent gain.
 
-For 10-degree sine yaw, the actual firmware/reference frequency responses are:
+For 10-degree sine yaw, the actual firmware versus reference frequency responses are:
 
 | Hz | Stock gain | Old gain | v2 gain | Stock phase lead |
 |---|---:|---:|---:|---:|
@@ -379,18 +379,18 @@ These commands only read local images and write scratch/allowed build outputs.
 The checked-in JSON patches do not require a compiler to apply.
 
 ```sh
-python3 tools/cfw.py apply \
-  firmware/h3promax3/h3promax3_2607061716_live.up \
+python3 -m openhuilian.patch.cfw apply \
+  "$OPENHUILIAN_STOCK_UP" \
   /home/ubuntu/.openclaw/workspace/tmp/headtrack/v2.up \
   patches/2607061716/head-tracking-v2.json
 
 uv run --offline -q --with unicorn==2.1.1 --with capstone==5.0.3 --with numpy \
-  python tools/emu/headtrack_test.py \
+  python -m openhuilian.emu.headtrack_test \
   --image /home/ubuntu/.openclaw/workspace/tmp/headtrack/v2.up -v
 
 uv run --offline -q --with unicorn==2.1.1 --with capstone==5.0.3 \
-  python tools/emu/repart_check.py \
-  firmware/h3promax3/h3promax3_2607061716_live.up \
+  python -m openhuilian.emu.repart_check \
+  "$OPENHUILIAN_STOCK_UP" \
   /home/ubuntu/.openclaw/workspace/tmp/headtrack/v2.up
 ```
 
@@ -399,16 +399,16 @@ encoder), or rebuild with the installed compiler:
 
 ```sh
 uv run --offline -q --with unicorn==2.1.1 --with capstone==5.0.3 --with numpy \
-  python tools/emu/headtrack.py \
+  python -m openhuilian.emu.headtrack \
   --out /home/ubuntu/.openclaw/workspace/tmp/headtrack \
   --variants stock old python v2 lab --fifo
 
 uv run --offline -q --with unicorn==2.1.1 --with capstone==5.0.3 --with numpy \
-  python tools/emu/headtrack_analysis.py \
+  python -m openhuilian.emu.headtrack_analysis \
   /home/ubuntu/.openclaw/workspace/tmp/headtrack \
-  --export /home/ubuntu/OpenHuilian/tools/headtrack/results.json
+  --export /home/ubuntu/OpenHuilian/openhuilian/patch/headtrack/results.json
 
-python3 tools/headtrack/build.py \
+python3 -m openhuilian.patch.headtrack.build \
   --out /home/ubuntu/.openclaw/workspace/tmp/headtrack \
   --cc /home/ubuntu/.openclaw/workspace/tmp/oh-toolchains/usr/bin/arm-none-eabi-gcc
 ```
@@ -430,7 +430,7 @@ If the user elects to do a hardware experiment, the bounded trial is:
    prompt checks to pass. This does NOT qualify the image for hardware safety;
    repartitioned OTA behavior remains untested on a real updater.
 3. **User action only:** flash the generated `v2.up`, not `v2-lab.up`, with
-   `tools/hl ota` (try `--side one` first), which sends the image as built. Do
+   `hl ota` (try `--side one` first), which sends the image as built. Do
    NOT use the StarFun app's local-file OTA path: it copies the bud's current
    TONE/EQ2P into the image at their stock addresses, which corrupts any
    repartitioned image (v2 moves them). No flashing commands were executed or

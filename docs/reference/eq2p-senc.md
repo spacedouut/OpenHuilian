@@ -1,7 +1,7 @@
 # EQ2P and SENC
 
-Both are plain little-endian float tables in CRC-only partitions. Raw copies from h2sturbo
-2506281656 are in [`data/partitions-h2sturbo/`](../../data/partitions-h2sturbo/).
+Both are plain little-endian float tables in CRC-only partitions. The historical analysis
+used h2sturbo 2506281656; raw partition copies are not distributed here.
 
 ## EQ2P (magic `SLEQ`)
 
@@ -82,5 +82,5 @@ Page 1 is **byte-for-byte the H2S Turbo factory curve** (80/130/240/420/900/2421
 alternative 14-band curves (bass-heavy, vocal, treble-cut and so on), almost certainly the presets
 behind StarFun .017's "EQ adjustment (only some models)" and the `eq_preset_cur_num` NV key. Page 0 is a
 different, more aggressive 14-band curve with the extra compressor block. Full decoded table:
-[`eq2p_profiles.txt`](../../data/partitions-h3promax3/eq2p_profiles.txt). ANC/talk-through pages 51–57
+[`eq2p_profiles.txt`](../../data/eq2p_profiles.txt). ANC/talk-through pages 51–57
 are **still absent**, consistent with [ANC](../explanation/anc-and-transparency.md): filters live in FIRM code.

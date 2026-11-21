@@ -1,49 +1,34 @@
 # Dump your buds' firmware
 
-Use this to back up a pair before you flash anything, or to get the image for a build this repo
-doesn't have yet. Reading never writes to the buds.
-
-## With `hl` (no phone needed)
+Back up before flashing. Reading never writes to the buds. No stock images are distributed.
 
 Pair the buds with the computer and turn off the phone's Bluetooth first
-([first connection](../tutorials/first-connection.md)).
+([first connection](../tutorials/first-connection.md)). Create a private output directory
+outside the checkout, then:
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF read 0x0 0x100000 flash.bin
-python3 tools/build_up.py flash.bin my-buds.up
-python3 tools/tone_tool.py verify my-buds.up
+./hl --port AA:BB:CC:DD:EE:FF read 0x0 0x100000 ~/stock/flash.bin
+python3 -m openhuilian.format.build_up ~/stock/flash.bin ~/stock/my-buds.up
+python3 -m openhuilian.format.tone_tool verify ~/stock/my-buds.up
+export OPENHUILIAN_STOCK_UP="$HOME/stock/my-buds.up"
 ```
 
-* `read` takes a start address, a length and an output file. It reads 100 bytes per request by
-  default; `--chunk N` accepts 1..200 (the buds answer with at most 200 bytes per request).
-* `build_up.py` checks every partition CRC and refuses to write the `.up` if one is wrong. A wrong
-  CRC almost always means a bad read, so read again.
-* To read just the partition index, use `read 0x3000 200 index.bin`.
+The example reads a 1 MiB H3Pro Max3. Confirm sizes for other hardware.
+`read` takes a start address, length and output file; the default chunk is 100 bytes.
+`--chunk N` accepts 1..200. The builder checks every partition CRC and refuses
+invalid dumps unless forced. A mismatch usually means a bad read, so read again.
+Use `read 0x3000 200 ~/stock/index.bin` to read just the partition index.
 
-## Through the StarFun app (Frida)
+## Mask ROM
 
-This older route reuses the app's own connection. You need a rooted Android phone with StarFun
-**2.0.7.016** (2.0.7.017 rejects these buds) and Frida **16.5.9** on both sides. Frida 17 drops
-the agent and kills the app.
+`C0 83` normally reads only SPI flash. With the experimental `rom-read` patch,
+bit 31 selects raw memory: `hl read 0x80000000 0x20000 ~/stock/rom.bin`.
+The patch has not been run on buds; unmapped reads can reboot a bud.
+See [ROM read](../research/rom-read.md) for probing advice and range limitations.
+Set `OPENHUILIAN_MASK_ROM` to your own dump for experiments requiring real ROM code.
 
-```bash
-adb forward tcp:27042 tcp:27042
-FRIDA_HOST=127.0.0.1:27042 python3 tools/flashdump.py 0x0 0x100000 flash.bin 200
-python3 tools/build_up.py flash.bin my-buds.up
-```
+## Keep dumps private
 
-It runs at about 1.1 KB/s, so the full 1 MiB takes about 16 minutes. The only command it sends is
-the `C0 83` flash read.
-
-## The mask ROM
-
-`C0 83` only reads SPI flash. With the `rom-read` patch flashed, an address with bit 31 set reads
-raw memory instead, so `hl read 0x80000000 0x20000 rom.bin` pulls the mask ROM. The patch has not
-been run on buds yet, and reading an unmapped address can reboot a bud. Details and probing advice
-are in [ROM read](../research/rom-read.md).
-
-## Keep the raw dump private
-
-`flash.bin` contains the PSMP settings partition, which holds your Bluetooth addresses, serials,
-the app authorization code and Apple pairing keys. The `.up` that `build_up.py` writes stops before
-PSMP, so it's safe to share. Details are in [PSMP](../reference/psmp.md).
+Raw flash contains PSMP: Bluetooth addresses, serials, app authorization and Apple pairing keys.
+The builder normally stops before PSMP, but inspect outputs before sharing.
+See [PSMP](../reference/psmp.md). Keep dumps outside the checkout; dump extensions are ignored.

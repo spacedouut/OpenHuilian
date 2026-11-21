@@ -59,7 +59,7 @@ FIRM and OTAP have the same header structure. The values below describe FIRM whe
 | `+0x30` | Vector table | Initial SP, reset and other vectors |
 | `+0x470` | Copy source | Header size plus `0x440` |
 
-The header CRC starts at the vector table. It covers different bytes from the block copied from `+0x470`. Any description that assigns the `+0x1C` CRC to that copied block is incorrect. [cfw.py](../../tools/cfw.py) computes the vector-table range, which matches the stored FIRM and OTAP values.
+The header CRC starts at the vector table. It covers different bytes from the block copied from `+0x470`. Any description that assigns the `+0x1C` CRC to that copied block is incorrect. [cfw.py](../../openhuilian/patch/cfw.py) computes the vector-table range, which matches the stored FIRM and OTAP values.
 
 The bootloader reads the header to copy and jump. It does not check the FIRM or OTAP CRC, does not read the `+0x1C` CRC field and has no CRC16 routine or `0x1021` polynomial constant.
 

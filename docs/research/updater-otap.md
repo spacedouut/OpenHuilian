@@ -43,7 +43,7 @@ Unicorn emulation of the `82` handler (`0x80E4C0`, erase helper hooked) pins dow
 | not a 4 KiB multiple | rounds up past `0x3000 + total` |
 | below `0xD000` | `total - 0xD000` underflows and every 64 KiB block in the address space is erased, the whole chip |
 
-`upfmt.py`, `flashota.py` and the WebUI refuse an image whose OTAP isn't 4 KiB-aligned at `>= 0x10000` for that reason.
+`upfmt.py`, `hl ota` and the WebUI refuse an image whose OTAP isn't 4 KiB-aligned at `>= 0x10000` for that reason.
 
 ## Data, CRC and index handling
 
@@ -73,7 +73,7 @@ Hardware confirms that omitting `04` leaves the buds in OTAP across power cycles
 
 ## Emulated end-to-end update
 
-[`tools/emu/otap_check.py`](../../tools/emu/otap_check.py) runs the stock OTAP in Unicorn from `0x804800` and feeds it the RFCOMM bytes from `hl ota`'s one-bud routine (`cli._ota_one_bud`). The 55AA parser `FUN_00805e54`, the handler `FUN_0080e770`, the erase planner, index save/restore, OTAP/PSMP pinning, the final CRC, the guard CRC and the `04` flag clear all run unmodified. SPI erase (`FUN_0082bc40`) and page program (`FUN_0082bbd4`) act on a NOR model in which erase sets `FF` and program ANDs bits, so a write to flash that wasn't erased is caught. The ROM flash read and libc helpers are emulated. Timers, peer relay and reboot are recorded.
+[`openhuilian/emu/otap_check.py`](../../openhuilian/emu/otap_check.py) runs the stock OTAP in Unicorn from `0x804800` and feeds it the RFCOMM bytes from `hl ota`'s one-bud routine (`cli._ota_one_bud`). The 55AA parser `FUN_00805e54`, the handler `FUN_0080e770`, the erase planner, index save/restore, OTAP/PSMP pinning, the final CRC, the guard CRC and the `04` flag clear all run unmodified. SPI erase (`FUN_0082bc40`) and page program (`FUN_0082bbd4`) act on a NOR model in which erase sets `FF` and program ANDs bits, so a write to flash that wasn't erased is caught. The ROM flash read and libc helpers are emulated. Timers, peer relay and reboot are recorded.
 
 | Scenario | Result with the `--tone-len 0x20000` image |
 |---|---|
@@ -137,7 +137,7 @@ OTAP has its own 1,196-byte dispatcher at `FUN_00810914`. The table distinguishe
 | `60`, `61`, `63`, `64` | Write-command group also present in FIRM | Present, gated behavior |
 | `83` | Flash read, maximum 200 bytes | Working read path |
 
-The observed reply subset is `04`, `05`, `09`, `51`, plus `83` flash reads. Handler presence alone does not establish a usable recovery command. [tools/hl](../../tools/hl) supports the working reads and the [recovery guide](../how-to/unstick-buds.md) covers leaving OTAP.
+The observed reply subset is `04`, `05`, `09`, `51`, plus `83` flash reads. Handler presence alone does not establish a usable recovery command. [hl](../../hl) supports the working reads and the [recovery guide](../how-to/unstick-buds.md) covers leaving OTAP.
 
 ## Function map
 

@@ -118,7 +118,7 @@ The 191-byte maximum and 224-byte vendor feature size are both recorded in the d
 
 The 377 build contains `devmotion6`, while the compared SL6800 build does not. Both have the AAP server, SDP, XAPL, Siri and the proximity advert. H3Pro contains the `devmotion6` AccessoryService plist, HID descriptor and the 2007 Apple copyright string.
 
-[sdp_hid.py](../../tools/sdp_hid.py) is the decoder. The detailed static report is [aap_anc_body.html](../../data/reports/aap_anc_body.html).
+[sdp_hid.py](../../openhuilian/format/sdp_hid.py) is the decoder. The detailed static report is [aap_anc_body.html](../../docs/research/reports/aap_anc_body.html).
 
 ## Continuity adverts
 

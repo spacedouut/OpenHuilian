@@ -6,7 +6,7 @@ The vendor's COM.dll speaks `42 52` frames to a boot ROM and then to a RAM loade
 
 Shenju, 珠海绅聚 or Smartlink, supplies the SL68xx production tool and the `ota.shenjugroup.com` service. Flashloader SL-DEV 6.9.5 is a Windows PyInstaller bundle with Python 3.10 code and a PyQt6 UI.
 
-The archive is [vendor/shenju-flashloader](../../vendor/shenju-flashloader/). Its [README](../../vendor/shenju-flashloader/README.md) records provenance and third-party licensing.
+The third-party factory flasher archive used for this analysis is not distributed here.
 
 | Archive path | Contents |
 |---|---|

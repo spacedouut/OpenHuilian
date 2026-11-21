@@ -4,8 +4,8 @@
 
 Shenju (珠海绅聚 / Smartlink, `shenjugroup.com`) is the chip vendor behind the SL68xx parts and the
 `ota.shenjugroup.com` host in StarFun. Their Windows production/flashing tool is a PyInstaller bundle that decompiles to readable Python.
-It's archived under
-[`vendor/shenju-flashloader/`](../../vendor/shenju-flashloader/), see its [README](../../vendor/shenju-flashloader/README.md) for provenance and rights (third-party, **not** AGPL):
+It is third-party software, **not** AGPL, and is not distributed here. The historical
+analysis used this layout:
 
 ```
 decompiled-src/     Python 3.10 source (some functions marked "Decompyle incomplete")
@@ -115,11 +115,11 @@ string there is `SL6801`). On the H3Pro the updater doesn't check a mark string 
 * Rewrites the UI of the Iigenai GN-438 MP3 player (yp3_2.0.43 base) as an iPod-nano clone.
   Distributed as `.up` binaries; RE notes and tools are **not public**.
 * Proves the method on this silicon: dump → patch FIRM → fix CRCs → flash via the vendor tool (only checked on the GN-438).
-* Two files from its git history are archived here:
+* Two files from its git history informed this analysis (neither is distributed here):
   * Shenju's `SetupFlashloaderSL-DEV(6.9.5).exe` → [vendor tools](vendor-tools-and-prior-art.md)
   * `GN438_sl6801_fulldump.bin`, a raw 2 MiB SL6801 flash image with bootloader, partition table
-    and a **live PSMP log** → [`firmware/openpod-sl6801/`](../../firmware/openpod-sl6801/), used by
-    [PSMP](../reference/psmp.md) / `tools/psmp_tool.py`.
+    and a **live PSMP log**, used by
+    [PSMP](../reference/psmp.md) / `openhuilian/format/psmp_tool.py`.
 
 ### What transfers to the H3Pro Max3, and what doesn't
 

@@ -4,10 +4,10 @@ The voice prompts and click sounds live in the TONE partition. `tone_tool.py` sw
 the checksums. This has been flashed to real buds.
 
 ```bash
-python3 tools/tone_tool.py list    my-buds.up
-python3 tools/tone_tool.py extract my-buds.up stock-tones/
-python3 tools/tone_tool.py replace my-buds.up connected.mp3=new.mp3 noise.mp3=new-anc.mp3 -o custom.up
-python3 tools/tone_tool.py verify  custom.up
+python3 -m openhuilian.format.tone_tool list    my-buds.up
+python3 -m openhuilian.format.tone_tool extract my-buds.up stock-tones/
+python3 -m openhuilian.format.tone_tool replace my-buds.up connected.mp3=new.mp3 noise.mp3=new-anc.mp3 -o custom.up
+python3 -m openhuilian.format.tone_tool verify  custom.up
 ```
 
 Then flash `custom.up` ([flash an image](flash-an-image.md)).

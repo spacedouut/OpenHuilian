@@ -23,8 +23,8 @@ SPI flash via `FUN_0080576c`. The patch reroutes that one call in
 reply echoes it:
 
 ```
-python3 tools/hl --port <mac> read 0x80000000 0x200 rom-head.bin
-python3 tools/hl --port <mac> read 0x80008000 0x10000 rom.bin
+python3 hl --port <mac> read 0x80000000 0x200 rom-head.bin
+python3 hl --port <mac> read 0x80008000 0x10000 rom.bin
 ```
 
 ROM call sites seen so far sit around `0x8000-0x12000`
@@ -69,9 +69,10 @@ and it does not exercise the real `0x83` handler or the reroute site.
 
 ## What this is for
 
-The dump of `0x0-0x5ffff` is in [`firmware/h3promax3/rom/`](../../firmware/h3promax3/rom/README.md).
+The historical dump covered `0x0-0x5ffff`; it is not distributed. Set
+`OPENHUILIAN_MASK_ROM` to your own dump for experiments that need it.
 
 Pulling the real mask ROM (`0x0-0x20000`) replaces the `bx lr` stubs in the
-Unicorn rehost [`tools/emu/h3emu.py`](../../tools/emu/h3emu.py) with the actual RTOS kernel, SVC/PendSV handlers and
+Unicorn rehost [`openhuilian/emu/h3emu.py`](../../openhuilian/emu/h3emu.py) with the actual RTOS kernel, SVC/PendSV handlers and
 library calls. Also handy: dumping live RAM state or peripheral
 registers over the same path.

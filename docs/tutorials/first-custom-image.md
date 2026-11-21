@@ -17,7 +17,7 @@ You need:
 List what's in the stock image:
 
 ```bash
-python3 tools/tone_tool.py list firmware/h3promax3/h3promax3_2607061716_live.up
+python3 -m openhuilian.format.tone_tool list "$OPENHUILIAN_STOCK_UP"
 ```
 
 This example replaces `connected.mp3`, the sound you hear when the buds connect to a phone. Note
@@ -29,7 +29,7 @@ The buds only play formats the stock prompts already use. Pull out the stock fil
 format:
 
 ```bash
-python3 tools/tone_tool.py extract firmware/h3promax3/h3promax3_2607061716_live.up stock-tones/
+python3 -m openhuilian.format.tone_tool extract "$OPENHUILIAN_STOCK_UP" stock-tones/
 ffprobe stock-tones/connected.mp3
 ```
 
@@ -46,9 +46,9 @@ one it replaces. [Replace voice prompts](../how-to/replace-prompts.md) has the d
 ## 3. Build the image
 
 ```bash
-python3 tools/tone_tool.py replace firmware/h3promax3/h3promax3_2607061716_live.up \
+python3 -m openhuilian.format.tone_tool replace "$OPENHUILIAN_STOCK_UP" \
     connected.mp3=my-connected.mp3 -o custom.up
-python3 tools/tone_tool.py verify custom.up
+python3 -m openhuilian.format.tone_tool verify custom.up
 ```
 
 `replace` rebuilds the prompt list and fixes every checksum. `verify` should say
@@ -60,7 +60,7 @@ its bitrate to match the stock one.
 Take both buds out of the case, keep them close to the computer, and run:
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF ota custom.up
+python3 hl --port AA:BB:CC:DD:EE:FF ota custom.up
 ```
 
 Here's what you'll see:
@@ -75,7 +75,7 @@ Don't close the terminal or put the buds away while it runs.
 ## 5. Check it worked
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF info
+python3 hl --port AA:BB:CC:DD:EE:FF info
 ```
 
 Both buds should answer and show as linked. Turn your phone's Bluetooth back on and connect. You
@@ -83,12 +83,12 @@ should hear your new sound.
 
 If the buds don't reconnect, put both in the case, close the lid for about 10 seconds, and take
 them out again. If they show up as a generic Bluetooth device with no AirPods pop-up, they are
-still in the updater. Run `python3 tools/hl --port AA:BB:CC:DD:EE:FF leave-ota`.
+still in the updater. Run `python3 hl --port AA:BB:CC:DD:EE:FF leave-ota`.
 
 ## What you did
 
 You built an image with a custom prompt and flashed it over Bluetooth. Flashing the stock image
-`firmware/h3promax3/h3promax3_2607061716_live.up` the same way puts the original sound back.
+`"$OPENHUILIAN_STOCK_UP"` the same way puts the original sound back.
 
 Next steps:
 

@@ -1,26 +1,22 @@
 # Get stock firmware
 
-There is no H3Pro Max3 firmware on StarFun's server. The stock image in this repo,
-`firmware/h3promax3/h3promax3_2607061716_live.up`, was read off a pair of buds. If your buds run a
-different version, [dump your own](dump-firmware.md).
-
-## Check the server for a new H3Pro build
+No stock images or ROMs are distributed. Dump your own buds using `hl read`, then
+wrap the raw flash using build_up. Create a private output directory outside the checkout first.
 
 ```bash
-export STARFUN_USER=... STARFUN_PASS=...
-python3 tools/pull_ota.py h3promax3 2607061716
+./hl --port AA:BB:CC:DD:EE:FF read 0x0 0x100000 ~/stock/flash.bin
+python3 -m openhuilian.format.build_up ~/stock/flash.bin ~/stock/my-buds.up
+python3 -m openhuilian.format.tone_tool verify ~/stock/my-buds.up
+export OPENHUILIAN_STOCK_UP="$HOME/stock/my-buds.up"
 ```
 
-"No update returned" means the server has nothing for that version. The login is the app's own
-tenant account. It isn't in this repo, but it can be pulled from the StarFun APK
-(`OtaPresenter.getUserToken`).
+The length is for a 1 MiB H3Pro Max3; confirm sizes for other hardware.
+See [dump firmware](dump-firmware.md) for read details and ROM access limitations.
+Never flash another model's image. Raw flash includes device identities and pairing keys.
 
-## Download catalog images
+Experiments using real ROM code also need your own dump:
+`export OPENHUILIAN_MASK_ROM="$HOME/stock/my-mask-rom.bin"`.
 
-```bash
-python3 tools/pull_ota.py a10        # newest image for a package
-```
-
-The 24 public images are already in `firmware/starfun-catalog/`. They are all SL6801-class, for
-other earbuds. They're useful for comparing formats, but **never flash them to H3Pro buds**. The
-list is in [the app and its servers](../explanation/the-app-and-servers.md#the-public-catalog).
+The optional `python3 -m openhuilian.device.pull_ota` client queries the StarFun server
+using existing `STARFUN_USER` / `STARFUN_PASS` credentials. It is not required for
+your own stock image, and the server may have no build for your buds.

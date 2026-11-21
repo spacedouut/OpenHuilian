@@ -4,8 +4,8 @@
 change to each other, so you only talk to one of them.
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF get anc_mode
-python3 tools/hl --port AA:BB:CC:DD:EE:FF set anc_mode 2
+python3 hl --port AA:BB:CC:DD:EE:FF get anc_mode
+python3 hl --port AA:BB:CC:DD:EE:FF set anc_mode 2
 ```
 
 ## Settings
@@ -42,7 +42,7 @@ Use channel 3. Channel 1 is the buds' hands-free channel and answers with `AT` c
 ## Tune ANC gains live
 
 ```bash
-python3 tools/hl --port AA:BB:CC:DD:EE:FF dash
+python3 hl --port AA:BB:CC:DD:EE:FF dash
 ```
 
 This starts a local page at `http://127.0.0.1:8765` (`--listen host:port` to change it). It shows
@@ -65,9 +65,9 @@ too much feedback gain can squeal. Gains you don't save reset on reboot.
 
 ## In a browser or a desktop panel
 
-* `tools/webui/index.html` does the same in Chrome or Edge through Web Serial. Serve it with
-  `python3 -m http.server 8000 -d tools/webui` and open `http://localhost:8000`. It hasn't been
+* `openhuilian/ui/webui/index.html` does the same in Chrome or Edge through Web Serial. Serve it with
+  `python3 -m http.server 8000 -d openhuilian/ui/webui` and open `http://localhost:8000`. It hasn't been
   run against buds yet.
-* `python3 tools/panel/server.py --port AA:BB:CC:DD:EE:FF`, then open `http://127.0.0.1:8765`.
+* `python3 -m openhuilian.ui.panel.server --port AA:BB:CC:DD:EE:FF`, then open `http://127.0.0.1:8765`.
   It shows live status and more settings than `hl`. The extra ones come from the app's source and
   are marked unverified in the panel.

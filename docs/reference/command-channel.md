@@ -2,7 +2,7 @@
 
 The buds take commands over Bluetooth SPP, RFCOMM channel 3. Frames start with `C0` for
 normal commands and `55 AA` for the updater ([OTA protocol](ota-protocol.md)). Only one SPP
-connection is allowed at a time. `tools/hl` implements all of this, and `hl cmd <hex>` sends a raw
+connection is allowed at a time. `hl` implements all of this, and `hl cmd <hex>` sends a raw
 frame.
 
 ## Frames
@@ -14,7 +14,7 @@ little-endian. Writes to settings are copied to the other bud by the firmware.
 
 `C0 01` sends a 64-byte challenge and `C0 02` a 64-byte verify. Both are scrambled with a 16-bit
 LFSR (`s = rotl16(s, 1) ^ (s & 0x8000 ? 0xD103 : 0)`, clocked once per input bit, XOR keystream).
-It is obfuscation, not a cipher. `tools/huilian/proto.py` implements both sides. A unit whose
+It is obfuscation, not a cipher. `openhuilian/device/proto.py` implements both sides. A unit whose
 PSMP `authorization_code` doesn't descramble to `APP` never answers `C0 01`, so any reply means
 the unit is authorized. `hl auth` runs the exchange. The `55 AA` updater frames don't need it.
 

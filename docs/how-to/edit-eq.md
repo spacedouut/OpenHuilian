@@ -20,8 +20,7 @@ changes the gain of one band and fixes both CRCs (run it from the repo root):
 ```python
 # eq_gain.py <in.up> <out.up> <profile> <band> <gain_db>
 import struct, sys
-sys.path.insert(0, "tools")
-from upfmt import BODY, crc16, index_offset, parse_index
+from openhuilian.format.upfmt import BODY, crc16, index_offset, parse_index
 
 src, dst, page, band, gain = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), float(sys.argv[5])
 up = bytearray(open(src, "rb").read())
@@ -49,10 +48,10 @@ open(dst, "wb").write(up)
 
 ```bash
 python3 eq_gain.py my-buds.up eq.up 1 4 2.0      # profile 1, band 4 (2421 Hz) from +3.8 to +2.0 dB
-python3 tools/tone_tool.py verify eq.up
+python3 -m openhuilian.format.tone_tool verify eq.up
 ```
 
 Band numbers and current values for every profile are in
-[`data/partitions-h3promax3/eq2p_profiles.txt`](../../data/partitions-h3promax3/eq2p_profiles.txt).
+[`data/eq2p_profiles.txt`](../../data/eq2p_profiles.txt).
 The same record format holds frequency (`param` 0) and Q (`param` 1). An edited EQ2P hasn't been
 flashed to buds yet, only round-tripped offline.

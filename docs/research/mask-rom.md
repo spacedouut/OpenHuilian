@@ -44,10 +44,10 @@ Counts are the reported call counts from the static sweep. A dash means no count
 
 ## Dumping it
 
-The ROM image is in [`firmware/h3promax3/rom/`](../../firmware/h3promax3/rom/README.md), `0x0` to `0x5FFFF`, read with the [ROM read patch](rom-read.md). That patch extends `C0 83` so an address with bit 31 set reads raw memory, which makes `hl read 0x80000000 <len>` a mask-ROM dump over Bluetooth. [`tools/emu/h3emu.py`](../../tools/emu/h3emu.py) still stands in a `bx lr` for every ROM address and emulates only the helpers named in its own table.
+The historical ROM image covered `0x0` to `0x5FFFF` and is not distributed. Supply your own dump via `OPENHUILIAN_MASK_ROM`. The [ROM read patch](rom-read.md) extends `C0 83` so an address with bit 31 set reads raw memory, which makes `hl read 0x80000000 <len>` a mask-ROM dump over Bluetooth; that patch is hardware-unverified. [`openhuilian/emu/h3emu.py`](../../openhuilian/emu/h3emu.py) still stands in a `bx lr` for every ROM address and emulates only the helpers named in its own table.
 
 ## Reproduction and limits
 
-The full generated target list, with call counts and example callers, is [`data/analysis/rom_surface_h3promax3.txt`](../../data/analysis/rom_surface_h3promax3.txt). The [reproduction workflow](README.md#reproduce-it) lists `oh_dump_lib.py` for decompile references and `romscan.py` for direct BL targets.
+The full generated target list, with call counts and example callers, is not distributed. The historical [reproduction workflow](README.md#reproduce-it) lists `oh_dump_lib.py` for decompile references and `romscan.py` for direct BL targets; those analysis-machine scripts are not bundled.
 
 The table above preserves every named entry in the sources. It does not assign names or behavior to the remaining targets. [UART boot ROM](uart-boot-rom.md) covers the download protocol surface, and [FIRM runtime](firm-runtime.md) covers the task and event APIs that use ROM.
