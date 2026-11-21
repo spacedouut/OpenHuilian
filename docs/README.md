@@ -19,6 +19,7 @@ recovery.
 * [Change settings](how-to/change-settings.md)
 * [Replace voice prompts](how-to/replace-prompts.md)
 * [Edit the EQ](how-to/edit-eq.md)
+* [Set up REA and Hopper](how-to/set-up-rea-and-hopper.md)
 * [Apply a firmware patch](how-to/apply-a-patch.md)
 * [Flash an image](how-to/flash-an-image.md)
 * [Get buds out of the updater](how-to/unstick-buds.md)

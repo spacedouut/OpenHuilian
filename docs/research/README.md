@@ -17,6 +17,7 @@ This section describes what the H3Pro Max3 `2607061716` firmware does and where 
 | [Audio and DSP](audio-and-dsp.md) | EQ2P and SENC readers, ANC controls, DSP tables and verified patch offsets |
 | [Low-volume noise](low-volume-noise.md) | Volume curves, the mask-ROM gain ramp, undithered PCM16, the voice-path noise suppressor (emulated), tests to tell firmware from hardware |
 | [Docs audit (Nov 2026)](docs-audit-2026-11.md) | Historical offline checks, corrections and remaining hardware questions |
+| [Chip peripherals](chip-peripherals.md) | Polled registers, the 64-bit timebase, PMU bus, flash controller, UARTs, the RAM vector table and IRQ numbers, with the emulator changes they suggest |
 | [Mask ROM](mask-rom.md) | The 467-target call surface and named ROM services |
 | [Debug monitor patch](debug-monitor.md) | `debug-monitor` patch: C0 `D0`-`D4` peek, poke, call and a log ring, in new code after stock FIRM; the code-cave and heap-reservation layout; its emulator check |
 | [ROM read patch](rom-read.md) | `rom-read` patch: C0 `0x83` with address bit 31 set copies raw memory, the mask-ROM dump path, its Unicorn selftest |
