@@ -212,12 +212,7 @@ class I2CMaster(Peripheral):
 
     def __init__(self, machine):
         super().__init__(machine)
-        self.devices, self.log, self.cur = {}, [], None
-
-    def read(self, off, size):
-        if off == 0x0C and self.cur is not None:
-            return self.cur.read() & 0xFF
-        return self.regs.get(off, 0)
+        self.devices, self.log, self.cur, self.reading = {}, [], None, 0
 
     def write(self, off, value, size):
         if off == 0x00:
@@ -227,12 +222,15 @@ class I2CMaster(Peripheral):
         elif off == 0x04 and value >> 31:
             tx = self.regs.get(0x08, 0) & 0xFF
             if value & 1:
-                self.cur = self.devices.get(tx >> 1)
+                self.cur, self.reading = self.devices.get(tx >> 1), tx & 1
                 self.log.append((tx, self.cur is not None))
                 if self.cur is None:
                     self.regs[0x10] = self.regs.get(0x10, 0) | 0x8000
-            elif value & 8 and self.cur is not None and hasattr(self.cur, "write"):
-                self.cur.write(tx)
+            elif value & 8 and self.cur is not None:
+                if self.reading:
+                    self.regs[0x0C] = self.cur.read() & 0xFF
+                else:
+                    self.cur.write(tx)
             value = 0
         self.regs[off] = value
 

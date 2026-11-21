@@ -79,6 +79,7 @@ class Machine:
         self._stop = None
         self.stall_limit = 2_000_000   # reads of one register with nothing else happening
         self._last_read = None
+        self._woken = None
         self._wfi_blocks, self.wfi_count = {}, 0
         self.self_clearing = {}    # register -> bits that read back 0 after being written 1
         self.read_values = {}      # register -> fixed value or callable(machine) -> value
@@ -213,8 +214,11 @@ class Machine:
         self.block_hist[addr] += 1
         self.cycles += size >> 1
         st = self.systick
-        if self._has_wfi(addr, size) and not any(e < EXC_IRQ0 or e in self.enabled
-                                                 for e in self.pending):
+        wfi = self._has_wfi(addr, size)
+        if wfi and addr == self._woken:
+            self._woken = None      # back from the interrupt that ended this sleep
+            wfi = False
+        if wfi and not any(e < EXC_IRQ0 or e in self.enabled for e in self.pending):
             # WFI: the core sleeps until an enabled interrupt is pending (masked by PRIMASK or
             # not). Skip to the next SysTick if it can wake us; with no modelled wake source
             # left the machine is asleep for good.
@@ -233,6 +237,8 @@ class Machine:
         for p in self.tickers:
             p.tick()
         if self.pending and self._deliverable() is not None:
+            if wfi:
+                self._woken = addr
             self._stop = "exception"
             uc.emu_stop()
 
@@ -291,6 +297,8 @@ class Machine:
             pend = min(self.pending, default=0)
             v = active | pend << 12 | (EXC_PENDSV in self.pending) << 28 | \
                 (EXC_SYSTICK in self.pending) << 26 | (not self.active[:-1]) << 11
+        elif base == 0xD08:
+            v = self.vectors
         else:
             v = self.scs.get(base, 0)
         uc.mem_write(SCS + base, struct.pack("<I", v & 0xFFFFFFFF))
@@ -300,10 +308,11 @@ class Machine:
         base = off & ~3
         st = self.systick
         if size != 4:   # byte/halfword writes land in the priority registers
-            if 0x400 <= off < 0x500:
-                self.prio[EXC_IRQ0 + off - 0x400] = value & 0xFF
-            elif 0xD18 <= off < 0xD24:
-                self.prio[4 + off - 0xD18] = value & 0xFF
+            for i in range(size):
+                if 0x400 <= off + i < 0x500:
+                    self.prio[EXC_IRQ0 + off + i - 0x400] = value >> (8 * i) & 0xFF
+                elif 0xD18 <= off + i < 0xD24:
+                    self.prio[4 + off + i - 0xD18] = value >> (8 * i) & 0xFF
             return
         if base == 0x10:
             st["csr"] = value & 7
@@ -469,7 +478,7 @@ class Machine:
                 self.w(UC_ARM_REG_PSP, sp)
             else:
                 self.w(UC_ARM_REG_SP, sp)
-            self.w(UC_ARM_REG_XPSR, xpsr & 0xFE000000 & ~0x200 | 0x01000000)
+            self.w(UC_ARM_REG_XPSR, xpsr & 0xFE0FFC00 & ~0x200 | 0x01000000)
             control = self.r(UC_ARM_REG_CONTROL)
             self.w(UC_ARM_REG_CONTROL, control | 2 if to_psp else control & ~2)
         self.w(UC_ARM_REG_PC, pc)

@@ -10,7 +10,7 @@ import struct
 import unittest
 from pathlib import Path
 
-from unicorn.arm_const import UC_ARM_REG_PC, UC_ARM_REG_R0
+from unicorn.arm_const import UC_ARM_REG_PC, UC_ARM_REG_R0, UC_ARM_REG_R1
 
 from openhuilian.emu import chip
 from openhuilian.emu.machine import FLASH, SRAM
@@ -141,6 +141,44 @@ class ChipTests(unittest.TestCase):
         self.assertTrue(i2c.read(0x10, 4) & 0x8000)
         i2c.write(0x10, 0x8000, 4)
         self.assertFalse(i2c.read(0x10, 4) & 0x8000)
+
+    def test_i2c_read_takes_one_byte_per_data_command(self):
+        class Slave:
+            got, out = [], iter(b"\x11\x22")
+
+            def write(self, b):
+                self.got.append(b)
+
+            def read(self):
+                return next(self.out)
+
+        i2c = self.p["i2c"]
+        i2c.devices[0x60] = Slave()
+        for tx, cmd in ((0xC0, 1), (0x0F, 8), (0xC1, 1), (0, 8)):
+            i2c.write(0x08, tx, 4)
+            i2c.write(0x04, 0x80000000 | cmd, 4)
+        self.assertEqual((i2c.read(0x0C, 4), i2c.read(0x0C, 4), Slave.got), (0x11, 0x11, [0x0F]))
+        i2c.write(0x04, 0x80000008, 4)
+        self.assertEqual(i2c.read(0x0C, 4), 0x22)
+
+    def test_wfi_continues_after_the_waking_interrupt(self):
+        m = self.m
+        m.uc.mem_write(BUF, bytes.fromhex("30bf0131fee7") + bytes.fromhex("7047"))
+        m.uc.mem_write(SRAM + 0x70000 + 4 * 21, struct.pack("<I", BUF + 7))   # IRQ 5: bx lr
+        m._on_scs_write(m.uc, 0, 0xE000ED08, 4, SRAM + 0x70000, None)
+        m._on_scs_read(m.uc, 0, 0xE000ED08, 4, 0, None)
+        self.assertEqual(m.rd32(0xE000ED08), SRAM + 0x70000)
+        m._on_scs_write(m.uc, 0, 0xE000E100, 4, 1 << 5, None)
+        m.uc.reg_write(UC_ARM_REG_PC, BUF | 1)
+        m.w(UC_ARM_REG_R1, 0)
+        self.assertEqual(m.run(1000), "idle")
+        m.raise_irq(5)
+        self.assertEqual(m.run(1000), "budget")
+        self.assertEqual((m.exc_counts[21], m.r(UC_ARM_REG_R1)), (1, 1))
+
+    def test_halfword_priority_write_sets_both(self):
+        self.m._on_scs_write(self.m.uc, 0, 0xE000E404, 2, 0x4020, None)
+        self.assertEqual((self.m.prio[20], self.m.prio[21]), (0x20, 0x40))
 
     def test_timer_counts_microseconds(self):
         t, m = self.p["ustimer"], self.m
