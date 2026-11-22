@@ -2,9 +2,11 @@ import os
 import struct
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from openhuilian.device.cli import _up_payloads
+from openhuilian.format import build_up
 from openhuilian.format.upfmt import (BODY, FLASH_HEADER_CRC, crc16, flash_header_problems,
                                       ota_image_problems)
 
@@ -59,6 +61,35 @@ class SyntheticImageTests(unittest.TestCase):
                 self.assertEqual(len(ota_image_problems(bad)), 1)
                 with self.assertRaisesRegex(SystemExit, "nothing sent"):
                     send(bad)
+
+
+class BuildUpTests(unittest.TestCase):
+    def build(self, flash, *flags):
+        """Run build_up on a dump; the .up it wrote, or None."""
+        with tempfile.TemporaryDirectory() as scratch:
+            dump, out = Path(scratch) / "flash.bin", Path(scratch) / "out.up"
+            dump.write_bytes(flash)
+            with mock.patch("sys.argv", ["build_up", *flags, str(dump), str(out)]), \
+                    mock.patch("builtins.print"):
+                try:
+                    build_up.main()
+                except SystemExit as stop:
+                    self.assertIn("bad flash header", str(stop))
+            return out.read_bytes() if out.exists() else None
+
+    def dump(self):
+        flash = synthetic_up()[BODY:] + bytes(0x100)
+        struct.pack_into("<I", flash, 0x302C, crc16(bytes(0x100)))
+        return flash
+
+    def test_good_dump_is_wrapped(self):
+        self.assertEqual(self.build(self.dump())[BODY:], bytes(self.dump()))
+
+    def test_bad_header_is_refused_unless_forced(self):
+        bad = self.dump()
+        bad[0x1D] ^= 1
+        self.assertIsNone(self.build(bad))
+        self.assertEqual(self.build(bad, "--force")[BODY:], bytes(bad))
 
 
 class FlashHeaderTests(unittest.TestCase):
