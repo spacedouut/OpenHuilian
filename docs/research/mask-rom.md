@@ -29,8 +29,8 @@ Counts are the reported call counts from the static sweep. A dash means no count
 | `0xB514` | 55 | Flash write wrapper |
 | `0xB534` | 60 | Flash read wrapper |
 | `0xB5A9` | - | SysTick vector target, Thumb address |
-| `0xB6C4` | 218 | Exit critical section |
-| `0xB6D8` | 278 | Enter critical section |
+| `0xB6C4` | 218 | Uptime in milliseconds, the `0xB6D8` counter divided by ticks per millisecond |
+| `0xB6D8` | 278 | Read the 64-bit free-running counter at `0x40082104` |
 | `0xB78C` | 110 | Sleep for N milliseconds |
 | `0xC096` | 19 | `printf` family |
 | `0xC0DC` | 25 | `printf` family |
@@ -40,7 +40,7 @@ Counts are the reported call counts from the static sweep. A dash means no count
 | `0x4B29C` | 121 | Bluetooth helper, A2DP/RF glue |
 | `0x404132` | 42 | Audio/DSP helper |
 
-`0xB6D8` and `0xB6C4` appear as a pair around shared state. `FUN_0080576c` uses the flash-wrapper surface. FIRM's PendSV target is RAM `0x827591`, separate from the SVC and SysTick ROM targets.
+`0xB6D8` and `0xB6C4` appear as a pair because callers read the clock before and after a wait. Earlier notes called them a critical section; see [chip peripherals](chip-peripherals.md#timebase). `FUN_0080576c` uses the flash-wrapper surface. FIRM's PendSV target is RAM `0x827591`, separate from the SVC and SysTick ROM targets.
 
 ## Dumping it
 
