@@ -23,6 +23,44 @@ def rewrap(up):
     return bytes(up)
 
 
+def synthetic_up():
+    """Smallest .up the OTA checks accept: header, index at 0x3000, FIRM at 0x4000, OTAP at 0x10000."""
+    body = bytearray(0x10000)
+    body[:len(header())] = header(0)
+    struct.pack_into("<I", body, 0x20, 0x3000)
+    struct.pack_into("<I", body, FLASH_HEADER_CRC, crc16(bytes(body[:FLASH_HEADER_CRC])))
+    body[0x4000:0x4100] = bytes(range(256))
+    struct.pack_into("<II", body, 0x3000, 2, 1)
+    struct.pack_into("<4sIII", body, 0x3010, b"FIRM", 0x4000, 0x100, crc16(bytes(body[0x4000:0x4100])))
+    struct.pack_into("<4sIII", body, 0x3020, b"OTAP", 0x10000, 0x100, 0)
+    up = bytearray(BODY) + body
+    up[:6] = b"CONFIG"
+    return bytearray(rewrap(up))
+
+
+def send(image):
+    with tempfile.TemporaryDirectory() as scratch:
+        path = Path(scratch) / "image.up"
+        path.write_bytes(image)
+        return _up_payloads(path)
+
+
+class SyntheticImageTests(unittest.TestCase):
+    def test_good_image_is_sent(self):
+        self.assertEqual(ota_image_problems(synthetic_up()), [])
+        self.assertEqual(send(synthetic_up())[1], 0x4000)
+
+    def test_corrupted_header_is_refused(self):
+        for offset in (0x10, 0x1D, FLASH_HEADER_CRC):
+            with self.subTest(offset=hex(offset)):
+                bad = synthetic_up()
+                bad[BODY + offset] ^= 1
+                bad = rewrap(bad)
+                self.assertEqual(len(ota_image_problems(bad)), 1)
+                with self.assertRaisesRegex(SystemExit, "nothing sent"):
+                    send(bad)
+
+
 class FlashHeaderTests(unittest.TestCase):
     def test_good_header(self):
         self.assertEqual(flash_header_problems(header()), [])
@@ -59,16 +97,10 @@ class StockImageTests(unittest.TestCase):
     def setUp(self):
         self.up = Path(STOCK).read_bytes()
 
-    def send(self, image):
-        with tempfile.TemporaryDirectory() as scratch:
-            path = Path(scratch) / "image.up"
-            path.write_bytes(image)
-            return _up_payloads(path)
-
     def test_stock_passes(self):
         self.assertEqual(flash_header_problems(self.up[BODY:]), [])
         self.assertEqual(ota_image_problems(self.up), [])
-        self.assertEqual(self.send(self.up)[1], 0x4000)
+        self.assertEqual(send(self.up)[1], 0x4000)
 
     def test_corrupted_header_is_refused(self):
         for offset in (0x10, 0x1D, FLASH_HEADER_CRC):
@@ -80,7 +112,7 @@ class StockImageTests(unittest.TestCase):
                 self.assertEqual(len(problems), 1)
                 self.assertIn("flash header CRC at 0x5c", problems[0])
                 with self.assertRaisesRegex(SystemExit, "nothing sent"):
-                    self.send(bad)
+                    send(bad)
 
 
 if __name__ == "__main__":
