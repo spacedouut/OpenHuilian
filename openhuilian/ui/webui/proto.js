@@ -147,6 +147,21 @@ export const OTA_INDEX_ADDR = 0x3000, OTA_FIRM_ADDR = 0x4000, OTA_INDEX_MAX = 0x
 // OTAP 82 erases up to 0x3000+total rounded to 4 KiB; total < 0xD000 underflows into a whole-chip erase.
 export const OTA_MIN_OTAP = 0x10000;
 
+// Port of upfmt.flash_header_problems: the mask ROM wants HLKJ at flash 0 and the word at 0x5C
+// equal to the CRC16 of the 0x5C bytes before it, or it never starts BOOT.
+export const FLASH_HEADER_CRC = 0x5C;
+
+export function flashHeaderProblems(flash) {
+  if (flash.length < FLASH_HEADER_CRC + 4) return ["flash image is too short to hold the HLKJ header"];
+  if (String.fromCharCode(...flash.slice(0, 4)) !== "HLKJ")
+    return ["flash header has no HLKJ magic; the mask ROM would not boot it"];
+  const stored = new DataView(flash.buffer, flash.byteOffset).getUint32(FLASH_HEADER_CRC, true);
+  const want = crc16(flash.slice(0, FLASH_HEADER_CRC));
+  if (stored !== want)
+    return [`flash header CRC at 0x5c is 0x${stored.toString(16)}, the mask ROM computes 0x${want.toString(16).padStart(4, "0")} and would not boot it`];
+  return [];
+}
+
 export function otaImageProblems(upBytes) {
   if (String.fromCharCode(...upBytes.slice(0, 6)) !== "CONFIG") return ["not a .up (missing CONFIG magic)"];
   const body = upBytes.slice(UP_BODY);
@@ -154,6 +169,8 @@ export function otaImageProblems(upBytes) {
   const bad = [];
   if (hdr.getUint32(0x10, true) !== body.length || crc16(body) !== hdr.getUint16(0x14, true))
     bad.push("CONFIG header length/CRC does not match the body");
+  bad.push(...flashHeaderProblems(body));
+  if (body.length < 0x24) return bad;
   const io = indexOffset(body);
   if (io !== OTA_INDEX_ADDR) return [...bad, `index at 0x${io.toString(16)}; OTAP only handles an index at 0x3000`];
   const { entries } = parseIndex(body, io);
