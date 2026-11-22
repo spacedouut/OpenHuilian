@@ -38,6 +38,7 @@ directly with `HLKJ`; wrapping it with a 256-byte `CONFIG` header turns it into 
 |---|---|
 | 0x000 | `"HLKJ"`, 慧联科技 (Huilian Technology) |
 | 0x020 | u32 LE **index offset** (body-relative). `0x3000` in every image → index at file `0x3100`. |
+| 0x05C | u32 LE **header CRC**: CRC16/CCITT-FALSE of body `0x00..0x5B`, upper half zero. The mask ROM refuses to boot a header where it does not match. |
 
 The rest of the first 0x3000 bytes is bootloader/config territory. In the raw SL6801 dump the
 partition table sits at `0xD000` and FIRM at `0xE000`, i.e. layouts differ per product; always

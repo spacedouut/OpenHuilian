@@ -45,6 +45,19 @@ if (upPath) {
   check("up declared", proto.withCrc8(proto.otaDeclare(declared, 0x33)), b(vec.declared));
   check("up index len", Uint8Array.of(index.length >> 8, index.length & 0xff), b(vec.index_len));
   console.log(`payload ${payload.length}B fw@0x${fwAddr.toString(16)} declared ${declared.length}B`);
+  // a header the mask ROM would refuse is never streamed, even with a matching CONFIG wrapper
+  for (const off of [0x10, 0x1d, 0x5c]) {
+    const bad = up.slice();
+    bad[0x100 + off] ^= 1;
+    const crc = proto.crc16(bad.slice(0x100));
+    bad[0x14] = crc & 0xff; bad[0x15] = crc >> 8;
+    const why = proto.otaImageProblems(bad);
+    let refused = false;
+    try { proto.upPayloads(bad); } catch { refused = true; }
+    const ok = refused && why.length === 1 && why[0].includes("flash header CRC at 0x5c");
+    console.log(`${ok ? "ok " : "FAIL"}  bad flash header refused (0x${off.toString(16)})`);
+    if (!ok) fails++;
+  }
   const patch = JSON.parse(readFileSync(new URL("../../../patches/2607061716/head-tracking.json", import.meta.url)));
   const lines = [];
   const { out } = cfwApply(up, [patch], {}, lines);

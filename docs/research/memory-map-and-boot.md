@@ -73,7 +73,10 @@ The bootloader reads the header to copy and jump. It does not check the FIRM or 
 | `+0x10` | Body length | `0x1CF0` |
 | `+0x14` | CRC16 | `0xA8CB`, verified |
 | `+0x20` | Index offset | `0x3000` |
+| `+0x5C` | Header CRC16, 32-bit word | `0x0F8C`, CRC16/CCITT-FALSE of `+0x00` to `+0x5B` |
 | `+0x60` | Bootloader vectors | SP `0x878DF0`, reset `0x860101` |
+
+The mask ROM reads the first `0x5C` bytes, requires the `HLKJ` magic and compares the whole word at `+0x5C` with their CRC16 (seed `0xFFFF`), read from the ROM code at `0x4CBEA`. On a mismatch it never starts BOOT and returns to its UART download wait. `upfmt.flash_header_problems` applies the same check. `build_up.py` refuses to wrap a dump that fails it, and `hl ota` refuses to send an image that fails it. OTA itself only writes the index page and `0x4000` upward, so it never replaces the header on the bud; the check is there because such an image is damaged or mis-built, and would leave a bud unbootable if it were ever written whole over the wire.
 
 See the [update-format reference](../reference/up-format.md) for the outer `CONFIG` wrapper.
 
@@ -120,4 +123,4 @@ Across 24 catalog images plus the OpenPod dump, the first `0x3000` bytes contain
 | `0x5C` | `8C` | `7C` |
 | `0x5D` | `0F` | `40` |
 
-Fit30 and H3Pro use the same bootloader bytes. Flash class is configuration data. These three bytes need to remain consistent with the target flash class when comparing or constructing images.
+`0x5C` and `0x5D` are the header CRC, so they follow from `0x1D`: the classes differ in one configuration byte. Fit30 and H3Pro use the same bootloader bytes. Flash class is configuration data. These three bytes need to remain consistent with the target flash class when comparing or constructing images.

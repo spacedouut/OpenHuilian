@@ -41,6 +41,27 @@ OTA_INDEX_MAX = 0x80
 OTA_MIN_OTAP = 0x10000
 
 
+# The mask ROM reads 0x5C bytes at flash 0, wants the HLKJ magic and compares the whole word at
+# 0x5C with their CRC16 (docs/research/memory-map-and-boot.md). A header that fails never
+# starts BOOT: the ROM falls back to its UART download wait.
+FLASH_MAGIC = b"HLKJ"
+FLASH_HEADER_CRC = 0x5C
+
+
+def flash_header_problems(flash):
+    """Reasons the mask ROM would refuse the header at the start of a flash image."""
+    if len(flash) < FLASH_HEADER_CRC + 4:
+        return ["flash image is too short to hold the HLKJ header"]
+    if bytes(flash[:4]) != FLASH_MAGIC:
+        return ["flash header has no HLKJ magic; the mask ROM would not boot it"]
+    stored = struct.unpack_from("<I", flash, FLASH_HEADER_CRC)[0]
+    want = crc16(bytes(flash[:FLASH_HEADER_CRC]))
+    if stored != want:
+        return [f"flash header CRC at 0x{FLASH_HEADER_CRC:x} is 0x{stored:x}, the mask ROM "
+                f"computes 0x{want:04x} and would not boot it"]
+    return []
+
+
 def ota_image_problems(data):
     """Reasons a .up must not be streamed over 55AA OTA (empty list = ok)."""
     if data[:6] != MAGIC:
@@ -50,6 +71,9 @@ def ota_image_problems(data):
     bad = []
     if length != len(body) or crc16(body) != outer:
         bad.append("CONFIG header length/CRC does not match the body")
+    bad += flash_header_problems(body)
+    if len(body) < 0x24:
+        return bad
     io = index_offset(body)
     if io != OTA_INDEX_ADDR:
         return bad + [f"index at 0x{io:x}; OTAP only handles an index at 0x{OTA_INDEX_ADDR:x}"]
