@@ -3,7 +3,8 @@
 
 Usage: build_up.py [--force] <flash.bin> <out.up> [chip_name] [index_flash_addr_hex]
 
-Refuses to write an image whose stored partition CRCs do not verify unless --force is given.
+Refuses to write an image whose stored partition CRCs do not verify, or whose flash header the
+mask ROM would not boot, unless --force is given.
 
 Layout (from catalog images + Shenju flasher source):
   file = 256-byte outer header + body, body[k] == flash[k]
@@ -15,7 +16,7 @@ import struct
 import sys
 from pathlib import Path
 
-from openhuilian.format.upfmt import crc16, index_offset, parse_index
+from openhuilian.format.upfmt import crc16, flash_header_problems, index_offset, parse_index
 
 
 def main():
@@ -45,6 +46,12 @@ def main():
     print("all stored partition CRCs valid" if ok else "SOME CRCs INVALID")
     if not ok and not force:
         raise SystemExit(f"refusing to build {out} from a dump with invalid partition CRCs (use --force to override)")
+
+    header = flash_header_problems(flash)
+    for problem in header:
+        print(problem)
+    if header and not force:
+        raise SystemExit(f"refusing to build {out} from a dump with a bad flash header (use --force to override)")
 
     body = flash[:end]
     hdr = bytearray(0x100)

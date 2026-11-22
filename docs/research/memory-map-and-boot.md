@@ -76,7 +76,7 @@ The bootloader reads the header to copy and jump. It does not check the FIRM or 
 | `+0x5C` | Header CRC16, 32-bit word | `0x0F8C`, CRC16/CCITT-FALSE of `+0x00` to `+0x5B` |
 | `+0x60` | Bootloader vectors | SP `0x878DF0`, reset `0x860101` |
 
-The mask ROM reads the first `0x5C` bytes, requires the `HLKJ` magic and compares the whole word at `+0x5C` with their CRC16 (seed `0xFFFF`), read from the ROM code at `0x4CBEA`. On a mismatch it never starts BOOT and returns to its UART download wait. `upfmt.flash_header_problems` applies the same check, and `hl ota` and the image builders refuse an image that fails it.
+The mask ROM reads the first `0x5C` bytes, requires the `HLKJ` magic and compares the whole word at `+0x5C` with their CRC16 (seed `0xFFFF`), read from the ROM code at `0x4CBEA`. On a mismatch it never starts BOOT and returns to its UART download wait. `upfmt.flash_header_problems` applies the same check. `build_up.py` refuses to wrap a dump that fails it, and `hl ota` refuses to send an image that fails it. OTA itself only writes the index page and `0x4000` upward, so it never replaces the header on the bud; the check is there because such an image is damaged or mis-built, and would leave a bud unbootable if it were ever written whole over the wire.
 
 See the [update-format reference](../reference/up-format.md) for the outer `CONFIG` wrapper.
 
