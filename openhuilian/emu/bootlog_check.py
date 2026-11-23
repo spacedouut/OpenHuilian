@@ -42,15 +42,16 @@ SAVED = [*range(UC_ARM_REG_R0, UC_ARM_REG_R12 + 1), UC_ARM_REG_SP, UC_ARM_REG_LR
 
 
 class Slave:
-    """An I2C device that acknowledges everything; keeps what it was sent and how often it was read."""
-    def __init__(self):
-        self.written, self.reads = [], 0
+    """An I2C device that acknowledges everything; keeps each byte it was sent or asked for, with
+    the number of the transfer (START) it came in."""
+    def __init__(self, bus):
+        self.bus, self.seen = bus, []
 
     def write(self, byte):
-        self.written.append(byte)
+        self.seen.append((len(self.bus.log), "w", byte))
 
     def read(self):
-        self.reads += 1
+        self.seen.append((len(self.bus.log), "r", 0x5A))
         return 0x5A
 
 
@@ -180,15 +181,15 @@ def main():
     runs = []
     for flash in (stock, both):
         mach, per = chip.power_on(flash, rom)
-        dev = per["i2c"].devices[PROBE_ADDR] = Slave()
+        dev = per["i2c"].devices[PROBE_ADDR] = Slave(per["i2c"])
         runs.append((mach, per["i2c"].log, dev, mach.run(a.insns)))
     (s3, s3_bus, s3_dev, s3_stop), (m3, m3_bus, m3_dev, m3_stop) = runs
     i2c3 = [r for r in parse(read_log(m3)) if r[0] == "i2c"]
     good += [
         check(m3_stop == s3_stop == "idle" and not m3.fault and m3_bus == s3_bus and all(ok for _, ok in m3_bus)
-              and (m3_dev.written, m3_dev.reads) == (s3_dev.written, s3_dev.reads) and ops(m3) == ops(s3),
-              f"with a device at 0x{PROBE_ADDR:x}: idle after {m3.ms} ms, the device sees the same bytes as under "
-              f"stock (written {bytes(m3_dev.written).hex()}, {m3_dev.reads} read)"),
+              and m3_dev.seen == s3_dev.seen and ops(m3) == ops(s3),
+              f"with a device at 0x{PROBE_ADDR:x}: idle after {m3.ms} ms, the device sees the same bytes in the same "
+              f"transfers as under stock: " + " ".join(f"{n}{d}{b:02x}" for n, d, b in m3_dev.seen)),
         check([(r[1], r[2], r[3]) for r in i2c3] == [(a7 >> 1, "r" if a7 & 1 else "w", 0) for a7, _ in m3_bus]
               and len(i2c3) == PROBE_TRIES,
               f"with a device at 0x{PROBE_ADDR:x}: {len(i2c3)} I2C records, all status 00: "
