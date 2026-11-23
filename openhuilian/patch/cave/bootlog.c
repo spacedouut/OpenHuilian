@@ -64,14 +64,13 @@ __asm__(
     ".type bl_hook, %function\n"
     ".thumb_func\n"
     "bl_hook:\n" /* reached by bl from a patched call site; lr is the site's return address */
+    "  sub sp, #8\n" /* slot for the callee's address, so no register is changed on the way in */
     "  push {r0, r1, r2, r3, ip, lr}\n"
     "  mov r0, lr\n"
     "  bl bl_site\n"
-    "  mov ip, r0\n"
-    "  pop {r0, r1, r2, r3}\n"
-    "  add sp, #4\n"
-    "  pop {lr}\n"
-    "  bx ip\n"
+    "  str r0, [sp, #24]\n"
+    "  pop {r0, r1, r2, r3, ip, lr}\n"
+    "  ldr pc, [sp], #8\n"
     ".global bl_i2c_w\n"
     ".type bl_i2c_w, %function\n"
     ".thumb_func\n"
