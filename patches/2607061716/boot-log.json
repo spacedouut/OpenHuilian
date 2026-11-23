@@ -1,0 +1,135 @@
+{
+  "name": "Boot milestone log (task main init calls and I2C transfers, into the monitor log ring)",
+  "firmware": 2607061716,
+  "partition": "FIRM",
+  "about": "Apply together with debug-monitor.json. Logs one text line per init call of `task main` (b01..b11) and one per I2C transfer made during init (address, direction, status) into the debug monitor's RAM log ring; read it with `hl mon log`. RAM only, no flash writes. Uses the second half of the monitor's cave page and reserves 16 bytes of heap RAM. Source openhuilian/patch/cave/bootlog.c, built by openhuilian/patch/cave/build_bootlog.py; checked in openhuilian/emu/bootlog_check.py. See docs/research/boot-log.md.",
+  "layout": {
+    "firm_end": "0xaf000",
+    "ram": {
+      "addr": "0x8787f0",
+      "len": "0x10"
+    }
+  },
+  "ops": [
+    {
+      "offset": "0xaa800",
+      "old": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "new": "2de90f50704600f011f884460fbc01b05df804eb6047772000e0722049462a4600f07cf86842bde8f883d4d4b0b584b04ef6a81420f001000025c0f2ca0400bf54f83510814203d00135102df8d10fe0102d0dd09db948f2f070c0f287000121017048f2f470c0f287000025056006e048f2f070c0f28700002101701025691c4ef63023c1f30312c0f2ca0362209a5c8df8000001f00f008df801201a5c6846c11c8df8022000f005f804ebc500406804b0b0bdf0b581b04ef20007c0f2ca070c46396844f64842c4f64d62914223d10546202020704bf2d96080474bf2c56290474ef630221421c0f2ca0220fa01f303f00f03d35c04390e1d04f8013ff5d10a206070eff3108672b6fa68601b811c2846904786f3108801b0f0bd48f2f073c0f287031b78012b3dd148f2f47cc0f2870cdcf80030072b88bf704780b586b00133ccf8003043f269234ef6302cc2f26303c0f2ca0c8df80700c2f303100093c1f3031301f00f011cf800001cf801108df8090002f00f001cf803308df8051020211cf8002068468df806108df8081000f10b018df804308df80a20fff78aff06b0bde88040704782dec4005505c60086dec400a1e7c6008adec4002137c5008edec4008daac60092dec40061a3c60096dec40055e6c4009adec40081a2c5009edec4008158c500a2dec4002142c500a6dec400dd58c500aadec4008134c500aedec400f508c500b2dec4002125c500b6dec4001debc400badec4001d25c500bedec40031ebc400c4dec40099a2c5003031323334353637383961626364656600",
+      "what": "boot log code at XIP 0xcae800, 577 bytes: bl_hook 0xcae800, state at 0x8787f0"
+    },
+    {
+      "offset": "0x49e7e",
+      "old": "12f069fb",
+      "new": "60f0bffc",
+      "what": "task main 0xc4de7e: bl FUN_00c60554 -> bl bl_hook (milestone b01)"
+    },
+    {
+      "offset": "0x49e82",
+      "old": "20f08dfc",
+      "new": "60f0bdfc",
+      "what": "task main 0xc4de82: bl FUN_00c6e7a0 -> bl bl_hook (milestone b02)"
+    },
+    {
+      "offset": "0x49e86",
+      "old": "05f04bfc",
+      "new": "60f0bbfc",
+      "what": "task main 0xc4de86: bl FUN_00c53720 -> bl bl_hook (milestone b03)"
+    },
+    {
+      "offset": "0x49e8a",
+      "old": "1cf0fffd",
+      "new": "60f0b9fc",
+      "what": "task main 0xc4de8a: bl FUN_00c6aa8c -> bl bl_hook (milestone b04)"
+    },
+    {
+      "offset": "0x49e8e",
+      "old": "1cf067fa",
+      "new": "60f0b7fc",
+      "what": "task main 0xc4de8e: bl FUN_00c6a360 -> bl bl_hook (milestone b05)"
+    },
+    {
+      "offset": "0x49e92",
+      "old": "00f0dffb",
+      "new": "60f0b5fc",
+      "what": "task main 0xc4de92: bl FUN_00c4e654 -> bl bl_hook (milestone b06)"
+    },
+    {
+      "offset": "0x49e96",
+      "old": "0cf0f3f9",
+      "new": "60f0b3fc",
+      "what": "task main 0xc4de96: bl FUN_00c5a280 -> bl bl_hook (milestone b07)"
+    },
+    {
+      "offset": "0x49e9a",
+      "old": "07f0f1fc",
+      "new": "60f0b1fc",
+      "what": "task main 0xc4de9a: bl FUN_00c55880 -> bl bl_hook (milestone b08)"
+    },
+    {
+      "offset": "0x49e9e",
+      "old": "06f0bff9",
+      "new": "60f0affc",
+      "what": "task main 0xc4de9e: bl FUN_00c54220 -> bl bl_hook (milestone b09)"
+    },
+    {
+      "offset": "0x49ea2",
+      "old": "07f01bfd",
+      "new": "60f0adfc",
+      "what": "task main 0xc4dea2: bl FUN_00c558dc -> bl bl_hook (milestone b0a)"
+    },
+    {
+      "offset": "0x49ea6",
+      "old": "05f0ebfa",
+      "new": "60f0abfc",
+      "what": "task main 0xc4dea6: bl FUN_00c53480 -> bl bl_hook (milestone b0b)"
+    },
+    {
+      "offset": "0x49eaa",
+      "old": "02f023fd",
+      "new": "60f0a9fc",
+      "what": "task main 0xc4deaa: bl FUN_00c508f4 -> bl bl_hook (milestone b0c)"
+    },
+    {
+      "offset": "0x49eae",
+      "old": "04f037fb",
+      "new": "60f0a7fc",
+      "what": "task main 0xc4deae: bl FUN_00c52520 -> bl bl_hook (milestone b0d)"
+    },
+    {
+      "offset": "0x49eb2",
+      "old": "00f033fe",
+      "new": "60f0a5fc",
+      "what": "task main 0xc4deb2: bl FUN_00c4eb1c -> bl bl_hook (milestone b0e)"
+    },
+    {
+      "offset": "0x49eb6",
+      "old": "04f031fb",
+      "new": "60f0a3fc",
+      "what": "task main 0xc4deb6: bl FUN_00c5251c -> bl bl_hook (milestone b0f)"
+    },
+    {
+      "offset": "0x49eba",
+      "old": "00f039fe",
+      "new": "60f0a1fc",
+      "what": "task main 0xc4deba: bl FUN_00c4eb30 -> bl bl_hook (milestone b10)"
+    },
+    {
+      "offset": "0x49ec0",
+      "old": "0cf0eaf9",
+      "new": "60f09efc",
+      "what": "task main 0xc4dec0: bl FUN_00c5a298 -> bl bl_hook (milestone b11)"
+    },
+    {
+      "offset": "0x9c682",
+      "old": "6842bde8f883",
+      "new": "0ef0c8b800bf",
+      "what": "I2C write helper FUN_00ca0624 exit 0xca0682: rsbs r0, r5, #0 ; pop.w {r3-r9, pc} -> b.w bl_i2c_w 0xcae816 ; nop (bl_i2c_w replays both)"
+    },
+    {
+      "offset": "0x9c6f0",
+      "old": "6842bde8f883",
+      "new": "0ef093b800bf",
+      "what": "I2C read helper FUN_00ca0694 exit 0xca06f0: rsbs r0, r5, #0 ; pop.w {r3-r9, pc} -> b.w bl_i2c_r 0xcae81a ; nop (bl_i2c_r replays both)"
+    }
+  ]
+}

@@ -27,6 +27,7 @@ python3 -m openhuilian.format.tone_tool verify "$OPENHUILIAN_STOCK_UP"
 python3 -m openhuilian.emu.monitor_check "$OPENHUILIAN_STOCK_UP"
 python3 -m openhuilian.emu.repart_check "$OPENHUILIAN_STOCK_UP"
 python3 -m openhuilian.emu.boot_check "$OPENHUILIAN_STOCK_UP"   # needs OPENHUILIAN_MASK_ROM
+python3 -m openhuilian.emu.bootlog_check "$OPENHUILIAN_STOCK_UP"   # needs OPENHUILIAN_MASK_ROM
 python3 -m unittest openhuilian.emu.machine_test
 python3 -m openhuilian.ui.webui.genvec "$OPENHUILIAN_STOCK_UP" > /tmp/vec.json
 node openhuilian/ui/webui/selftest.mjs /tmp/vec.json "$OPENHUILIAN_STOCK_UP"

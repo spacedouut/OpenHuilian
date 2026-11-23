@@ -23,5 +23,7 @@ package layout and examples are in [`openhuilian/README.md`](../../openhuilian/R
 | `emu.otap_check` | no | run the OTAP updater in Unicorn and flash an image into an emulated bud with `hl ota`'s own code (update, rollback, CRC failure, interrupted transfer) | [updater](../research/updater-otap.md#emulated-end-to-end-update) |
 | `patch.cave.build` | no | build the debug monitor into its patch file (needs `ziglang`, `pyelftools`) | [debug monitor](../research/debug-monitor.md) |
 | `emu.monitor_check` | no | run the debug monitor through the real C0 handler in Unicorn | [debug monitor](../research/debug-monitor.md) |
+| `patch.cave.build_bootlog` | no | build the boot milestone log into its patch file (needs `ziglang`, `pyelftools`) | [boot log](../research/boot-log.md) |
+| `emu.bootlog_check` | no | boot the image with the boot log patch on the hardware model and read the log back (needs `unicorn`, `OPENHUILIAN_MASK_ROM`) | [boot log](../research/boot-log.md) |
 | `format.flashmap` | no | draw `docs/flash-map.png` from a `.up` (needs PIL) | |
 | `format.upfmt` | no | shared CRC16 and index helpers, not a CLI | |
