@@ -53,6 +53,7 @@ Patches live under `patches/<firmware version>/`. Anything that exposes a knob s
 |---|---|---|
 | `2607061716/head-tracking.json` | faster, less laggy head tracking ([command channel](../research/airpods-layer.md#head-tracking)) | `tx_ms` report period (stock 40), `decimate` fusion step every N+1 samples (stock 3), `alpha` smoother blend (stock 0.1) |
 | `2607061716/debug-monitor.json` | `C0 D0`-`D4` debug monitor: peek, poke, call, log ring, used with `hl mon` ([debug monitor](../research/debug-monitor.md)). Grows FIRM by one page and reserves 1 KiB of heap RAM. Checked in Unicorn by `openhuilian/emu/monitor_check.py`, not flashed yet | none |
+| `2607061716/boot-log.json` | Boot milestone log: a line per `task main` init call and per I2C transfer during init, into the monitor's log ring, RAM only ([boot log](../research/boot-log.md)). Apply with `debug-monitor.json`. Reserves 16 more bytes of heap RAM. Checked on the hardware model by `openhuilian/emu/bootlog_check.py`, not flashed yet | none |
 | `2607061716/rom-read.json` | `C0 83` reads raw memory when address bit 31 is set, for dumping the mask ROM ([ROM read](../research/rom-read.md)). Stub checked in Unicorn by `rom-read-selftest.py`, not flashed yet | none |
 
 ## Rules

@@ -21,6 +21,7 @@ This section describes what the H3Pro Max3 `2607061716` firmware does and where 
 | [Mask ROM](mask-rom.md) | The 467-target call surface and named ROM services |
 | [Hardware model](hardware-model.md) | Power-on boot in Unicorn with the real ROM: modelled peripheral registers, the boot timeline, and what is not modelled |
 | [Debug monitor patch](debug-monitor.md) | `debug-monitor` patch: C0 `D0`-`D4` peek, poke, call and a log ring, in new code after stock FIRM; the code-cave and heap-reservation layout; its emulator check |
+| [Boot milestone log patch](boot-log.md) | `boot-log` patch: `task main` init milestones and the I2C probe result written to the monitor's log ring; its check on the hardware model |
 | [ROM read patch](rom-read.md) | `rom-read` patch: C0 `0x83` with address bit 31 set copies raw memory, the mask-ROM dump path, its Unicorn selftest |
 | [UART boot ROM](uart-boot-rom.md) | Vendor loader sequence, `42 52` frames, USB entry and unresolved hardware details |
 | [Images and variants](images-and-variants.md) | Catalog differences, H3Pro image contents, `zero_ota.bin` and OpenPod |
