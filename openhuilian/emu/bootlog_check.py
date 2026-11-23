@@ -25,6 +25,7 @@ from unicorn import UC_HOOK_CODE
 from unicorn.arm_const import (UC_ARM_REG_LR, UC_ARM_REG_PC, UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R12,
                                UC_ARM_REG_SP, UC_ARM_REG_XPSR)
 
+from openhuilian.emu import chip
 from openhuilian.emu.boot_check import boot, check
 from openhuilian.format.upfmt import BODY
 from openhuilian.inputs import mask_rom, stock_up
@@ -38,6 +39,19 @@ MON_MAGIC = 0x4C4D4C48
 SENT, STACK, FRAME = 0x7F000, 0x8F8000, 0x8FA000   # return sentinel in ROM, scratch stack and frame
 PROBE_ADDR, PROBE_TRIES = 0x60, 3
 SAVED = [*range(UC_ARM_REG_R0, UC_ARM_REG_R12 + 1), UC_ARM_REG_SP, UC_ARM_REG_LR, UC_ARM_REG_PC, UC_ARM_REG_XPSR]
+
+
+class Slave:
+    """An I2C device that acknowledges everything; keeps what it was sent and how often it was read."""
+    def __init__(self):
+        self.written, self.reads = [], 0
+
+    def write(self, byte):
+        self.written.append(byte)
+
+    def read(self):
+        self.reads += 1
+        return 0x5A
 
 
 def patched(image, tmp, *patches):
@@ -112,10 +126,17 @@ def main():
         alone = patched(image, tmp, BOOTLOG)
     sites = sum("milestone" in op["what"] for op in json.loads(BOOTLOG.read_text())["ops"])
 
-    s, sp, s_stop = boot(image.read_bytes()[BODY:], rom, a.insns)
+    stock = image.read_bytes()[BODY:]
+    s, sp, s_stop = boot(stock, rom, a.insns)
     m, p, stop = boot(both, rom, a.insns)
     ops = lambda mach: [op[:3] for op in mach.flash_ops]
     psmp, psmp_len = m.parts["PSMP"]
+
+    def outside(mach, flash):
+        """Offsets outside PSMP where the flash no longer holds the image it was loaded with."""
+        want = bytes(flash).ljust(len(mach.flash), b"\xff")
+        return [i for i in range(len(mach.flash)) if not psmp <= i < psmp + psmp_len and mach.flash[i] != want[i]]
+
     good = [
         check(s_stop == "idle" and not s.fault, f"stock: idle task sleeps in WFI after {s.ms} ms"),
         check(stop == "idle" and not m.fault,
@@ -125,6 +146,8 @@ def main():
         check(not p["flash"].errors and ops(m) == ops(s)
               and all(psmp <= o[1] and o[1] + o[2] <= psmp + psmp_len for o in m.flash_ops),
               f"patched: the same {len(m.flash_ops)} flash writes as stock, all inside PSMP (the patch adds none)"),
+        check(m.flash[psmp:psmp + psmp_len] == s.flash[psmp:psmp + psmp_len] and not outside(m, both),
+              "patched: PSMP ends with the same bytes as stock, the rest of the flash is as it was written"),
         check(p["i2c"].log == sp["i2c"].log, f"patched: the same I2C bus traffic as stock {p['i2c'].log}"),
     ]
 
@@ -151,6 +174,25 @@ def main():
               f"I2C records match the bus model: {' '.join(d for _, d, _ in bus)}"),
         check(recs and recs[-1][:2] == ("b", sites) and all(recs.index(r) < len(recs) - 1 for r in i2c),
               "the probe happens during init, before the last milestone"),
+    ]
+
+    # The same boot with a device answering at the probed address: the transfers succeed and say so.
+    runs = []
+    for flash in (stock, both):
+        mach, per = chip.power_on(flash, rom)
+        dev = per["i2c"].devices[PROBE_ADDR] = Slave()
+        runs.append((mach, per["i2c"].log, dev, mach.run(a.insns)))
+    (s3, s3_bus, s3_dev, s3_stop), (m3, m3_bus, m3_dev, m3_stop) = runs
+    i2c3 = [r for r in parse(read_log(m3)) if r[0] == "i2c"]
+    good += [
+        check(m3_stop == s3_stop == "idle" and not m3.fault and m3_bus == s3_bus and all(ok for _, ok in m3_bus)
+              and (m3_dev.written, m3_dev.reads) == (s3_dev.written, s3_dev.reads) and ops(m3) == ops(s3),
+              f"with a device at 0x{PROBE_ADDR:x}: idle after {m3.ms} ms, the device sees the same bytes as under "
+              f"stock (written {bytes(m3_dev.written).hex()}, {m3_dev.reads} read)"),
+        check([(r[1], r[2], r[3]) for r in i2c3] == [(a7 >> 1, "r" if a7 & 1 else "w", 0) for a7, _ in m3_bus]
+              and len(i2c3) == PROBE_TRIES,
+              f"with a device at 0x{PROBE_ADDR:x}: {len(i2c3)} I2C records, all status 00: "
+              + " ".join(r[2] for r in i2c3)),
     ]
 
     m2, _, stop2 = boot(alone, rom, a.insns)

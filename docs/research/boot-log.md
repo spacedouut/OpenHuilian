@@ -87,7 +87,7 @@ the next one.
 |---|---|---|
 | Code | XIP `0xCAE800`, 577 bytes | Second half of the monitor's cave page. `layout.firm_end` is the monitor's `0xAF000`, so the flash layout is the same as with the monitor alone |
 | State | RAM `0x8787F0`, 16 bytes reserved | An armed word and the I2C line count, just below the monitor's block. `cfw.py` lowers the heap by another 16 bytes |
-| Milestone hooks | the 17 `bl` instructions in `FUN_00c4de78` | Each `bl X` becomes `bl bl_hook`. `bl_hook` saves `r0`-`r3`, `ip` and `lr`, finds the call in a table by its return address, logs, restores the registers and jumps to `X`, which returns straight to `task main` |
+| Milestone hooks | the 17 `bl` instructions in `FUN_00c4de78` | Each `bl X` becomes `bl bl_hook`. `bl_hook` saves `r0`-`r3`, `ip` and `lr`, finds the call in a table by its return address, logs, restores all six and jumps to `X` through a stack slot, so `X` starts with every register as `task main` left it and returns straight to `task main` |
 | I2C hooks | `0xCA0682` and `0xCA06F0` | The common exits of the bus write helper `FUN_00ca0624` and read helper `FUN_00ca0694`: `rsbs r0, r5, #0` and `pop.w {r3-r9, pc}` become a `b.w` to a stub that logs `r9` (address) and `r5` (status) and then runs the same two instructions |
 | Ring | `mon_log` from the monitor header | Called with interrupts masked, so a line is not interleaved with another writer's |
 
@@ -122,17 +122,22 @@ and prints it. It checks the following:
 
 * The patched image reaches idle like stock (3694 ms against 3693 ms) with the same IRQ enabled.
 * The patched boot makes the same 12 flash writes as stock, all inside PSMP, and the same I2C
-  bus traffic.
+  bus traffic. PSMP ends with the same bytes as after the stock boot and no other flash byte
+  changes.
 * The log read back through the monitor is the ring in RAM.
 * The log holds `b01` to `b11` once each, in order, with rising timestamps.
 * The log holds three I2C lines for address `0x60`, all failed, matching the bus model's write,
   read, write.
+* With a device answering at `0x60` in the bus model, the three transfers succeed, the log holds
+  three lines with status `00`, and the device is sent and asked for the same bytes as under
+  stock.
 * `boot-log.json` without the monitor boots to idle and writes no ring.
 
 ## Not verified
 
-* Nothing has run on a bud. The times and the NACKs are the model's. On a bud with a device at
-  `0x60` the status bytes and the number of transfers will differ.
+* Nothing has run on a bud. The times and the NACKs are the model's. A real device at
+  `0x60` may answer differently from the model's, which acknowledges everything and returns
+  `0x5A`, so the number of transfers on a bud may differ.
 * The status byte's values other than 0 are not decoded. The model's NACK gives `01`.
 * The two I2C helpers are assumed to be the only path to the bus. A driver that drives the
   controller another way would not be logged.
